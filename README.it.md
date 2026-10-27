@@ -87,13 +87,12 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 [![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-win-x64.zip)
 [![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0-linux-x64.tar.gz)
 
-**Opzionale**: lo script di installazione (`install.ps1` su Windows,
-`install.sh` su Linux) pubblica i binari come comandi utente nel PATH —
-cosi' `mfd-cli` e `mfd-tui` funzionano da qualsiasi terminale, non solo
-dalla cartella estratta. Copia anche le lingue nel profilo
-(`%APPDATA%\mfd\lang` o `~/.config/mfd/lang`). Senza, funziona comunque
-tutto — ti sposti solo nella cartella prima di lanciare. Lo SHA256 sta
-accanto a ogni file. macOS arriva dopo.
+**Opzionale**: se vuoi i comandi disponibili ovunque (non solo dalla
+cartella estratta), lancia `install.ps1` (Windows) o `install.sh`
+(Linux). Un comando, due secondi, fatto: `mfd-cli` e `mfd-tui`
+funzionano da qualsiasi terminale, con tutte le lingue. Senza lanciarlo
+funziona comunque tutto — ti sposti solo nella cartella prima di
+usarli. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
 
 ## Installazione
 
