@@ -80,16 +80,20 @@ i dettagli piu' sotto.
 
 ## Scaricalo
 
-**Windows x64** — niente da installare: estrai ed esegui.
+**Windows x64 e Linux x64** — niente da installare: estrai ed esegui.
 
-[![Download](https://img.shields.io/badge/%E2%AC%87%20Download-v0.8.0%20win--x64-2ea44f?style=for-the-badge)](../../releases)
+[![Download](https://img.shields.io/badge/%E2%AC%87%20Download-v0.8.0%20win%20%7C%20linux-2ea44f?style=for-the-badge)](../../releases)
 
-Lo ZIP porta `mfd-cli.exe` e `mfd-tui.exe` (inglese incorporato —
-funzionano da soli), le altre sei lingue in `lang\`, un `install.ps1`
-per pubblicare tutto come comandi utente, la licenza e un README di
-cinque righe. Lo SHA256 sta accanto al file (`.sha256`). Build per
-Linux e macOS arriveranno a breve — prima vanno compilate e provate
-su quelle piattaforme.
+Entrambi i pacchetti portano `mfd-cli` e `mfd-tui` (inglese incorporato
+— funzionano da soli), le altre sei lingue in `lang/` (trovate accanto
+ai binari, senza installazione), uno script di installazione per
+pubblicare tutto come comandi utente, la licenza e un README di cinque
+righe. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
+
+| Pacchetto | Piattaforma | Script |
+| --- | --- | --- |
+| `mantofreedisk-0.8.0-win-x64.zip` | Windows x64 | `install.ps1` → `%USERPROFILE%\.local\bin` + `%APPDATA%\mfd\lang` |
+| `mantofreedisk-0.8.0-linux-x64.tar.gz` | Linux x64 | `install.sh` → `~/.local/bin` + `~/.config/mfd/lang` |
 
 ## Installazione
 
@@ -396,9 +400,9 @@ il FAQ e' il posto dove una domanda vera diventa una feature
 
 - **Testato su una macchina sola, in una sessione sola.** Il bench
   confronta le implementazioni fra loro; non classifica i computer.
-- **Windows prima di tutto.** L'ottimizzazione no-`stat` legge le
-  dimensioni dai dati di enumerazione — un contratto Win32; e l'harness
-  del bench e' PowerShell.
+- **Windows e Linux.** Su Windows vale l'ottimizzazione no-`stat` (il
+  trucco Win32); su Linux il walker usa `stat`. macOS e' il prossimo.
+  L'harness del bench e' PowerShell (solo Windows).
 - Le cartelle bloccate sono warning, non errori: la griglia le mostra lo
   stesso (0 B), e i totali dicono quanti report mancano.
 - Il look duf richiede un terminale ANSI; rediretto, l'output e' la

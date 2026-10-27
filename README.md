@@ -76,16 +76,20 @@ the details below.
 
 ## Get it
 
-**Windows x64** — nothing to install: extract and run.
+**Windows x64 and Linux x64** — nothing to install: extract and run.
 
-[![Download](https://img.shields.io/badge/%E2%AC%87%20Download-v0.8.0%20win--x64-2ea44f?style=for-the-badge)](../../releases)
+[![Download](https://img.shields.io/badge/%E2%AC%87%20Download-v0.8.0%20win%20%7C%20linux-2ea44f?style=for-the-badge)](../../releases)
 
-The ZIP carries `mfd-cli.exe` and `mfd-tui.exe` (English is embedded —
-they work alone), the other six languages in `lang\`, an `install.ps1`
-to publish everything as user commands, the license and a five-line
-README. The SHA256 rides next to the file (`.sha256`). Linux and macOS
-builds are coming soon — they need to be compiled and tested on those
-platforms first.
+Both packages carry `mfd-cli` and `mfd-tui` (English is embedded — they
+work alone), the other six languages in `lang/` (found next to the
+binaries, no installation needed), an install script to publish
+everything as user commands, the license and a five-line README. The
+SHA256 rides next to each file. macOS is next.
+
+| Package | Platform | Install script |
+| --- | --- | --- |
+| `mantofreedisk-0.8.0-win-x64.zip` | Windows x64 | `install.ps1` → `%USERPROFILE%\.local\bin` + `%APPDATA%\mfd\lang` |
+| `mantofreedisk-0.8.0-linux-x64.tar.gz` | Linux x64 | `install.sh` → `~/.local/bin` + `~/.config/mfd/lang` |
 
 ## Quickstart
 
@@ -386,9 +390,9 @@ the FAQ is the place where a real question becomes a feature
 
 - **Tested on one machine, one session.** The bench compares the
   implementations with each other; it does not rank computers.
-- **Windows first.** The no-`stat` optimization reads sizes from
-  directory enumeration — a Win32 contract; the bench harness is
-  PowerShell.
+- **Windows and Linux.** Windows carries the no-`stat` fast path (a
+  Win32 contract); on Linux the walker falls back to `stat`. macOS is
+  next. The bench harness is PowerShell (Windows only).
 - Locked folders are warnings, not errors: the grid still shows them (0 B),
   and the totals say how many reports are missing.
 - The duf look needs an ANSI terminal; redirected, the output is the
