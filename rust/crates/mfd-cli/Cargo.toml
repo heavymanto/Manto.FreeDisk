@@ -1,0 +1,14 @@
+[package]
+name = "mfd-cli"
+version = "0.8.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "MantoFreeDisk CLI: analizzatore di spazio disco (walker parallelo, griglia di ripartizione, filtri)"
+
+[dependencies]
+# il motore (walker, aggregazione, filtri, warning): stesso workspace
+mfd-core = { path = "../mfd-core" }
+
+# NOTA: [profile.release] sta nel Cargo.toml del workspace (rust/), non qui:
+# Cargo ignora i profili dichiarati nei crate member.
+

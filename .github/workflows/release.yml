@@ -1,0 +1,54 @@
+# Release — al push di un tag v*: compila in release, impacchetta lo ZIP
+# classico (mantofreedisk-<ver>-win-x64.zip: i due exe, le sette lingue in
+# lang\, install.ps1 adattato allo ZIP, licenza e README), calcola lo
+# SHA256 e pubblica la GitHub Release con le note estratte dal CHANGELOG
+# (la sezione della versione, incollata per intero).
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build (release)
+        run: cargo build --release --manifest-path rust/Cargo.toml
+      - name: Package
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart("v")
+          $name = "mantofreedisk-$ver-win-x64"
+          $dir = "dist/$name"
+          New-Item -ItemType Directory -Force -Path "$dir/lang" | Out-Null
+          Copy-Item rust/target/release/mfd-cli.exe $dir
+          Copy-Item rust/target/release/mfd-tui.exe $dir
+          Copy-Item dist/install-zip.ps1 "$dir/install.ps1"
+          Copy-Item rust/crates/mfd-core/lang/*.json "$dir/lang/"
+          Copy-Item LICENSE $dir
+          Copy-Item dist/README.txt "$dir/README.txt"
+          Compress-Archive -Path $dir -DestinationPath "dist/$name.zip"
+          $hash = (Get-FileHash "dist/$name.zip" -Algorithm SHA256).Hash
+          "$hash  $name.zip" | Out-File "dist/$name.zip.sha256" -Encoding ascii
+          "$name.zip" | Out-File dist/zip-name.txt -Encoding ascii
+      - name: Release notes (dal CHANGELOG)
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart("v")
+          $lines = Get-Content CHANGELOG.md
+          $start = ($lines | Select-String -Pattern "^## \[$ver\]" | Select-Object -First 1).LineNumber
+          if (-not $start) { throw "sezione [$ver] non trovata nel CHANGELOG" }
+          $next = ($lines | Select-String -Pattern '^## \[' | Where-Object { $_.LineNumber -gt $start } | Select-Object -First 1).LineNumber
+          if (-not $next) { $next = $lines.Count + 1 }
+          $notes = $lines[$start..($next-2)] -join "`n"
+          $notes | Out-File dist/notes.md -Encoding utf8
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $zip = (Get-Content dist/zip-name.txt -Raw).Trim()
+          gh release create "${{ github.ref_name }}" "dist/$zip" "dist/$zip.sha256" --title "Manto.FreeDisk ${{ github.ref_name }}" --notes-file dist/notes.md

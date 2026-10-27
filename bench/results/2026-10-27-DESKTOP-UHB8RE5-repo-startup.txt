@@ -1,0 +1,21 @@
+> powershell -ExecutionPolicy Bypass -File bench\startup-bench.ps1 -Runs 7   (target di default: il repository)
+
+-- round 1/7 · carico CPU 2% --
+-- round 2/7 · carico CPU 2% --
+-- round 3/7 · carico CPU 3% --
+-- round 4/7 · carico CPU 3% --
+-- round 5/7 · carico CPU 3% --
+-- round 6/7 · carico CPU 4% --
+-- round 7/7 · carico CPU 35% --
+
+Variante                                  Best_ms Median_ms Walk_ms Startup_ms Runs_ms                                   Files
+--------                                  ------- --------- ------- ---------- -------                                   -----
+c# JIT         (FDD: runtime dal sistema)    70,1      82,3      17       65,3 81,4,70,1,93,3,94,5,81,2,82,3,96,9         5149
+c# R2R         (FDD precompilato)            76,4      79,2      22       57,2 86,9,76,4,94,1,78,4,79,2,78,6,80,7         5149
+c# R2R exe     (apphost launcher)            77,4      79,5      19       60,5 77,8,83,4,79,5,80,2,93,9,77,4,78,9         5149
+rust           (exe nativo)                    14      15,3       5       10,3 14,8,14,8,15,6,15,9,15,6,15,3,14           5149
+node           (runtime JS)                 137,8     157,3      97       60,3 160,9,137,8,158,2,157,8,157,3,140,3,139,9  5149
+
+
+
+Conteggio file coerente fra varianti [OK]

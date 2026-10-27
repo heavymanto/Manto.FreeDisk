@@ -1,0 +1,31 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.rs]
+indent_style = space
+indent_size = 4
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+[*.{ps1,pssm1}]
+indent_style = space
+indent_size = 4
+
+[*.toml]
+indent_style = space
+indent_size = 2
+
+[*.{json,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# il Markdown tiene gli spazi finali (interruzioni di riga volute)
+[*.md]
+trim_trailing_whitespace = false

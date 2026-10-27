@@ -1,0 +1,14 @@
+[package]
+name = "mfd-core"
+version = "0.7.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "Manto.FreeDisk core: walker parallelo, albero di ripartizione, filtri e warning (il motore condiviso da mfd-cli e mfd-tui)"
+
+[dependencies]
+# solo per i filtri -f/--filter: compilazione di glob e REG(...) in regex
+# case-insensitive
+regex = "1"
+
+# NOTA: [profile.release] sta nel Cargo.toml del workspace (rust/), non qui:
+# Cargo ignora i profili dichiarati nei crate member.

@@ -1,0 +1,20 @@
+> powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
+
+AVVISO: Manto.FreeDisk.Cli self-contained non pubblicato: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o bin\Release\net10.0\win-x64\publish-self 
+in net\src\Manto.FreeDisk.Cli
+-- round 1/5 · carico CPU 10% --
+-- round 2/5 · carico CPU 2% --
+-- round 3/5 · carico CPU 5% --
+-- round 4/5 · carico CPU 2% --
+-- round 5/5 · carico CPU 37% --
+
+Impl                                         Best_ms Median_ms Runs_ms                  Files  Dirs   Errors Bytes      
+----                                         ------- --------- -------                  -----  ----   ------ -----      
+c#   (find-data: dimensioni gratis, no stat)    1370      1378 1375,1370,1380,1378,1413 181513 102998 56     44453468412
+c#R2R (ReadyToRun: precompilato, zero JIT)      1380      1464 1494,1520,1380,1464,1405 181513 102998 56     44453468412
+rust  (find-data via std::fs, no stat)          1379      1462 1379,1462,1468,1478,1457 181513 102998 56     44453468412
+node  (readdir+stat per file, libuv)            8378      8531 8531,8598,8378,8401,8662 181513 102998 56     44453468412
+
+
+
+Totali coerenti fra implementazioni (bytes/files/dirs identici) [OK]

@@ -1,0 +1,21 @@
+# CI — i test del workspace a ogni push e pull request.
+# Il prodotto e' Windows-first (il no-stat e' un contratto Win32) ma il
+# walker usa std::fs: Linux e macOS girano negli stessi test perche'
+# quelle build devono arrivare.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        run: cargo test --workspace --manifest-path rust/Cargo.toml

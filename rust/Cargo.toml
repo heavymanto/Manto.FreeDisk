@@ -1,0 +1,15 @@
+# Workspace Cargo di Manto.FreeDisk (famiglia Rust).
+#   mfd-cli : command line interface (il prodotto, oggi).
+#   mfd-core: motore (walker, aggregazione, filtri, warning) - nasce quando parte
+#             il TUI: il secondo consumatore insegna l'API giusta da estrarre.
+#   mfd-tui : interfaccia interattiva (fase 2, vedi docs/ROADMAP.md).
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+# I profili vivono SOLO a livello workspace: Cargo ignora quelli dichiarati nei
+# crate member. LTO + codegen-units=1 = build di rilascio piu' lenta ma binario
+# piu' veloce (questa e' una CLI: anche i millisecondi di avvio contano).
+[profile.release]
+lto = true
+codegen-units = 1

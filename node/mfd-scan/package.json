@@ -1,0 +1,21 @@
+{
+  "name": "mantofreedisk",
+  "version": "0.2.0",
+  "private": true,
+  "description": "MantoFreeDisk — prototipo Node.js della fase 0 (report, ls aggregato, nav); il prodotto e ora mfd-cli in Rust (vedi rust/)",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "bin": {
+    "mfd-scan": "mfd-scan.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "scan": "node mfd-scan.mjs",
+    "ls": "node mfd-scan.mjs ls",
+    "nav": "node mfd-scan.mjs nav",
+    "scan:json": "node mfd-scan.mjs . --json snapshot.json",
+    "test": "node test-mfd.mjs"
+  }
+}
