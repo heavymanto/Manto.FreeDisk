@@ -80,20 +80,16 @@ i dettagli piu' sotto.
 
 ## Scaricalo
 
-**Windows x64 e Linux x64** — niente da installare: estrai ed esegui.
+Niente da installare: estrai ed esegui.
 
-[![Download](https://img.shields.io/badge/%E2%AC%87%20Download-v0.8.0%20win%20%7C%20linux-2ea44f?style=for-the-badge)](../../releases)
+[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-win-x64.zip)
+[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0-linux-x64.tar.gz)
 
 Entrambi i pacchetti portano `mfd-cli` e `mfd-tui` (inglese incorporato
 — funzionano da soli), le altre sei lingue in `lang/` (trovate accanto
-ai binari, senza installazione), uno script di installazione per
-pubblicare tutto come comandi utente, la licenza e un README di cinque
-righe. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
-
-| Pacchetto | Piattaforma | Script |
-| --- | --- | --- |
-| `mantofreedisk-0.8.0-win-x64.zip` | Windows x64 | `install.ps1` → `%USERPROFILE%\.local\bin` + `%APPDATA%\mfd\lang` |
-| `mantofreedisk-0.8.0-linux-x64.tar.gz` | Linux x64 | `install.sh` → `~/.local/bin` + `~/.config/mfd/lang` |
+ai binari, senza installazione), uno script di installazione, la licenza
+e un README di cinque righe. Lo SHA256 sta accanto a ogni file.
+macOS arriva dopo.
 
 ## Installazione
 
