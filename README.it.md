@@ -80,16 +80,20 @@ i dettagli piu' sotto.
 
 ## Scaricalo
 
-Niente da installare: estrai ed esegui.
+Niente da installare: estrai ed esegui — e basta. I due binari
+funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
+le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
 [![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-win-x64.zip)
 [![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0-linux-x64.tar.gz)
 
-Entrambi i pacchetti portano `mfd-cli` e `mfd-tui` (inglese incorporato
-— funzionano da soli), le altre sei lingue in `lang/` (trovate accanto
-ai binari, senza installazione), uno script di installazione, la licenza
-e un README di cinque righe. Lo SHA256 sta accanto a ogni file.
-macOS arriva dopo.
+**Opzionale**: lo script di installazione (`install.ps1` su Windows,
+`install.sh` su Linux) pubblica i binari come comandi utente nel PATH —
+cosi' `mfd-cli` e `mfd-tui` funzionano da qualsiasi terminale, non solo
+dalla cartella estratta. Copia anche le lingue nel profilo
+(`%APPDATA%\mfd\lang` o `~/.config/mfd/lang`). Senza, funziona comunque
+tutto — ti sposti solo nella cartella prima di lanciare. Lo SHA256 sta
+accanto a ogni file. macOS arriva dopo.
 
 ## Installazione
 
