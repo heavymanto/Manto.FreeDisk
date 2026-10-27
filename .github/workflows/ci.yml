@@ -1,7 +1,8 @@
 # CI — i test del workspace a ogni push e pull request.
-# Il prodotto e' Windows-first (il no-stat e' un contratto Win32) ma il
-# walker usa std::fs: Linux e macOS girano negli stessi test perche'
-# quelle build devono arrivare.
+# Windows e' il prodotto di oggi (il no-stat e' un contratto Win32): i suoi
+# test bloccano. Linux e macOS girano in informazione — ancora non
+# bloccano, perche' il porting deve arrivare (vedi "Get it" nel README).
+# Quando Linux sara' pronto: rimuovere continue-on-error.
 name: CI
 on:
   push:
@@ -13,6 +14,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os != 'windows-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
