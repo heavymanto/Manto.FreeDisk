@@ -20,6 +20,13 @@ foreach ($name in 'mfd-cli', 'mfd-tui') {
     }
     "installed: $dst"
 }
+
+# PATH check: if ~/.local/bin is not in user PATH, add it (one time)
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$binDir*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$binDir", "User")
+    "PATH updated: $binDir added (restart your terminal)"
+}
 # language registry: the JSON files from lang\ go to the user profile,
 # where CLI and TUI discover them at runtime (English is already embedded).
 $langSrc = Join-Path $PSScriptRoot 'lang'
