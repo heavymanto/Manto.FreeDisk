@@ -209,9 +209,27 @@ pub fn registry_in(dir: Option<&Path>) -> (Vec<Lang>, Vec<String>) {
     (langs, unreadable)
 }
 
+/// The lang folder next to the running executable (portable mode): if the
+/// exes carry their own lang/ directory — the ZIP does — that's the one to
+/// use, so the tool works on machines where writing to the profile is not
+/// an option (locked-down terminals, restricted accounts). Returns None if
+/// the directory is not there: the registry falls back to the profile.
+fn local_dir() -> Option<PathBuf> {
+    std::env::current_exe().ok().and_then(|p| {
+        let dir = p.parent()?.join("lang");
+        if dir.is_dir() { Some(dir) } else { None }
+    })
+}
+
 /// Le lingue disponibili, dalla cartella del profilo: l'inglese incorporato
 /// piu' quelle che l'utente ha droppato (il menu l / F12 le elenca).
+/// Portable first: lang/ next to the exe wins over the profile — the ZIP
+/// carries its languages, and on restricted machines there is no profile
+/// to write to. The profile remains the installed mode and the override.
 pub fn registry() -> (Vec<Lang>, Vec<String>) {
+    if let Some(dir) = local_dir() {
+        return registry_in(Some(&dir));
+    }
     registry_in(profile_dir().as_deref())
 }
 

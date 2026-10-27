@@ -4,6 +4,14 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
 ## [Unreleased]
 
+### Added
+- **Portable mode**: `mfd-cli` and `mfd-tui` now search for a `lang/`
+  folder next to the executable before falling back to the profile
+  (`%APPDATA%\mfd\lang`). The ZIP carries its own languages: extract and
+  run, even on machines where writing to the profile is not an option
+  (locked-down terminals, restricted accounts). The profile remains the
+  installed mode and the override.
+
 ## [0.8.0] - 2026-10-27
 
 ### Added
