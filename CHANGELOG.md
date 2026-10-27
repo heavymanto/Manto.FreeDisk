@@ -5,6 +5,14 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Added
+- **Linux in the release**: the workflow now builds on `ubuntu-latest`
+  too, packages a `mantofreedisk-<ver>-linux-x64.tar.gz` (same content
+  as the Windows ZIP: the two binaries, the seven languages in lang/,
+  an install.sh, the license and a README) and uploads it to the same
+  GitHub Release. Installation mirrors the Windows one: extract and run
+  (portable — lang/ next to the binaries works), or `install.sh` to
+  publish as user commands (~/.local/bin) and install the languages
+  (~/.config/mfd/lang). SHA256 alongside.
 - **Portable mode**: `mfd-cli` and `mfd-tui` now search for a `lang/`
   folder next to the executable before falling back to the profile
   (`%APPDATA%\mfd\lang`). The ZIP carries its own languages: extract and

@@ -52,3 +52,42 @@ jobs:
         run: |
           $zip = (Get-Content dist/zip-name.txt -Raw).Trim()
           gh release create "${{ github.ref_name }}" "dist/$zip" "dist/$zip.sha256" --title "Manto.FreeDisk ${{ github.ref_name }}" --notes-file dist/notes.md
+
+  release-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build (release)
+        run: cargo build --release --manifest-path rust/Cargo.toml
+      - name: Package
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          NAME="mantofreedisk-$VER-linux-x64"
+          DIR="dist/$NAME"
+          mkdir -p "$DIR/lang"
+          cp rust/target/release/mfd-cli "$DIR/"
+          cp rust/target/release/mfd-tui "$DIR/"
+          cp dist/install-linux.sh "$DIR/install.sh"
+          chmod +x "$DIR/install.sh"
+          cp rust/crates/mfd-core/lang/*.json "$DIR/lang/"
+          cp LICENSE "$DIR/"
+          cp dist/README-linux.txt "$DIR/README.txt"
+          tar -czf "dist/$NAME.tar.gz" -C "dist" "$NAME"
+          sha256sum "dist/$NAME.tar.gz" > "dist/$NAME.tar.gz.sha256"
+          echo "$NAME.tar.gz" > dist/tar-name.txt
+      - name: Release notes (dal CHANGELOG)
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          START=$(grep -n "^## \[$VER\]" CHANGELOG.md | head -1 | cut -d: -f1)
+          [ -z "$START" ] && { echo "version [$VER] not found"; exit 1; }
+          END=$(tail -n +"$((START+1))" CHANGELOG.md | grep -n "^## \[" | head -1 | cut -d: -f1)
+          [ -z "$END" ] && END=$(wc -l < CHANGELOG.md)
+          END=$((START + END))
+          sed -n "${START},${END}p" CHANGELOG.md > dist/notes.md
+      - name: Upload to existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAR=$(cat dist/tar-name.txt)
+          gh release upload "${{ github.ref_name }}" "dist/$TAR" "dist/$TAR.sha256" --clobber
