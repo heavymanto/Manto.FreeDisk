@@ -318,7 +318,7 @@ pub fn render_table(
             Some(f) => group_digits(f).len(),
             None => 1, // il "-" della foglia
         })
-        .chain(once(4))
+        .chain(once(cat.t("cli.file").chars().count()))
         .max()
         .unwrap();
     let w_dirs = rows
@@ -327,7 +327,7 @@ pub fn render_table(
             Some(d) => group_digits(d).len(),
             None => 1,
         })
-        .chain(once(8))
+        .chain(once(cat.t("cli.cartelle").chars().count()))
         .max()
         .unwrap();
     // il nome non ha tetto: e' il dato della griglia, quello che dice dove
@@ -790,6 +790,26 @@ mod tests {
         let data = &lines[3];
         assert_eq!(data.find("100 B"), tot.find("100 B"));
         assert_eq!(data.find("radice"), tot.find("TOTALE"));
+    }
+
+    #[test]
+    fn l_intestazione_inglese_non_sfora_la_colonna_dei_file() {
+        // FILES in inglese (5) e' piu' lungo del minimo storico della colonna
+        // (4, il FILE italiano): con pochi file l'intestazione sforava la
+        // cella e tutto cio' che seguiva slittava di uno. La larghezza
+        // minima ora segue la lingua attiva, perche' ogni lingua chiama le
+        // colonne a modo suo (ARCHIVOS, ARQUIVOS, DATEIEN...) e nessuna
+        // intestazione puo' uscire dal suo box.
+        let cat = mfd_core::lang::Catalog::english();
+        let rows = vec![row(100, "root"), row(60, "|-- a")];
+        let t = Totals { bytes: 100, files: 7, dirs: 0, voci: 2 };
+        let lines = render_table(&rows, &t, &[], false, &cat);
+        // il box resta intero: tutte le righe della stessa larghezza, con
+        // l'intestazione inglese dentro la sua cella
+        let w = lines[0].chars().count();
+        assert!(lines.iter().all(|l| l.chars().count() == w), "righe di larghezza diversa");
+        assert!(lines[1].contains("FILES"));
+        assert!(lines[1].contains("FOLDERS"));
     }
 
     #[test]

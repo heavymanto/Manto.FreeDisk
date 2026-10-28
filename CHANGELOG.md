@@ -4,6 +4,16 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
 ## [Unreleased]
 
+### Fixed
+- **The duf box no longer shifts with short file counts**: the FILES and
+  FOLDERS columns of the terminal table had a hardcoded minimum width (4
+  and 8, the Italian headers) — with few files the English header FILES
+  (5 chars) overflowed its cell by one and everything after it shifted
+  right; Spanish ARCHIVOS shifted by four, German DATEIEN by three. The
+  minimum width now follows the active language's own headers, so no
+  translation can ever break out of its column (regression test included,
+  English catalog with short counts).
+
 ### Added
 - **Linux in the release**: the workflow now builds on `ubuntu-latest`
   too, packages a `mantofreedisk-<ver>-linux-x64.tar.gz` (same content
