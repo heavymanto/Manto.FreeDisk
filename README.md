@@ -10,6 +10,7 @@
         <img src="https://img.shields.io/badge/OUTPUT-DUF%20%2B%20ASCII-e3b341?style=for-the-badge" alt="duf look plus the ASCII contract" />
       </p>
       <p>
+        <a href="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml"><img src="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
         <img src="https://img.shields.io/badge/walk-181.513%20files%20in%201%2C4%20s-brightgreen" alt="181.513 files in 1,4 s" />
         <img src="https://img.shields.io/badge/frontends-mfd--cli%200.8.0%20%C2%B7%20mfd--tui%200.2.1-blue" alt="mfd-cli 0.8.0 and mfd-tui 0.2.1" />
         <img src="https://img.shields.io/badge/languages-7-blue" alt="seven languages" />
