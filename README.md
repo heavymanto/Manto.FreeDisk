@@ -390,16 +390,17 @@ the FAQ is the place where a real question becomes a feature
 
 - **Tested on one machine, one session.** The bench compares the
   implementations with each other; it does not rank computers.
-- **Windows and Linux.** Windows carries the no-`stat` fast path (a
-  Win32 contract); on Linux the walker falls back to `stat`. macOS is
-  next. The bench harness is PowerShell (Windows only).
+- **Windows, Linux, macOS.** Windows carries the no-`stat` fast path (a
+  Win32 contract); on Linux and macOS the walker falls back to `stat`.
+  The bench harness is PowerShell (Windows only). The CI runs the whole
+  test suite on all three systems at every push.
 - Locked folders are warnings, not errors: the grid still shows them (0 B),
   and the totals say how many reports are missing.
 - The duf look needs an ANSI terminal; redirected, the output is the
   flat ASCII grid of always (`MFD_DUF=1` forces the look even through a
   pipe, for `less -R`).
-- Prebuilt binaries via GitHub Releases are planned: today you build with
-  `cargo` — one command, about a minute.
+- **macOS arm64 only** in the release: Intel Macs build from source (one
+  `cargo` command, about a minute).
 - The TUI speaks 16 colors, by design: the console's own palette.
 
 ## Development

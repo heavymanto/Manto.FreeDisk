@@ -1,8 +1,8 @@
 # CI — i test del workspace a ogni push e pull request.
-# Windows e' il prodotto di oggi (il no-stat e' un contratto Win32): i suoi
-# test bloccano. Linux e macOS girano in informazione — ancora non
-# bloccano, perche' il porting deve arrivare (vedi "Get it" nel README).
-# Quando Linux sara' pronto: rimuovere continue-on-error.
+# Tutti e tre i sistemi bloccano: i test girano uguali ovunque (i path
+# dei test seguono il separatore della piattaforma). --no-fail-fast fa
+# girare ogni binario di test anche quando uno precedente fallisce,
+# cosi' un run racconta tutto.
 name: CI
 on:
   push:
@@ -14,7 +14,6 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.os != 'windows-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

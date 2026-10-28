@@ -400,16 +400,17 @@ il FAQ e' il posto dove una domanda vera diventa una feature
 
 - **Testato su una macchina sola, in una sessione sola.** Il bench
   confronta le implementazioni fra loro; non classifica i computer.
-- **Windows e Linux.** Su Windows vale l'ottimizzazione no-`stat` (il
-  trucco Win32); su Linux il walker usa `stat`. macOS e' il prossimo.
-  L'harness del bench e' PowerShell (solo Windows).
+- **Windows, Linux, macOS.** Su Windows vale l'ottimizzazione no-`stat`
+  (il trucco Win32); su Linux e macOS il walker usa `stat`. L'harness
+  del bench e' PowerShell (solo Windows). La CI gira tutti i test su
+  tutti e tre i sistemi a ogni push.
 - Le cartelle bloccate sono warning, non errori: la griglia le mostra lo
   stesso (0 B), e i totali dicono quanti report mancano.
 - Il look duf richiede un terminale ANSI; rediretto, l'output e' la
   griglia ASCII piatta di sempre (`MFD_DUF=1` forza il look anche
   attraverso una pipe, per `less -R`).
-- I binari precompilati via GitHub Releases sono in programma: oggi si
-  compila con `cargo` — un comando, circa un minuto.
+- **Solo macOS arm64** nella release: i Mac Intel compilano da fonte (un
+  comando `cargo`, circa un minuto).
 - La TUI parla 16 colori, per scelta: la palette della console.
 
 ## Sviluppo

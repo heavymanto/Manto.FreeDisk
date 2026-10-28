@@ -43,6 +43,11 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   (locked-down terminals, restricted accounts). The profile remains the
   installed mode and the override.
 
+### Changed
+- **The CI blocks on all three systems now**: Linux and macOS tests used
+  to run as information only (`continue-on-error`) — with the paths fixed
+  they run green, so every platform gates every push and every PR.
+
 ## [0.8.0] - 2026-10-27
 
 ### Added
