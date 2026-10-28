@@ -451,7 +451,8 @@ sacro, naked significa cartella corrente, l'output e' ASCII puro, e ogni
 esempio nella documentazione e' vero. Lo sviluppo e' FAQ-driven: se un esempio
 risulta scomodo, quella e' una richiesta di feature. Le issue sono aperte —
 tre template (bug, domanda, feature) portano il contesto, e le domande vere
-diventano voci del FAQ.
+diventano voci del FAQ. Le aspettative: e' un progetto hobby — tutto viene
+letto, ma nessun tempo di risposta e' promesso.
 
 ## Licenza
 

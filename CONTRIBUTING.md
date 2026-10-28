@@ -48,6 +48,10 @@ stop. Questions are the engine of the FAQ-driven development (rule 4
 below): the real ones become entries in `docs\FAQ.md`, quoted with their
 real output.
 
+A note on expectations: this is a hobby project with one maintainer —
+no response times are promised. Everything gets read; answers arrive
+when life allows.
+
 ## The rules of the game
 
 1. **The bench contract is sacred.** With `MFD_BENCH=1` the output is

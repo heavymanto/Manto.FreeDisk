@@ -441,7 +441,8 @@ is sacred, naked means the current directory, output is pure ASCII, and every
 example in the docs is real. Development is FAQ-driven: if an example feels
 awkward, that is a feature request. Issues are open — three templates (bug,
 question, feature) carry the context, and the good questions become FAQ
-entries.
+entries. A note on expectations: this is a hobby project — everything gets
+read, but no response times are promised.
 
 ## License
 
