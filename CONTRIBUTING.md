@@ -39,6 +39,15 @@ dotnet build -c Release      # in net\
 powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target <folder> -Runs 3
 ```
 
+## Issues
+
+Three doors, one workflow: **bug**, **question**, **feature request** —
+the templates carry the context the project needs (the command, the
+redirected output, the version), and the manual is linked as the first
+stop. Questions are the engine of the FAQ-driven development (rule 4
+below): the real ones become entries in `docs\FAQ.md`, quoted with their
+real output.
+
 ## The rules of the game
 
 1. **The bench contract is sacred.** With `MFD_BENCH=1` the output is

@@ -447,7 +447,9 @@ gui\ app\ riservate alla futura GUI e alla distribuzione app
 Vedi [CONTRIBUTING.md](CONTRIBUTING.md). In breve: il contratto di bench e'
 sacro, naked significa cartella corrente, l'output e' ASCII puro, e ogni
 esempio nella documentazione e' vero. Lo sviluppo e' FAQ-driven: se un esempio
-risulta scomodo, quella e' una richiesta di feature.
+risulta scomodo, quella e' una richiesta di feature. Le issue sono aperte —
+tre template (bug, domanda, feature) portano il contesto, e le domande vere
+diventano voci del FAQ.
 
 ## Licenza
 

@@ -5,6 +5,14 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Fixed
+- **The three Linux-failing tests now run everywhere**: they compared paths
+  written with the Windows backslash (`m\eq.bin`) — on Linux the backslash
+  is a plain filename character, so the fixture built the wrong tree and
+  the asserts checked the wrong tail. Paths are now built with the platform
+  separator (a `rel()` helper for the asserts, plain forward slashes for
+  the fixtures, which both platforms accept), and the CI runs
+  `--no-fail-fast` so every test binary reports even when an earlier one
+  fails.
 - **The duf box no longer shifts with short file counts**: the FILES and
   FOLDERS columns of the terminal table had a hardcoded minimum width (4
   and 8, the Italian headers) — with few files the English header FILES
@@ -15,6 +23,11 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   English catalog with short counts).
 
 ### Added
+- **Issue templates**: three doors for the public — bug (command,
+  redirected output, version), question (FAQ-driven: the real ones become
+  manual entries), feature request (the command you wish you could write)
+  — with the manual linked as the first stop. `CONTRIBUTING.md` and the
+  READMEs point to them.
 - **Linux in the release**: the workflow now builds on `ubuntu-latest`
   too, packages a `mantofreedisk-<ver>-linux-x64.tar.gz` (same content
   as the Windows ZIP: the two binaries, the seven languages in lang/,

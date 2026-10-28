@@ -1199,22 +1199,29 @@ mod tests {
         dir
     }
 
+    /// Il path relativo col separatore della piattaforma: il walker scandisce
+    /// con quello di sistema e gli assert lo seguono — cosi' questi test
+    /// girano uguali su Windows (\) e su Linux/macOS (/).
+    fn rel(parts: &[&str]) -> String {
+        parts.join(&std::path::MAIN_SEPARATOR.to_string())
+    }
+
     #[test]
     fn big_le_righe_ordinano_per_taglia_con_full_path() {
         // la forma e' il contratto d'output: la prima colonna e' la DIMENSIONE
         // della griglia, accanto il full path; ordine fisso taglia
-        // decrescente, a parita' path crescente (b.txt < m\eq.bin < z\eq.bin)
+        // decrescente, a parita' path crescente (b.txt < m/eq.bin < z/eq.bin)
         let fx = fixture_big("righe");
         let tree = scan_live(&fx, &ScanOptions { depth: usize::MAX, filter: None }, false, &test_cat());
         let lines = big_lines(&tree, 10);
         assert_eq!(lines.len(), 5);
         assert_eq!(
             lines[0],
-            format!(" {:>10}  {}", "100 B", fx.join("z\\big.dat").display())
+            format!(" {:>10}  {}", "100 B", fx.join("z").join("big.dat").display())
         );
         assert!(lines[1].ends_with("b.txt"));
-        assert!(lines[2].ends_with("m\\eq.bin"));
-        assert!(lines[3].ends_with("z\\eq.bin"));
+        assert!(lines[2].ends_with(&rel(&["m", "eq.bin"])));
+        assert!(lines[3].ends_with(&rel(&["z", "eq.bin"])));
         assert!(lines[4].ends_with("small.txt"));
         // il taglio a N tiene i primi N, anche quando i file sono meno
         assert_eq!(big_lines(&tree, 2).len(), 2);
@@ -1230,8 +1237,8 @@ mod tests {
         let tree = scan_live(&fx, &ScanOptions { depth: usize::MAX, filter: Some(f) }, false, &test_cat());
         let lines = big_lines(&tree, 10);
         assert_eq!(lines.len(), 2);
-        assert!(lines[0].ends_with("m\\eq.bin"));
-        assert!(lines[1].ends_with("z\\eq.bin"));
+        assert!(lines[0].ends_with(&rel(&["m", "eq.bin"])));
+        assert!(lines[1].ends_with(&rel(&["z", "eq.bin"])));
         let _ = std::fs::remove_dir_all(&fx);
     }
 
@@ -1242,10 +1249,12 @@ mod tests {
         // primo livello, a profondita' illimitata tutto l'albero
         let fx = std::env::temp_dir().join(format!("mfd-cli-test-{}-aperti", std::process::id()));
         let _ = std::fs::remove_dir_all(&fx);
-        std::fs::create_dir_all(fx.join("uno\\sotto")).unwrap();
+        // gli slash semplici valgono su entrambe le piattaforme: qui servono
+        // le cartelle vere, non la forma dei path
+        std::fs::create_dir_all(fx.join("uno/sotto")).unwrap();
         std::fs::write(fx.join("a.txt"), vec![0u8; 10]).unwrap();
-        std::fs::write(fx.join("uno\\b.bin"), vec![0u8; 20]).unwrap();
-        std::fs::write(fx.join("uno\\sotto\\c.bin"), vec![0u8; 30]).unwrap();
+        std::fs::write(fx.join("uno/b.bin"), vec![0u8; 20]).unwrap();
+        std::fs::write(fx.join("uno/sotto/c.bin"), vec![0u8; 30]).unwrap();
         let tree = scan_live(
             &fx,
             &ScanOptions { depth: usize::MAX, filter: None },
