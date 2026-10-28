@@ -26,18 +26,17 @@
 
 ---
 
-L'idea e' nata da un fastidio vero. In un momento in cui le memorie
-costavano tantissimo — e un disco piu' capiente non me lo potevo
-permettere — continuavo a chiedermi perche' fosse sempre pieno, anche
-dopo aver fatto spazio con tutti i tool piu' noti. Nessuno pero' mi
-dava una risposta in un colpo d'occhio, o con un comando diretto.
-Stanco di risultati scarsi, ho deciso di farmelo da solo. Avrei potuto
-scriverlo in C# — il mio linguaggio preferito, che conosco da vent'anni
-— ma ho voluto cimentarmi in un po' di vibe coding e provare Rust. Mi
-ha aiutato GLM 5.3, open weight, on-premise. E ha funzionato: col mio
-tool ho trovato subito file enormi dimenticati — backup, macchine
-virtuali non piu' usate — e individuato un bel 30% di dati vecchi da
-cancellare. L'esperimento qui sotto racconta il resto della storia.
+L'idea nasce da un fastidio vero e attuale. Le memorie costano ancora
+care e un disco piu' capiente non e' un'opzione: il disco resta pieno,
+e i tool piu' noti non danno una risposta in un colpo d'occhio o con
+un comando diretto. Cosi' ho smesso di cercare quello giusto e ho
+deciso di farmelo da solo. Potevo scriverlo in C# — il mio linguaggio
+preferito, da vent'anni — ma ho preferito provare Rust, con un po' di
+vibe coding: ad affiancarmi, GLM 5.3, open weight, on-premise. Ha
+funzionato: con questo tool i file enormi dimenticati saltano subito
+all'occhio — backup, macchine virtuali ormai inutilizzate — e un buon
+30% di dati vecchi e' finito nel mirino. L'esperimento qui sotto
+racconta il resto della storia.
 
 **Manto.FreeDisk** e' un analizzatore di spazio disco costruito attorno a
 una domanda sola: *dove sono finiti i miei gigabyte*. Scansiona un albero

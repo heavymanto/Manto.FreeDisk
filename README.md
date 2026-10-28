@@ -26,17 +26,16 @@
 
 ---
 
-The idea was born from a real annoyance. At a time when storage cost
-dearly — and a bigger drive was not an option — I kept wondering why my
-disk was always full, even after cleaning up with every well-known
-tool. None of them gave me an answer at a glance, or with one direct
-command. Tired of poor results, I decided to build it myself. I could
-have written it in C# — my favorite language, one I have known for
-twenty years — but I wanted to try some vibe coding and go with Rust.
-GLM 5.3, open weight, on-premise, helped me along. And it worked: with
-my own tool I immediately found huge forgotten files — backups, virtual
-machines I no longer used — and spotted a good 30% of stale data I
-could delete. The experiment below tells the rest of the story.
+The idea comes from a real, present annoyance. Storage still costs
+dearly and a bigger drive is not an option: the disk stays full, and
+the best-known tools give no answer at a glance, or with one direct
+command. So I stopped searching for the right one and decided to build
+my own. I could have written it in C# — my favorite language, for
+twenty years — but I chose to try Rust, with some vibe coding, helped
+by GLM 5.3, open weight, on-premise. It worked: with this tool, huge
+forgotten files stand out at once — backups, virtual machines no
+longer in use — and a good 30% of stale data is now in the crosshairs.
+The experiment below tells the rest of the story.
 
 **Manto.FreeDisk** is a disk-space analyzer built around one question:
 *where did my gigabytes go*. It scans a tree with one worker per core,
