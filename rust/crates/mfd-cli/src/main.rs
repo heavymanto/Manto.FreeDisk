@@ -206,9 +206,10 @@ fn voci(n: i64, cat: &Catalog) -> String {
 /// colonne — la dimensione sotto DIMENSIONE, i file sotto FILE, le cartelle
 /// sotto CARTELLE — e in colonna NOME l'etichetta col conto delle voci: la
 /// lettura e' la classica verticale, col dato cumulativo sotto. % e barra
-/// restano vuote: la somma non e' una quota di se' stessa (la radice, in
-/// cima, e' gia' il 100%). Le spaziature sono quelle di ascii_row, cella
-/// per cella: le colonne coincidono al byte.
+/// restano vuote: la somma non e' una quota di se' stessa — le righe sopra,
+/// con la divisione intera, sommano a quasi tutto, e i resti non si
+/// fingono: il totale e' il punto fermo, non una percentuale. Le spaziature
+/// sono quelle di ascii_row, cella per cella: le colonne coincidono al byte.
 fn totals_row(t: &Totals, cat: &Catalog) -> String {
     format!(
         " {:>10}  {:>4}  {:>24}  {:>11}  {:>9}  {}",
@@ -231,6 +232,33 @@ struct GridRow {
     files: Option<i64>,
     dirs: Option<i64>,
     name: String,
+}
+
+/// La vista che la CLI consegna: il quadro (griglia + classifica dei file),
+/// la griglia da sola o la classifica da sola. Il default e' il quadro —
+/// l'esperienza intera in un comando, zero flag per chi arriva; -grid e
+/// -report tolgono ciascuno la meta' che non serve. -big e' il nome storico
+/// di -report: stesso comando, stessa uscita.
+#[derive(PartialEq, Clone, Copy)]
+enum View {
+    /// la griglia e la classifica dei file: il quadro completo
+    Full,
+    /// solo la griglia — il contratto asciutto di pipe e log
+    Grid,
+    /// solo la classifica dei file piu' grandi
+    Files,
+}
+
+/// La fascia del titolo della griglia ASCII: il percorso fra i trattini, la
+/// convenzione di ncdu — la radice non e' piu' riga al 100%, e il posto
+/// dove siamo resta dichiarato. Pura, per il test di regressione.
+fn title_band(title: &str) -> String {
+    let mut band = format!("--- {} ---", title);
+    let len = band.chars().count();
+    if len < 79 {
+        band.push_str(&"-".repeat(79 - len));
+    }
+    band
 }
 
 /// La riga della griglia nel formato ASCII storico — il contratto d'output
@@ -283,26 +311,27 @@ fn print_breakdown(
     filter_active: bool,
     filter_disp: Option<&str>,
     cat: &Catalog,
+    max_level: usize,
+    files: Option<usize>,
 ) -> (Option<String>, usize) {
     // il look si decide qui, una volta per corsa: terminale vero -> il box duf
     // di theme.rs; redirect/pipe -> il formato ASCII storico, byte per byte
     let look = theme::Look::detect();
     let total_bytes = tree.stats().bytes;
     let r = tree.metrics(0);
-    let root_name = match filter_disp {
+    // il percorso scandito (con la lente, se attiva) e' il titolo: la radice
+    // non e' piu' una riga al 100% — e' la fascia che dichiara dove siamo,
+    // e la lente le sta accanto perche' cambia il senso di tutti i numeri
+    let title = match filter_disp {
         Some(f) => format!("{} {}", root.display(), cat.tf("cli.filtro", &[f])),
         None => root.display().to_string(),
     };
-    // la radice e' la prima riga: il punto zero della % e della barra (100%)
-    let mut rows = vec![GridRow {
-        bytes: total_bytes,
-        files: Some(r.files),
-        dirs: Some(r.dirs),
-        name: root_name,
-    }];
+    // le righe sono i figli: la radice e' la base del calcolo di % e barra,
+    // non una riga da leggere — il 100% non dice niente e i suoi numeri li
+    // tiene gia' la TOTALE. -top conta le righe dei figli, radice esclusa
+    let mut rows: Vec<GridRow> = Vec::new();
     let limit = top.unwrap_or(usize::MAX);
     let mut budget = limit;
-    budget -= 1; // la radice appena raccolta conta come prima riga
     let mut hidden = 0usize;
     collect_rows(
         0,
@@ -310,6 +339,8 @@ fn print_breakdown(
         tree,
         order,
         &[],
+        1,
+        max_level,
         &mut budget,
         filter_active,
         &mut hidden,
@@ -318,7 +349,7 @@ fn print_breakdown(
     // i totali che chiudono la griglia: le tre info della radice piu' il
     // conto delle voci — tutte quelle che la tabella avrebbe, non il taglio
     // di -top (i totali non si tagliano: il conto concorda con la NOTE)
-    let total_rows = 1 + count_rows(0, tree, filter_active);
+    let total_rows = count_rows(0, tree, filter_active, 1, max_level);
     let totals = Totals {
         bytes: total_bytes,
         files: r.files,
@@ -330,6 +361,9 @@ fn print_breakdown(
     let warns = warning_lines(tree.warnings(), cat);
     match look {
         theme::Look::Ascii => {
+            // la fascia del titolo apre la griglia: il percorso fra i
+            // trattini, la convenzione di ncdu — dove siamo resta detto
+            println!("{}", title_band(&title));
             println!(
                 " {:>10}  {:>4}  {:>24}  {:>11}  {:>9}  {}",
                 cat.t("cli.dim"),
@@ -350,16 +384,52 @@ fn print_breakdown(
             // tocca: le righe sono tagliate, i totali no
             println!("{}", "-".repeat(79));
             println!("{}", totals_row(&totals, cat));
-            // e sotto la TOTALE, nel footer, le segnalazioni: prima cella
-            // l'etichetta, resto della riga fuso nel testo
-            print_warning_rows(&warns, cat);
+            match files {
+                // il quadro continua senza stacco: la fascia della sezione e
+                // le righe della classifica, SIZE in colonna con la griglia;
+                // le segnalazioni chiudono tutto, dopo i dati — note
+                // contestuali a entrambe le parti, secondarie a entrambe
+                Some(n) => {
+                    let section = cat.tf(
+                        if n == 1 { "cli.top_file" } else { "cli.top_files" },
+                        &[&n.to_string()],
+                    );
+                    println!("{}", title_band(&section));
+                    for line in big_lines(tree, n) {
+                        println!("{}", line);
+                    }
+                    if !warns.is_empty() {
+                        println!("{}", "-".repeat(79));
+                        print_warning_rows(&warns, cat);
+                    }
+                }
+                // la griglia da sola: le segnalazioni sotto la TOTALE, la
+                // forma di sempre
+                None => print_warning_rows(&warns, cat),
+            }
         }
         theme::Look::Duf { color } => {
-            // nel box la TOTALE e' grassa e incolonnata come le altre, gli
-            // stessi numeri della griglia ASCII; i warning la seguono nella
-            // cella fusa che chiude il box
-            for line in theme::render_table(&rows, &totals, &warns, color, cat) {
-                println!("{}", line);
+            // il quadro e' un box solo in due parti: la griglia e, sotto il
+            // divisore che porta il titolo, la classifica; la griglia da
+            // sola chiude il suo box come ha sempre fatto
+            match files {
+                Some(n) => {
+                    let entries = tree.top_files(n, None);
+                    let section = cat.tf(
+                        if n == 1 { "cli.top_file" } else { "cli.top_files" },
+                        &[&n.to_string()],
+                    );
+                    for line in theme::render_report(
+                        &rows, &totals, &title, &warns, &entries, &section, color, cat,
+                    ) {
+                        println!("{}", line);
+                    }
+                }
+                None => {
+                    for line in theme::render_table(&rows, &totals, &title, &warns, color, cat) {
+                        println!("{}", line);
+                    }
+                }
             }
         }
     }
@@ -381,17 +451,21 @@ fn print_breakdown(
 }
 
 /// Righe totali della tabella sotto il nodo `id` (figli cartella + file diretti
-/// + ricorsi): serve solo a dire a -top quante righe sono rimaste fuori.
-/// Con -f attivo i rami senza match non contano: non verrebbero stampati
-/// (stessa condizione di print_rows, perche' NOTE e griglia devono concordare).
-fn count_rows(id: u32, tree: &Tree, filter_active: bool) -> usize {
+/// + ricorsi, fino a `max_level`): serve solo a dire a -top quante righe sono
+/// rimaste fuori. Con -f attivo i rami senza match non contano: non verrebbero
+/// stampati (stessa condizione di print_rows, perche' NOTE e griglia devono
+/// concordare).
+fn count_rows(id: u32, tree: &Tree, filter_active: bool, level: usize, max_level: usize) -> usize {
     let mut tot = tree.leaves_count(id);
     for &i in tree.children(id) {
         let m = tree.metrics(i);
         if filter_active && m.files == 0 && m.bytes == 0 {
             continue; // figlia senza match: nascosta anche nel conteggio
         }
-        tot += 1 + count_rows(i, tree, filter_active);
+        tot += 1;
+        if level < max_level {
+            tot += count_rows(i, tree, filter_active, level + 1, max_level);
+        }
     }
     tot
 }
@@ -491,16 +565,21 @@ fn big_lines(tree: &Tree, n: usize) -> Vec<String> {
 /// look segue la stessa regola della griglia: terminale vero -> il box duf
 /// di theme.rs (la classifica vestita come il resto della famiglia);
 /// redirect/pipe -> il formato ASCII storico, byte per byte il contratto.
-fn print_big(tree: &Tree, n: usize, filter_disp: Option<&str>, look: &theme::Look, cat: &Catalog) {
-    let header = match filter_disp {
-        Some(f) => format!("{} {}", cat.t("cli.path"), cat.tf("cli.filtro", &[f])),
-        None => cat.t("cli.path").to_string(),
-    };
-    let warns = warning_lines(tree.warnings(), cat);
+fn print_big(tree: &Tree, n: usize, filter_disp: Option<&str>, look: &theme::Look, cat: &Catalog, warns: &[String]) {
+    // il titolo: cosa si guarda — e la lente, quando c'e', gli sta accanto,
+    // perche' cambia il senso dei numeri. Le colonne non si ridichiano:
+    // SIZE e' quella della griglia, il path si racconta da se'
+    let mut title = cat.tf(
+        if n == 1 { "cli.top_file" } else { "cli.top_files" },
+        &[&n.to_string()],
+    );
+    if let Some(f) = filter_disp {
+        title.push(' ');
+        title.push_str(&cat.tf("cli.filtro", &[f]));
+    }
     match look {
         theme::Look::Ascii => {
-            println!(" {:>10}  {}", cat.t("cli.dim"), header);
-            println!("{}", "-".repeat(79));
+            println!("{}", title_band(&title));
             for line in big_lines(tree, n) {
                 println!("{}", line);
             }
@@ -508,14 +587,7 @@ fn print_big(tree: &Tree, n: usize, filter_disp: Option<&str>, look: &theme::Loo
         }
         theme::Look::Duf { color } => {
             let entries = tree.top_files(n, None);
-            for line in theme::render_big_table(
-                &entries,
-                cat.t("cli.dim"),
-                &header,
-                &warns,
-                *color,
-                cat,
-            ) {
+            for line in theme::render_big_table(&entries, &title, &warns, *color, cat) {
                 println!("{}", line);
             }
         }
@@ -534,6 +606,8 @@ fn collect_rows(
     tree: &Tree,
     order: Order,
     guides: &[bool],
+    level: usize,
+    max_level: usize,
     budget: &mut usize,
     filter_active: bool,
     hidden: &mut usize,
@@ -565,7 +639,12 @@ fn collect_rows(
                 *budget -= 1;
                 let mut child_guides = guides.to_vec();
                 child_guides.push(idx + 1 != count); // questo ramo ha fratelli in coda
-                collect_rows(i, total, tree, order, &child_guides, budget, filter_active, hidden, out);
+                // max_level ferma la discesa: il quadro legge l'albero intero
+                // ma la griglia mostra i suoi livelli — il livello piu'
+                // profondo resta riga di totali ricorsivi, come -d N
+                if level < max_level {
+                    collect_rows(i, total, tree, order, &child_guides, level + 1, max_level, budget, filter_active, hidden, out);
+                }
             }
             Row::Leaf(s, name) => {
                 out.push(GridRow {
@@ -701,6 +780,12 @@ fn main() {
     let mut big_opt: Option<usize> = None;
     let mut filter: Option<Filter> = None;
     let mut json = false;
+    // la vista: il quadro (griglia + classifica) e' il default; -grid e
+    // -report tolgono ciascuno la loro meta'. -big e' il nome storico di
+    // -report — stesso comando, stessa uscita
+    let mut view = View::Full;
+    let mut grid_seen = false;
+    let mut files_seen = false;
     let mut i = 0usize;
     while i < args.len() {
         match args[i].as_str() {
@@ -776,17 +861,35 @@ fn main() {
                     }
                 }
             }
-            "-big" | "--big" => {
-                i += 1;
-                match args
-                    .get(i)
-                    .and_then(|s| s.parse::<usize>().ok())
-                    .filter(|&n| n >= 1)
-                {
-                    Some(n) => big_opt = Some(n),
-                    None => {
-                        eprintln!("{}", cat.t("cli.err_big"));
-                        std::process::exit(2);
+            "-grid" | "--grid" => {
+                if files_seen {
+                    eprintln!("{}", cat.t("cli.err_view"));
+                    std::process::exit(2);
+                }
+                grid_seen = true;
+                view = View::Grid;
+            }
+            "-report" | "--report" | "-big" | "--big" => {
+                if grid_seen {
+                    eprintln!("{}", cat.t("cli.err_view"));
+                    std::process::exit(2);
+                }
+                files_seen = true;
+                view = View::Files;
+                // N opzionale: di fabbrica 10, il numero di casa del report.
+                // Un numero non valido resta l'errore di sempre; un argomento
+                // non numerico non e' un N — e' il path che segue
+                if let Some(next) = args.get(i + 1) {
+                    match next.parse::<usize>() {
+                        Ok(n) if n >= 1 => {
+                            big_opt = Some(n);
+                            i += 1;
+                        }
+                        Ok(_) => {
+                            eprintln!("{}", cat.t("cli.err_big"));
+                            std::process::exit(2);
+                        }
+                        Err(_) => {}
                     }
                 }
             }
@@ -831,7 +934,7 @@ fn main() {
     // la risposta e' la fotografia JSON del report (json::report): le
     // stesse N righe con ranking e path interi, in un formato per le
     // macchine
-    if big_opt.is_some() {
+    if view == View::Files {
         if bench || loops > 1 {
             eprintln!("{}", cat.t("cli.err_big_bench"));
             std::process::exit(2);
@@ -901,7 +1004,8 @@ fn main() {
     // diventano la fotografia JSON del report (json::report: il ranking,
     // i path interi, i totali del ramo in testa) — la stessa che il TUI
     // stampa dalla sua finestra del report
-    if let Some(n) = big_opt {
+    if view == View::Files {
+        let n = big_opt.unwrap_or(10); // di fabbrica: i dieci di casa
         let filter_disp = filter.as_ref().map(|f| f.display().to_string());
         let lens = filter.clone();
         let tree = scan_live(&root, &ScanOptions { depth: usize::MAX, filter }, live, &cat);
@@ -922,7 +1026,8 @@ fn main() {
         // terminale vero -> anche la classifica veste il box duf;
         // redirect/pipe -> l'ASCII di sempre, il contratto non cambia
         let look = theme::Look::detect();
-        print_big(&tree, n, filter_disp.as_deref(), &look, &cat);
+        let warns = warning_lines(tree.warnings(), &cat);
+        print_big(&tree, n, filter_disp.as_deref(), &look, &cat, &warns);
         // le segnalazioni chiudono la lista dentro print_big, come i
         // warning chiudono la griglia: lo scan non sporca la risposta
         return;
@@ -963,14 +1068,23 @@ fn main() {
     }
 
     for k in 1..=loops {
-        let tree = scan_live(&root, &ScanOptions { depth, filter: filter.clone() }, live, &cat);
+        // il quadro scansiona l'albero intero una volta sola: la griglia
+        // legge i primi `depth` livelli, la classifica dei file legge tutto —
+        // un solo walk per entrambe le meta'. Griglia e classifica da sole
+        // (o il bench) scansionano come hanno sempre fatto
+        let scan_depth = if view == View::Full && loops == 1 && !bench {
+            usize::MAX
+        } else {
+            depth
+        };
+        let tree = scan_live(&root, &ScanOptions { depth: scan_depth, filter: filter.clone() }, live, &cat);
         let s = tree.stats();
         if loops == 1 && !bench {
-            // Con la griglia (depth > 0) la risposta e' la tabella stessa: la riga
-            // radice al 100% la apre e la riga TOTALE la chiude incolonnando i
-            // totali sotto le rispettive colonne (le stesse info del dettaglio
+            // Con la griglia (depth > 0) la risposta e' la tabella stessa: la
+            // fascia del titolo la apre e la riga TOTALE la chiude incolonnando
+            // i totali sotto le rispettive colonne (le stesse info del dettaglio
             // del TUI); le righe WARNING seguono la TOTALE. Con -f, che cambia
-            // il senso dei numeri, il filtro appare accanto alla radice.
+            // il senso dei numeri, il filtro appare nella fascia del titolo.
             let mut notes: Vec<String> = Vec::new();
             if depth > 0 {
                 let filter_disp = filter.as_ref().map(|f| f.display().to_string());
@@ -982,6 +1096,11 @@ fn main() {
                     filter.is_some(),
                     filter_disp.as_deref(),
                     &cat,
+                    // il quadro legge l'albero intero e mostra `depth` livelli;
+                    // la griglia da sola ha gia' l'albero limitato dallo scan
+                    if view == View::Full { depth } else { usize::MAX },
+                    // e il quadro porta con se' la classifica: un box, due parti
+                    if view == View::Full { Some(10) } else { None },
                 );
                 if let Some(n) = top_note {
                     notes.push(n);

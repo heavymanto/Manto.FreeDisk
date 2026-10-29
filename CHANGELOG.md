@@ -4,6 +4,23 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
 ## [Unreleased]
 
+### Changed
+- **The picture, in one box**: `mfd-cli` now answers with the whole
+  picture — the folder grid above and the 10 biggest files below, one
+  box, two sections. The root row is gone (its 100% said nothing the
+  TOTAL doesn't already say): the scanned path lives in the title band
+  on top (the ncdu convention), and the files section declares itself
+  with a yellow header — the SIZE column re-labeled, the section title
+  centered, uppercase. `-grid` keeps just the grid (the lean contract
+  of pipes and logs), `-report N` just the ranking (`-big` stays as its
+  historical alias, N now optional and 10 by default); `-grid` and
+  `-report` together refuse with a clear error. The warnings close the
+  box, after the data: notes, contextual to both parts, secondary to
+  both. The classification reads the whole tree in the same single walk
+  the grid reads, and `-top` no longer counts the root among its rows.
+  New keys in all seven languages (`cli.err_view`, `cli.top_file`,
+  `cli.top_files`) — the parity gate is green.
+
 ### Fixed
 - **The three Linux-failing tests now run everywhere**: they compared paths
   written with the Windows backslash (`m\eq.bin`) — on Linux the backslash

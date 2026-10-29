@@ -289,6 +289,12 @@ fn left(s: &str, w: usize) -> String {
     format!("{:<w$}", s, w = w)
 }
 
+fn center(s: &str, w: usize) -> String {
+    let pad = w.saturating_sub(s.chars().count());
+    let l = pad / 2;
+    format!("{}{}{}", " ".repeat(l), s, " ".repeat(pad - l))
+}
+
 /// La griglia vestita da duf: bordo arrotondato con gli incroci delle
 /// colonne, intestazioni, righe e TOTALE di chiusura — incolonnata come le
 /// righe di dati, col conto delle voci in colonna NOME: la lettura verticale
@@ -301,13 +307,15 @@ fn left(s: &str, w: usize) -> String {
 /// nomi non si tranciano: come nella griglia ASCII il box e' largo quanto
 /// serve — se il terminale e' piu' stretto e' lui a mandare a capo, il dato
 /// resta intero.
-pub fn render_table(
+fn grid_open(
     rows: &[GridRow],
     t: &Totals,
+    title: &str,
     warnings: &[String],
+    files: Option<(&[(i64, PathBuf)], &str)>,
     color: bool,
     cat: &Catalog,
-) -> Vec<String> {
+) -> (Vec<String>, [usize; 6], usize, usize) {
     let total = t.bytes;
     let w_size = rows.iter().map(|r| fmt_bytes(r.bytes).len()).chain(once(10)).max().unwrap();
     let w_pct = 4; // "100%"
@@ -342,10 +350,40 @@ pub fn render_table(
         .chain(once(label.chars().count()))
         .max()
         .unwrap();
+    // il titolo attraversa tutto il box: la cella fusa piu' larga, il
+    // percorso della scansione sopra le intestazioni. Se e' piu' lungo
+    // della somma delle colonne e' il box ad allargarsi — l'extra sulla
+    // colonna NOME, come i nomi e i warning: nemmeno il titolo si trancia
+    let w_title = w_size + w_pct + w_bar + w_files + w_dirs + w_name + 15;
+    if title.chars().count() > w_title {
+        w_name += title.chars().count() - w_title;
+    }
+    // il quadro aggiunge la classifica: le sue righe vivono nel fuso delle
+    // colonne dopo SIZE — il path largo quanto quella zona di sopra, e
+    // nemmeno lui si trancia: se serve piu' spazio e' il box ad allargarsi
+    // (sulla colonna NOME, la regola di sempre). Li' viaggia anche il
+    // titolo della sezione, nel divisore. Questo vincolo viene PRIMA di
+    // quello dei warning: la sezione warning vive nello stesso fuso del
+    // divisore, e la sua larghezza va calcolata sull'albero gia' allargato
+    // dalla classifica — cosi' le pareti combaciano, dritte dall'alto in basso
+    if let Some((entries, section)) = files {
+        let base = w_pct + w_bar + w_files + w_dirs + w_name + 12;
+        let need = entries
+            .iter()
+            .map(|(_, p)| p.display().to_string().chars().count())
+            .chain(once(section.chars().count() + 4))
+            .max()
+            .unwrap_or(0);
+        if need > base {
+            w_name += need - base;
+        }
+    }
     // la cella fusa dei warning assorbe tutte le colonne dopo la prima
     // (spazi e incroci compresi); se una segnalazione e' piu' lunga, e' il
     // box ad allargarsi — l'extra va sulla colonna NOME, che di coda ne ha:
-    // nemmeno le segnalazioni si tranciano, come i nomi
+    // nemmeno le segnalazioni si tranciano, come i nomi. Calcolata dopo la
+    // classifica perche' warning e divisore condividono il fuso: stessa
+    // larghezza, parete dritta anche qui
     let w_warn = if warnings.is_empty() {
         0
     } else {
@@ -359,10 +397,18 @@ pub fn render_table(
         }
     };
     let widths = [w_size, w_pct, w_bar, w_files, w_dirs, w_name];
+    // la larghezza della cella fusa del titolo, ricalcolata dopo gli
+    // allargamenti: il bordo alto e' liscio perche' sopra le colonne c'e'
+    // il titolo, non i dati
+    let fused = w_size + w_pct + w_bar + w_files + w_dirs + w_name + 15;
 
-    let mut out = Vec::with_capacity(rows.len() + 6);
-    // il bordo alto porta gia' gli incroci delle colonne, come la cornice di duf
-    out.push(sep("╭", "┬", "╮", &widths, color));
+    let mut out = Vec::with_capacity(rows.len() + 8);
+    out.push(sep("╭", "─", "╮", &[fused], color));
+    // la fascia del titolo: il percorso in blu, come i nomi — la riga che
+    // era della radice, promossa a intestazione del box
+    out.push(row_line(&[wrap(color, BLUE, &left(title, fused))], color));
+    // da qui si aprono le colonne: la forma e' quella di sempre
+    out.push(sep("├", "┬", "┤", &widths, color));
     // le intestazioni (go-pretty le mette in maiuscolo: le nostre gia' lo sono)
     out.push(row_line(&[
         wrap(color, BORDER, &right(cat.t("cli.dim"), w_size)),
@@ -397,6 +443,14 @@ pub fn render_table(
     // colonna NOME l'etichetta col conto delle voci, il totale dei nomi
     // elencati. Tutta in grasso, tenuta in colonna dagli stessi incroci che
     // separano l'intestazione dalle righe
+    // la TOTALE chiude i dati come l'ultima riga di una tabella vera: ogni
+    // colonna col suo cumulativo — la dimensione sotto DIMENSIONE, i file
+    // sotto FILE, le cartelle sotto CARTELLE — % e barra vuote: la somma
+    // non e' una quota di se' stessa (le righe sopra, con la divisione
+    // intera, chiudono a quasi tutto: i resti non si fingono). E in colonna
+    // NOME l'etichetta col conto delle voci, il totale dei nomi elencati.
+    // Tutta in grasso, tenuta in colonna dagli stessi incroci che separano
+    // l'intestazione dalle righe
     out.push(sep("├", "┼", "┤", &widths, color));
     out.push(row_line(&[
         wrap(color, BOLD, &right(&fmt_bytes(t.bytes), w_size)),
@@ -412,20 +466,107 @@ pub fn render_table(
     // riga (gialla: il colore d'avviso della famiglia), le seguenti la
     // lasciano vuota — i trattini restano in colonna; il fondo segue la
     // sezione fusa, incrocio uno anche lui
+    // il fuso delle colonne dopo SIZE: dove vivono i warning e dove la
+    // classifica del quadro prende casa
+    let w_fused = w_pct + w_bar + w_files + w_dirs + w_name + 12;
+    (out, widths, w_warn, w_fused)
+}
+
+/// La sezione dei warning: le segnalazioni rese come righe della tabella —
+/// l'etichetta gialla incolonnata su SIZE, il testo fuso accanto. Apre col
+/// suo incrocio e non chiude: sta a chi chiama dirle dove — la griglia da
+/// sola le vuole sotto la TOTALE, il quadro le vuole in fondo, dopo la
+/// classifica: note e segnalazioni, contestuali a entrambe le parti,
+/// secondarie a entrambe
+fn warn_rows(warnings: &[String], w_size: usize, w_fused: usize, color: bool, cat: &Catalog) -> Vec<String> {
+    let mut out = Vec::with_capacity(warnings.len() + 1);
+    out.push(sep("├", "┼", "┤", &[w_size, w_fused], color));
+    for (i, w) in warnings.iter().enumerate() {
+        let etichetta = if i == 0 {
+            right(cat.t("cli.warn"), w_size)
+        } else {
+            left("", w_size)
+        };
+        out.push(row_line(&[wrap(color, YELLOW, &etichetta), left(w, w_fused)], color));
+    }
+    out
+}
+
+/// La griglia vestita da duf, tutta sua: il corpo di grid_open chiuso dal
+/// fondo — incroci sulle colonne, o sulla sezione fusa dei warning.
+pub fn render_table(
+    rows: &[GridRow],
+    t: &Totals,
+    title: &str,
+    warnings: &[String],
+    color: bool,
+    cat: &Catalog,
+) -> Vec<String> {
+    let (mut out, widths, w_warn, _) = grid_open(rows, t, title, warnings, None, color, cat);
+    let w_size = widths[0];
     if warnings.is_empty() {
         out.push(sep("╰", "┴", "╯", &widths, color));
     } else {
-        out.push(sep("├", "┼", "┤", &[w_size, w_warn], color));
-        for (i, w) in warnings.iter().enumerate() {
-            let etichetta = if i == 0 {
-                right(cat.t("cli.warn"), w_size)
-            } else {
-                left("", w_size)
-            };
-            out.push(row_line(&[wrap(color, YELLOW, &etichetta), left(w, w_warn)], color));
-        }
+        // la griglia da sola: le segnalazioni chiudono sotto la TOTALE,
+        // la forma di sempre
+        out.extend(warn_rows(warnings, w_size, w_warn, color, cat));
         out.push(sep("╰", "┴", "╯", &[w_size, w_warn], color));
     }
+    out
+}
+
+/// Il quadro vestito da duf: un box solo in due parti. Sopra la griglia —
+/// fascia del percorso, intestazioni, righe, TOTALE; sotto la classifica
+/// dei file piu' grandi: la colonna SIZE e' quella di sopra, il path vive
+/// nel fuso delle altre colonne. In mezzo il divisore di sezione: la riga
+/// che scioglie le colonne e porta il titolo della classifica fra i
+/// trattini. In fondo, dopo i dati, le segnalazioni: note contestuali a
+/// entrambe le parti, secondarie a entrambe. Un solo oggetto, due risposte.
+pub fn render_report(
+    rows: &[GridRow],
+    t: &Totals,
+    title: &str,
+    warnings: &[String],
+    entries: &[(i64, PathBuf)],
+    section: &str,
+    color: bool,
+    cat: &Catalog,
+) -> Vec<String> {
+    let (mut out, widths, _, w_fused) =
+        grid_open(rows, t, title, warnings, Some((entries, section)), color, cat);
+    let w_size = widths[0];
+    // il divisore di sezione: la colonna DIMENSIONE resta colonna e si
+    // ri-dichiara — la sezione inizia dopo la TOTALE, e la sua colonna
+    // SIZE merita l'etichetta di nuovo, gialla come le intestazioni. Nel
+    // fuso il titolo della sezione: centrato, maiuscolo, giallo anche lui.
+    // Una riga sopra e una sotto; poi le righe della classifica
+    out.push(sep("├", "┼", "┤", &[w_size, w_fused], color));
+    out.push(row_line(
+        &[
+            wrap(color, BORDER, &right(cat.t("cli.dim"), w_size)),
+            wrap(color, BORDER, &center(section, w_fused)),
+        ],
+        color,
+    ));
+    out.push(sep("├", "┼", "┤", &[w_size, w_fused], color));
+    // le righe della classifica: SIZE in colonna con la griglia, il path
+    // nel fuso — in blu, come tutti i path della famiglia
+    for (s, p) in entries {
+        out.push(row_line(
+            &[
+                right(&fmt_bytes(*s), w_size),
+                wrap(color, BLUE, &left(&p.display().to_string(), w_fused)),
+            ],
+            color,
+        ));
+    }
+    // le segnalazioni chiudono il quadro, dopo i dati: note contestuali a
+    // entrambe le parti, secondarie a entrambe — prima la mappa e i
+    // colpevoli, poi cio' che lo scan non ha potuto leggere
+    if !warnings.is_empty() {
+        out.extend(warn_rows(warnings, w_size, w_fused, color, cat));
+    }
+    out.push(sep("╰", "┴", "╯", &[w_size, w_fused], color));
     out
 }
 
@@ -439,10 +580,20 @@ pub fn render_table(
 /// il box e' largo quanto serve — e se una segnalazione e' piu' lunga e' il
 /// box ad allargarsi, con l'extra sulla colonna PATH: la stessa regola che
 /// i nomi della griglia seguono da sempre.
+/// La classifica di -big vestita da duf: lo stesso box arrotondato della
+/// griglia, le stesse regole — bordi e intestazioni gialli, i full path in
+/// blu come i nomi, le segnalazioni che chiudono in una sezione fusa col
+/// fondo a incrocio uno. Due colonne sole — DIMENSIONE e PATH — senza
+/// intestazioni ridichiate: la fascia del titolo dice cosa sono, e la
+/// lente, quando c'e', viaggia nel titolo. Niente TOTALE: la
+/// lista e' la risposta, e i file esclusi dal taglio non sono totali persi
+/// (docs/FAQ.md, voce 11). Anche qui niente si trancia: i path sono il dato,
+/// il box e' largo quanto serve — e se una segnalazione e' piu' lunga e' il
+/// box ad allargarsi, con l'extra sulla colonna PATH: la stessa regola che
+/// i nomi della griglia seguono da sempre.
 pub fn render_big_table(
     entries: &[(i64, PathBuf)],
-    dim_header: &str,
-    path_header: &str,
+    title: &str,
     warnings: &[String],
     color: bool,
     cat: &Catalog,
@@ -451,27 +602,29 @@ pub fn render_big_table(
         .iter()
         .map(|(s, _)| fmt_bytes(*s).len())
         .chain(once(10))
-        .chain(once(dim_header.chars().count()))
         .max()
         .unwrap();
-    let w_path = entries
+    let mut w_path = entries
         .iter()
         .map(|(_, p)| p.display().to_string().chars().count())
-        .chain(once(path_header.chars().count()))
         .chain(warnings.iter().map(|w| w.chars().count()))
         .max()
         .unwrap();
+    // il titolo attraversa il box: la cella fusa sopra le righe, la stessa
+    // fascia della griglia — la classifica dichiara cosa si guarda
+    let w_title = w_size + w_path + 3;
+    if title.chars().count() > w_title {
+        w_path += title.chars().count() - w_title;
+    }
     let widths = [w_size, w_path];
+    let fused = w_size + w_path + 3;
     let mut out = Vec::with_capacity(entries.len() + 6);
-    out.push(sep("╭", "┬", "╮", &widths, color));
-    out.push(row_line(
-        &[
-            wrap(color, BORDER, &right(dim_header, w_size)),
-            wrap(color, BORDER, &left(path_header, w_path)),
-        ],
-        color,
-    ));
-    out.push(sep("├", "┼", "┤", &widths, color));
+    out.push(sep("╭", "─", "╮", &[fused], color));
+    // la fascia: il titolo della sezione, centrato e giallo come le
+    // intestazioni — la stessa riga che nel quadro divide griglia e
+    // classifica, qui e' la testa del box
+    out.push(row_line(&[wrap(color, BORDER, &center(title, fused))], color));
+    out.push(sep("├", "┬", "┤", &widths, color));
     for (s, p) in entries {
         out.push(row_line(
             &[
@@ -706,6 +859,7 @@ pub mod loader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::title_band;
 
     /// Il vocabolario dei test: l'italiano del crate (come main.rs).
     fn cat() -> mfd_core::lang::Catalog {
@@ -717,12 +871,12 @@ mod tests {
     }
 
     #[test]
-    fn il_box_duf_di_big_ha_bordo_intestazione_dati_e_fondo() {
+    fn il_box_duf_di_big_ha_bordo_fascia_dati_e_fondo() {
         let entries = vec![
             (2000, PathBuf::from("C:\\demo\\alpha\\data.dat")),
             (1000, PathBuf::from("C:\\demo\\alpha\\lib.dll")),
         ];
-        let lines = render_big_table(&entries, "SIZE", "PATH", &[], false, &cat());
+        let lines = render_big_table(&entries, "LA CLASSIFICA", &[], false, &cat());
         // bordo alto e basso del box, come la griglia
         assert!(lines[0].starts_with('╭') && lines[0].ends_with('╮'));
         let bottom = lines.last().unwrap();
@@ -730,8 +884,8 @@ mod tests {
         // tutte le righe sono lunghe uguali: il box non si rompe
         let w = lines[0].chars().count();
         assert!(lines.iter().all(|l| l.chars().count() == w));
-        // intestazione, separatore, le due righe di dati, fondo
-        assert!(lines[1].contains("SIZE") && lines[1].contains("PATH"));
+        // la fascia del titolo, il separatore, le due righe di dati, fondo
+        assert!(lines[1].contains("LA CLASSIFICA"));
         assert!(lines[3].contains("data.dat") && lines[3].contains("2,0 KB"));
         assert!(lines[4].contains("lib.dll"));
         assert_eq!(lines.len(), 6);
@@ -741,9 +895,9 @@ mod tests {
     fn il_box_duf_di_big_colora_i_path_e_chiude_con_i_warning() {
         let entries = vec![(2000, PathBuf::from("a\\data.dat"))];
         let warns = vec!["- apertura cartella C:\\x: Accesso negato.".to_string()];
-        let lines = render_big_table(&entries, "SIZE", "PATH", &warns, true, &cat());
+        let lines = render_big_table(&entries, "LA CLASSIFICA", &warns, true, &cat());
         // il path e' blu, come i nomi della griglia (la riga dati e' la
-        // quarta: bordo, intestazione, separatore, dati)
+        // quarta: bordo, fascia, separatore, dati)
         assert!(lines[3].contains(BLUE));
         // i warning chiudono il box: etichetta in colonna SIZE, fondo a
         // incrocio uno come la sezione fusa della griglia — coi colori il
@@ -752,7 +906,7 @@ mod tests {
         let bottom = lines.last().unwrap();
         assert!(bottom.contains('╰') && bottom.matches('┴').count() == 1);
         // senza colori non c'e' nessun codice ANSI in giro
-        let plain = render_big_table(&entries, "SIZE", "PATH", &warns, false, &cat());
+        let plain = render_big_table(&entries, "LA CLASSIFICA", &warns, false, &cat());
         assert!(plain.iter().all(|l| !l.contains('\x1b')));
     }
 
@@ -760,7 +914,7 @@ mod tests {
     fn il_box_duf_e_chiuso_con_titolo_intestazione_e_totale() {
         let rows = vec![row(100, "radice"), row(60, "|-- a\\"), row(40, "`-- b")];
         let t = Totals { bytes: 100, files: 1, dirs: 0, voci: 3 };
-        let lines = render_table(&rows, &t, &[], false, &cat());
+        let lines = render_table(&rows, &t, "C:\\demo\\radice", &[], false, &cat());
         // bordo alto e basso del box
         assert!(lines[0].starts_with('╭') && lines[0].ends_with('╮'));
         let bottom = lines.last().unwrap();
@@ -768,13 +922,17 @@ mod tests {
         // tutte le righe sono lunghe uguali: il box non si rompe
         let w = lines[0].chars().count();
         assert!(lines.iter().all(|l| l.chars().count() == w), "righe di larghezza diversa");
+        // la fascia del percorso sopra le intestazioni
+        assert!(lines[1].contains("C:\\demo\\radice"));
         // l'intestazione nomina le colonne
-        assert!(lines[1].contains("DIMENSIONE"));
-        assert!(lines[1].contains("CARTELLE"));
-        assert!(lines[1].contains("NOME"));
-        // gli incroci dei separatori
-        assert!(lines[0].contains('┬'));
-        assert!(lines[2].contains('┼'));
+        assert!(lines[3].contains("DIMENSIONE"));
+        assert!(lines[3].contains("CARTELLE"));
+        assert!(lines[3].contains("NOME"));
+        // gli incroci: il bordo alto e' liscio (sopra c'e' il titolo, non
+        // i dati), le colonne si aprono sotto la fascia
+        assert!(!lines[0].contains('┬'));
+        assert!(lines[2].contains('┬'));
+        assert!(lines[4].contains('┼'));
         // la TOTALE e' l'ultima riga del box: incolonnata come le righe di
         // dati (i divisori │ ci sono tutti) e col conto delle voci in colonna
         // NOME; il separatore sopra le tiene, come quello dell'intestazione
@@ -787,7 +945,7 @@ mod tests {
         // e le colonne coincidono con quelle delle righe di dati: la
         // dimensione e l'etichetta (nella colonna dei nomi) cadono sugli
         // stessi caratteri della prima riga
-        let data = &lines[3];
+        let data = &lines[5];
         assert_eq!(data.find("100 B"), tot.find("100 B"));
         assert_eq!(data.find("radice"), tot.find("TOTALE"));
     }
@@ -803,20 +961,20 @@ mod tests {
         let cat = mfd_core::lang::Catalog::english();
         let rows = vec![row(100, "root"), row(60, "|-- a")];
         let t = Totals { bytes: 100, files: 7, dirs: 0, voci: 2 };
-        let lines = render_table(&rows, &t, &[], false, &cat);
+        let lines = render_table(&rows, &t, "root folder", &[], false, &cat);
         // il box resta intero: tutte le righe della stessa larghezza, con
         // l'intestazione inglese dentro la sua cella
         let w = lines[0].chars().count();
         assert!(lines.iter().all(|l| l.chars().count() == w), "righe di larghezza diversa");
-        assert!(lines[1].contains("FILES"));
-        assert!(lines[1].contains("FOLDERS"));
+        assert!(lines[3].contains("FILES"));
+        assert!(lines[3].contains("FOLDERS"));
     }
 
     #[test]
     fn le_soglie_di_duf_colorano_barra_e_percentuale() {
         let rows = vec![row(100, "r"), row(95, "rosso"), row(60, "giallo"), row(10, "verde")];
         let t = Totals { bytes: 100, files: 4, dirs: 0, voci: 4 };
-        let lines = render_table(&rows, &t, &[], true, &cat());
+        let lines = render_table(&rows, &t, "C:\\demo", &[], true, &cat());
         let find = |n: &str| lines.iter().find(|l| l.contains(n)).unwrap().clone();
         // 95% e 100% rosse, 60% gialla, 10% verde: le soglie 0.5/0.9 di duf
         assert!(find("rosso").contains(RED));
@@ -832,7 +990,7 @@ mod tests {
         assert!(find("DIMENSIONE").contains(BORDER));
         assert!(find("voci").contains(BOLD));
         // senza colori non c'e' nessun codice ANSI in giro
-        let plain = render_table(&rows, &t, &[], false, &cat());
+        let plain = render_table(&rows, &t, "radice", &[], false, &cat());
         assert!(plain.iter().all(|l| !l.contains('\x1b')));
     }
 
@@ -840,11 +998,11 @@ mod tests {
     fn i_nomi_lunghi_non_si_tranciano_il_box_si_allarga() {
         let rows = vec![row(100, "nome-lunghissimo-che-non-ci-sta-proprio")];
         let t = Totals { bytes: 100, files: 1, dirs: 0, voci: 1 };
-        let lines = render_table(&rows, &t, &[], false, &cat());
+        let lines = render_table(&rows, &t, "radice", &[], false, &cat());
         // il nome resta intero: niente "..." da taglio — il nome e' il dato,
         // il box si allarga quanto serve, come la griglia ASCII
-        assert!(lines[3].contains("nome-lunghissimo-che-non-ci-sta-proprio"));
-        assert!(!lines[3].contains("..."));
+        assert!(lines[5].contains("nome-lunghissimo-che-non-ci-sta-proprio"));
+        assert!(!lines[5].contains("..."));
         // e resta un box: tutte le righe della stessa larghezza
         let w = lines[0].chars().count();
         assert!(lines.iter().all(|l| l.chars().count() == w));
@@ -860,32 +1018,32 @@ mod tests {
             "- apertura cartella C:\\x: Accesso negato.".to_string(),
             "- enumerazione in C:\\y: Accesso negato.".to_string(),
         ];
-        let lines = render_table(&rows, &t, &warns, false, &cat());
-        // top, intestazione, separatore, dato, separatore, TOTALE,
-        // separatore, due righe di warning, fondo
-        assert_eq!(lines.len(), 10);
+        let lines = render_table(&rows, &t, "radice", &warns, false, &cat());
+        // top, fascia, colonne, intestazione, separatore, dato, separatore,
+        // TOTALE, separatore, due righe di warning, fondo
+        assert_eq!(lines.len(), 12);
         // il box non si rompe: tutte le righe della stessa larghezza
         let w = lines[0].chars().count();
         assert!(lines.iter().all(|l| l.chars().count() == w), "righe di larghezza diversa");
         // la sezione warning ha incrocio uno: dove finisce la prima cella —
         // le altre colonne si fondono in una
-        let sep_w = &lines[6];
+        let sep_w = &lines[8];
         assert!(sep_w.starts_with('├') && sep_w.ends_with('┤'));
         assert_eq!(sep_w.matches('┼').count(), 1);
         // la prima riga porta l'etichetta in colonna DIMENSIONE e il testo
         // accanto: due celle, tre separatori — e la prima cella finisce
         // dove finisce nelle righe di dati
-        let warn1 = &lines[7];
+        let warn1 = &lines[9];
         assert!(warn1.contains("WARNING"));
         assert!(warn1.contains("- apertura cartella"));
         assert_eq!(warn1.matches('│').count(), 3);
         assert_eq!(
             warn1.match_indices('│').nth(1),
-            lines[3].match_indices('│').nth(1)
+            lines[5].match_indices('│').nth(1)
         );
         // le successive lasciano la prima cella vuota: i trattini restano in
         // colonna, la lettura resta ordinata
-        let warn2 = &lines[8];
+        let warn2 = &lines[10];
         assert!(warn2.contains("- enumerazione"));
         assert!(warn2.starts_with(&format!("│{}│", " ".repeat(12))));
         assert_eq!(warn1.find("- "), warn2.find("- "));
@@ -895,27 +1053,75 @@ mod tests {
         assert_eq!(bottom.matches('┴').count(), 1);
         // coi colori l'etichetta e' gialla — il colore d'avviso — e il
         // testo resta della tinta del terminale
-        let colored = render_table(&rows, &t, &warns, true, &cat());
-        assert!(colored[7].contains(&format!("{}   WARNING{}", YELLOW, RESET)));
+        let colored = render_table(&rows, &t, "radice", &warns, true, &cat());
+        assert!(colored[9].contains(&format!("{}   WARNING{}", YELLOW, RESET)));
     }
 
     #[test]
     fn i_warning_lunghi_allargano_il_box_senza_troncare() {
         let rows = vec![row(100, "radice")];
         let t = Totals { bytes: 100, files: 1, dirs: 0, voci: 1 };
-        let corto = render_table(&rows, &t, &["- corto: Accesso negato.".to_string()], false, &cat());
+        let corto = render_table(&rows, &t, "radice", &["- corto: Accesso negato.".to_string()], false, &cat());
         let testo = format!(
             "- apertura cartella C:\\{}: Accesso negato.",
             "molto-lungo-".repeat(20)
         );
-        let lungo = render_table(&rows, &t, &[testo.clone()], false, &cat());
+        let lungo = render_table(&rows, &t, "radice", &[testo.clone()], false, &cat());
         // la segnalazione resta intera: e' il box ad allargarsi (l'extra va
         // sulla colonna NOME), e le righe restano tutte della stessa
         // larghezza — piu' larga di prima
-        assert!(lungo[7].contains(&testo));
+        assert!(lungo[9].contains(&testo));
         let w = lungo[0].chars().count();
         assert!(lungo.iter().all(|l| l.chars().count() == w));
         assert!(w > corto[0].chars().count());
+    }
+
+    #[test]
+    fn la_fascia_della_griglia_ascii_e_il_trattino_di_ncdu() {
+        // la fascia del titolo: il percorso fra i trattini, riempita a 79
+        // — la convenzione di ncdu, il posto dove la radice vive adesso
+        // che riga non e' piu'
+        let corta = title_band("C:\\demo");
+        assert_eq!(corta.chars().count(), 79);
+        assert!(corta.starts_with("--- C:\\demo ---"));
+        assert!(corta.ends_with('-'));
+        // lunga: niente riempimento, la fascia resta dichiarata
+        let lunga = title_band(&"x".repeat(100));
+        assert_eq!(lunga, format!("--- {} ---", "x".repeat(100)));
+    }
+
+    #[test]
+    fn il_quadro_e_un_box_solo_in_due_parti() {
+        // il quadro: la griglia sopra e la classifica sotto, un box solo.
+        // La sezione si dichiara con la sua intestazione — la colonna
+        // DIMENSIONE che riparte e il titolo centrato nel fuso — e la SIZE
+        // della classifica resta in colonna con la griglia di sopra
+        let rows = vec![row(100, "|-- a"), row(60, "`-- b")];
+        let t = Totals { bytes: 100, files: 2, dirs: 0, voci: 2 };
+        let entries = vec![(100, PathBuf::from("C:\\demo\\big.dat"))];
+        let lines = render_report(
+            &rows, &t, "C:\\demo", &[], &entries, "I 2 FILE PIU' GRANDI", false, &cat(),
+        );
+        // un box solo: bordo liscio in alto, fondo unico, righe tutte uguali
+        assert!(lines[0].starts_with('╭') && !lines[0].contains('┬'));
+        assert!(lines.last().unwrap().starts_with('╰'));
+        let w = lines[0].chars().count();
+        assert!(lines.iter().all(|l| l.chars().count() == w), "righe di larghezza diversa");
+        // bordo, fascia, colonne, intestazione, separatore, due dati,
+        // separatore, TOTALE, separatore, intestazione di sezione,
+        // separatore, la riga della classifica, fondo
+        assert_eq!(lines.len(), 14);
+        assert!(lines[8].contains("TOTALE: 2 voci"));
+        // l'intestazione della sezione: DIMENSIONE a sinistra, il titolo
+        // al centro nel fuso
+        let sez = &lines[10];
+        assert!(sez.contains("DIMENSIONE"));
+        assert!(sez.contains("I 2 FILE PIU' GRANDI"));
+        assert_eq!(sez.matches('│').count(), 3);
+        // la riga della classifica: SIZE in colonna con la griglia
+        let file = &lines[12];
+        assert!(file.contains("big.dat"));
+        assert_eq!(lines[5].find("100 B"), file.find("100 B"));
     }
 
     // -- il loader (theme::loader) --
