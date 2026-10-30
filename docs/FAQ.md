@@ -589,17 +589,16 @@ the semantics below, the looks as they really are.
   does not close the window — the error stays in sight until you fix it.
 
   ![The filter prompt (Shift+F / F7)](docs/img/tui-filter.png)
-- **The big report**: `Shift+R` (or F9) opens the window with the biggest files
-  of the folder you are in, subtree included: the report follows the
-  navigation — pinned to the whole scan it would always be the same answer.
-  It is `-big` (entry 11) with a moving root: ranking, % and bar over the
-  folder total. The top is changed right there: digits rewrite it on the
-  fly (2, 25, 100...), `+` and `-` move it by ten. The biggest files are
-  scattered on the branches at every depth: this is where they sit
-  together. The report goes through the lens too: with a filter on, only
-  matching files count. Arrows scroll, ESC or `Shift+R` closes.
-
-  ![mfd-tui: the report window](docs/img/tui-report.png)
+- **The ranking at the bottom**: the biggest files of the branch under the
+  cursor, always visible — it follows the selection as you move. Select
+  the root row `.` (the top one, the current folder) and it is the whole
+  folder; select a child and it is that branch. It is `-big` (entry 11)
+  with a moving root: ranking, % and bar over the branch total. **Digits
+  rewrite the top on the fly** (2, 25, 100...), `F9` removes the panel
+  when you need the whole screen. The ranking goes through the lens too:
+  with a filter on, only matching files count. `TAB` brings a reading
+  cursor there: the arrows walk it, and the status line says the full
+  path of the pointed row.
 - **Shift+G** toggles the bar, **Shift+W** opens the warnings window (which declares
   by itself what they are: the entries the scan could not read, whose
   content is not in the totals), **Shift+T** (or F3) chooses the theme, **F1**
@@ -682,18 +681,15 @@ are the biggest .log files, and the header declares it (`PATH (filter:
 third one asked for was not there to be found)
 
 With `-json` the answer changes shape: the JSON picture of the report —
-the same one the TUI photographs from its report window (entry 12) — the
-ranking and the full paths in a format machines read, the totals of the
-branch in the header. Not combinable with `-d`, `-o`, `-top`, `MFD_BENCH`
+the ranking and the full paths in a format machines read, the totals of
+the branch in the header. Not combinable with `-d`, `-o`, `-top`, `MFD_BENCH`
 and loops: they are options about shape, and `-big` already has its own
 (entry 7 shows what the refusal looks like).
 
-In the TUI the same answer is one key away: **`Shift+R` / F9** opens the report
-of the biggest files of the folder you are in — the same row as `-big`
-(size and full path) plus the ranking and the grid's % and bar, the top is
-changed by digits in the window, and it too goes through the lens of the
-active filter (entry 10). And **`Shift+P` / F11 from inside the window
-photographs it** (entry 12).
+In the TUI the same answer sits at the bottom of the screen: the
+**ranking panel** (F9) — the same rows as `-big` (size and full path)
+plus the grid's % and bar, the top changed by digits, and it too goes
+through the lens of the active filter (entry 10).
 
 ## 12. Can the TUI take the JSON picture, for reporting?
 
@@ -705,10 +701,8 @@ is the same serializer, promoted from the CLI into the shared engine
 
 ![mfd-tui: the print from the main screen](docs/img/tui-print-home.png)
 
-![mfd-tui: the print from the report window](docs/img/tui-print-report.png)
-
-- **What it photographs**: the current folder, root included — like the
-  `Shift+R` / F9 report it follows the drill-down: go into a subfolder and
+- **What it photographs**: the current folder, root included — it follows
+  the drill-down: go into a subfolder and
   Shift+P photographs that, not the whole scan. And it photographs the
   screen **as you see it, both panes**: the `tree` section is the left
   one — the branches you opened with `Shift+X` / `Shift+A` open in the picture too,
@@ -726,19 +720,10 @@ is the same serializer, promoted from the CLI into the shared engine
   diff only if the filesystem changed. The `root` field always says
   which folder was photographed; the `totals` are the recursive ones of
   the branch (through the lens) and the `warnings` only those of the
-  branch (the same rule as the "N warnings in the branch" count of the
-  report).
-- **From the report window**: with `Shift+R` / F9 open, Shift+P photographs
-  **that** — the top you asked in the window (digits, `+` and `-`) and
-  the big files with their ranking and absolute paths, exactly what the
-  window shows (no `tree` section there: the framing follows the
-  window). The file family changes with it, because the name says what
-  is inside: `mfd-report-<name>.json` instead of
-  `mfd-stampa-<name>.json`. The window stays open: printing does not
-  close what you are reading.
+  branch.
 - **Where it lands**: the folder where you launched `mfd-tui`, not the
-  scanned one (mfd measures, it does not mutate) — `mfd-stampa-<name>.json`
-  for the view, `mfd-report-<name>.json` for the report. If the name
+  scanned one (mfd measures, it does not mutate) — `mfd-stampa-<name>.json`.
+  If the name
   already exists, the next print becomes `mfd-stampa-<name>-2.json`, then
   -3: no silent overwrites, two pictures are worth a diff. The flash on
   the status line says the full path.
@@ -805,31 +790,8 @@ the `tree` section keeps closed (`mfd-stampa-demo-tui.json`):
 }
 ```
 
-And with the report window open (top 10 out of the factory, seven files
-answer — `mfd-report-demo-tui.json`):
-
-```json
-{
-  "mfd": "0.2.1",
-  "root": "C:\\Users\\Public\\mfd-captures\\demo-tui",
-  "filter": null,
-  "depth": 4294967295,
-  "totals": {"bytes": 3530, "files": 7, "dirs": 5, "warnings": 0, "elapsed_ms": 3.7},
-  "warnings": [],
-  "report": {
-    "top": 10,
-    "files": [
-      {"rank": 1, "bytes": 2000, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\alpha\\data.dat"},
-      {"rank": 2, "bytes": 1000, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\alpha\\lib.dll"},
-      {"rank": 3, "bytes": 300, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\gamma\\x\\y.dll"},
-      {"rank": 4, "bytes": 100, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\readme.txt"},
-      {"rank": 5, "bytes": 70, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\beta\\sub\\altro.log"},
-      {"rank": 6, "bytes": 50, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\beta\\note.txt"},
-      {"rank": 7, "bytes": 10, "path": "C:\\Users\\Public\\mfd-captures\\demo-tui\\gamma\\z.tmp"}
-    ]
-  }
-}
-```
+The report picture — the ranking and the full paths — is the CLI's job:
+`mfd-cli -report -json` (entry 11 shows the shape).
 
 The `mfd` field of the header is the version of the frontend that took
 the picture (`0.7.x` the CLI with `--json`, `0.2.x` the TUI with Shift+P):

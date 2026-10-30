@@ -76,7 +76,6 @@ pub enum Mode {
     Main,
     Help,
     Warnings,
-    Report,
     SortMenu,
     ThemeMenu,
     FilterPrompt,
@@ -129,6 +128,11 @@ pub struct ListRow {
     pub size: i64,
     pub depth: usize,
     pub has_subdirs: bool,
+    /// la riga radice: la cartella corrente, puntata in cima all'albero —
+    /// la maniglia del report (selezionarla e' chiedere "i piu' grossi di
+    /// dove sono") e la scala dei totali. Non e' un figlio e non corre con
+    /// loro: % e barra le restano vuote, INVIO e x non fanno niente
+    pub is_root: bool,
 }
 
 /// Una riga dell'anteprima di destra: cartella o file-foglia con la sua taglia
@@ -275,11 +279,6 @@ pub struct App {
     pub cancelling: bool,
     /// scroll della finestra dei warning
     pub warn_top: usize,
-    /// i big del report (r / F9): (taglia, full path) nell'ordine di
-    /// top_files_under — una fotografia della cartella corrente, scattata
-    /// all'apertura e rinnovata quando cambia il top (la rinnova anche chi
-    /// la riapre altrove: il report segue il drill-down)
-    pub report: Vec<(i64, PathBuf)>,
     /// la classifica in fondo (F9): i 10 piu' grandi del ramo selezionato,
     /// ricorsivi — la stessa risposta del report, viva: si rinnova a ogni
     /// movimento della selezione, refresh la fotografa
@@ -293,10 +292,9 @@ pub struct App {
     /// e' quella dell'albero (il cursore resta visibile), pronta a
     /// qualunque lunghezza il top dovesse prendere
     pub pane_top: usize,
-    /// scroll della finestra del report
-    pub report_top: usize,
-    /// il top del report: parte da dieci, in finestra le cifre lo
-    /// riscrivono al volo. E' della sessione, come dove sei: F2 non lo salva
+    /// il top della classifica: parte da dieci e le cifre lo riscrivono al
+    /// volo, in qualunque momento della navigazione. E' della sessione,
+    /// come dove sei: F2 non lo salva
     pub report_n: usize,
     /// true tra una cifra e l'altra: le cifre si accodano (25 = 2, poi 5);
     /// un altro tasto chiude la scrittura e la prossima cifra riparte
@@ -357,11 +355,9 @@ impl App {
             scan_start: Instant::now(),
             cancelling: false,
             warn_top: 0,
-            report: Vec::new(),
             pane: Vec::new(),
             pane_sel: 0,
             pane_top: 0,
-            report_top: 0,
             report_n: REPORT_DEFAULT,
             report_typing: false,
             menu_sel: 0,
@@ -484,26 +480,15 @@ impl App {
             self.flash_t("flash.stampa_nodir");
             return;
         };
-        let report_aperto = self.mode == Mode::Report;
-        let foto = if report_aperto {
-            json::report(
-                &tree,
-                self.current,
-                self.report_n,
-                env!("CARGO_PKG_VERSION"),
-                self.view.filter.as_ref(),
-            )
-        } else {
-            let selected = self.list.get(self.sel).map(|r| r.id);
-            json::view(
-                &tree,
-                self.current,
-                selected,
-                env!("CARGO_PKG_VERSION"),
-                &self.expanded,
-                self.view.filter.as_ref(),
-            )
-        };
+        let selected = self.list.get(self.sel).map(|r| r.id);
+        let foto = json::view(
+            &tree,
+            self.current,
+            selected,
+            env!("CARGO_PKG_VERSION"),
+            &self.expanded,
+            self.view.filter.as_ref(),
+        );
         // il nome dice cosa c'e' dentro: la cartella fotografata (64
         // caratteri bastano a riconoscerla, i conflitti li risolve il
         // progressivo) e la famiglia del file (stampa o report). La
@@ -515,7 +500,7 @@ impl App {
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| self.t("stampa.radice").to_string());
         let nome: String = nome.chars().take(64).collect();
-        let famiglia = if report_aperto { "mfd-report" } else { "mfd-stampa" };
+        let famiglia = "mfd-stampa";
         let mut path = dir.join(format!("{}-{}.json", famiglia, nome));
         let mut k = 2;
         while path.exists() {
@@ -600,7 +585,6 @@ impl App {
                         self.sel = 0;
                         self.dsel = 0;
                         self.expanded.clear(); // albero nuovo: i rami aperti erano del vecchio
-                        self.report.clear(); // e il report era del vecchio
                         self.focus = Focus::List;
                         self.mode = Mode::Main;
                         self.refresh();
@@ -685,6 +669,26 @@ impl App {
         // --- lista di sinistra: l'albero del nodo corrente, coi rami aperti
         let mut list = Vec::new();
         self.collect_list(&tree, self.current, 0, &mut list);
+        // --- la riga radice in cima: la cartella corrente, puntata — la
+        // maniglia del report (selezionarla e' chiedere "i piu' grossi di
+        // dove sono": alla radice dello scan, il globale) e la scala dei
+        // totali. Non e' un figlio e non corre con loro: % e barra le
+        // restano vuote — la grammatica della TOTALE della CLI, fatta
+        // selezionabile
+        let root_size = match &self.view.filter {
+            Some(f) => tree.subtree_match(self.current, f).0,
+            None => tree.metrics(self.current).bytes,
+        };
+        list.insert(
+            0,
+            ListRow {
+                id: self.current,
+                size: root_size,
+                depth: 0,
+                has_subdirs: false,
+                is_root: true,
+            },
+        );
         if self.sel >= list.len() {
             self.sel = list.len().saturating_sub(1);
         }
@@ -734,7 +738,7 @@ impl App {
         // vista (F9 lo apre e lo chiude): niente lavoro per nulla
         if self.view.show_report {
             let base = sel_id.unwrap_or(self.current);
-            self.pane = tree.top_files_under(base, PANE_ROWS, self.view.filter.as_ref());
+            self.pane = tree.top_files_under(base, self.report_n, self.view.filter.as_ref());
         } else {
             self.pane.clear();
         }
@@ -769,6 +773,7 @@ impl App {
                     size,
                     depth,
                     has_subdirs,
+                    is_root: false,
                 });
                 if self.expanded.contains(&i) {
                     self.collect_list(tree, i, depth + 1, out);
@@ -840,7 +845,6 @@ impl App {
                 _ => {}
             },
             Mode::Warnings => self.on_key_warnings(k),
-            Mode::Report => self.on_key_report(k),
             Mode::SortMenu => self.on_key_menu(k),
             Mode::ThemeMenu => self.on_key_theme(k),
             Mode::FilterPrompt => self.on_key_prompt(k),
@@ -1024,6 +1028,11 @@ impl App {
         if self.focus == Focus::Report && self.hits.report_pane.is_none() {
             self.focus = Focus::List;
         }
+        // le cifre scrivono il top della classifica: ogni altro tasto
+        // chiude la scrittura (la prossima cifra riparte da se')
+        if !matches!(k.code, KeyCode::Char(c) if c.is_ascii_digit()) {
+            self.report_typing = false;
+        }
         match k.code {
             // Shift+Q o F10: si esce. La q nuda non esce piu' — le
             // lettere dei comandi vogliono lo SHIFT, i tasti F son diretti
@@ -1080,13 +1089,6 @@ impl App {
                 self.warn_top = 0;
                 self.mode = Mode::Warnings;
             }
-            // Shift+R / F9: il report dei file piu' grossi della cartella dove
-            // si sta — -big con la radice che segue il drill-down,
-            // attraverso la lente come tutto il resto
-            // Shift+R: la finestra del report, il posto dove leggerlo per
-            // intero (scroll, taglio a piacere, stampa). F9 e' l'interruttore
-            // del pannello: sono due modi di guardare la stessa risposta
-            KeyCode::Char('R') => self.open_report(),
             // F9: la classifica in fondo si mostra e si nasconde — quando
             // serve tutto lo schermo per navigare si chiude, quando serve
             // la risposta intera si apre. La scelta si ricorda (F2); il
@@ -1190,6 +1192,21 @@ impl App {
             // classifica entra nel giro solo quando c'e' (F9 la toglie)
             KeyCode::Tab => self.cycle_focus(true),
             KeyCode::BackTab => self.cycle_focus(false),
+            // le cifre riscrivono il top della classifica in fondo (25 =
+            // due, poi cinque; il tetto e' REPORT_MAX): il mestiere che
+            // faceva la finestra del report, prima della riga radice —
+            // la classifica si allarga sotto gli occhi, TAB la scorre
+            KeyCode::Char(c) if c.is_ascii_digit() => {
+                let d = (c as u8 - b'0') as usize;
+                let typed = if self.report_typing {
+                    self.report_n * 10 + d
+                } else {
+                    d
+                };
+                self.report_n = typed.clamp(1, REPORT_MAX);
+                self.report_typing = true;
+                self.refresh(); // la classifica segue il nuovo taglio
+            }
             _ => {}
         }
     }
@@ -1281,6 +1298,12 @@ impl App {
     /// restano aperti: sono uno stato di vista, e chi risale li ritrova.
     fn enter(&mut self) {
         if let Some(r) = self.list.get(self.sel) {
+            if r.is_root {
+                // la riga radice e' dove si sta gia': il report lo dice,
+                // l'invio non va da nessuna parte
+                self.flash_t("flash.gia_qui");
+                return;
+            }
             self.current = r.id;
             self.sel = 0;
             self.dsel = 0;
@@ -1310,6 +1333,12 @@ impl App {
     /// padre: la vista si ricostruisce dall'alto).
     fn toggle_expand(&mut self) {
         let Some(r) = self.list.get(self.sel) else { return };
+        if r.is_root {
+            // i figli della radice sono gia' le righe sotto: niente da
+            // aprire, si e' gia' qui
+            self.flash_t("flash.gia_qui");
+            return;
+        }
         if !r.has_subdirs {
             self.flash_t("flash.nessuna_sub");
             return;
@@ -1333,7 +1362,11 @@ impl App {
     /// nascosti (lo stato e' strutturale, la lente decide cosa si vede).
     fn expand_subtree(&mut self) {
         let Some(r) = self.list.get(self.sel) else { return };
-        if !r.has_subdirs {
+        // la riga radice non ha il marchio delle sotto-cartelle (i suoi
+        // figli sono gia' le righe sotto) ma il suo sottoalbero si apre
+        // come quello di chiunque: A spalanca tutto l'albero della
+        // cartella corrente
+        if !r.has_subdirs && !r.is_root {
             self.flash_t("flash.nessuna_sub");
             return;
         }
@@ -1357,85 +1390,6 @@ impl App {
             }
             KeyCode::PageUp => self.warn_top = self.warn_top.saturating_sub(10),
             KeyCode::PageDown => self.warn_top = (self.warn_top + 10).min(n.saturating_sub(1)),
-            _ => {}
-        }
-    }
-
-    /// Il report dei file piu' grossi (r / F9): -big DELLA CARTELLA dove si
-    /// sta — il sottoalbero di current, radice compresa, perche' un report
-    /// fermo sulla radice dello scan non risponderebbe alla navigazione —
-    /// calcolata dall'albero in memoria senza riscansionare. La lente vale
-    /// anche qui: col filtro attivo contano solo i file che matchano (e la
-    /// finestra lo dichiara, come il titolo della lista).
-    fn open_report(&mut self) {
-        self.refresh_report();
-        self.report_top = 0;
-        self.report_typing = false;
-        self.mode = Mode::Report;
-    }
-
-    /// La fotografia del report: la scatta l'apertura e la rinnova il
-    /// cambio di top (stessa domanda, altro taglio). Lo scroll segue la
-    /// risposta: se il nuovo top e' piu' corto, torna dove c'e' ancora
-    /// qualcosa da leggere.
-    fn refresh_report(&mut self) {
-        let Some(tree) = self.tree.clone() else { return };
-        self.report =
-            tree.top_files_under(self.current, self.report_n, self.view.filter.as_ref());
-        let last = self.report.len().saturating_sub(1);
-        self.report_top = self.report_top.min(last);
-    }
-
-    /// I tasti del report: si scorre, si chiude e si cambia il top — le
-    /// cifre lo riscrivono al volo (la prima riparte da zero, le altre si
-    /// accodano: 25 = 2, poi 5; Backspace cancella, + e - spostano di
-    /// dieci) e il report si ricalcola a ogni colpo. Resta una risposta
-    /// da leggere, non un posto dove navigare (il salto alla cartella del
-    /// file, se mai, sara' un'altra decisione).
-    fn on_key_report(&mut self, k: KeyEvent) {
-        match k.code {
-            KeyCode::Char(c) if c.is_ascii_digit() => {
-                let d = (c as u8 - b'0') as usize;
-                let typed = if self.report_typing {
-                    self.report_n * 10 + d
-                } else {
-                    d
-                };
-                self.report_n = typed.clamp(1, REPORT_MAX);
-                self.report_typing = true;
-                self.refresh_report();
-            }
-            // Backspace sta alla scrittura come le cifre: non la chiude
-            KeyCode::Backspace => {
-                self.report_n = (self.report_n / 10).max(1);
-                self.report_typing = true;
-                self.refresh_report();
-            }
-            KeyCode::Char('+') | KeyCode::Char('=') | KeyCode::Char('-') => {
-                let step = if matches!(k.code, KeyCode::Char('-')) {
-                    -10i64
-                } else {
-                    10i64
-                };
-                self.report_n = (self.report_n as i64 + step).clamp(1, REPORT_MAX as i64) as usize;
-                self.report_typing = false;
-                self.refresh_report();
-            }
-            KeyCode::Esc | KeyCode::Char('R') | KeyCode::F(9) => self.mode = Mode::Main,
-            // Shift+P / F11: la stampa dalla finestra — l'inquadratura segue
-            // la modalita': col report aperto la foto e' del report,
-            // quello che si sta leggendo (mfd-report-<nome>.json)
-            KeyCode::Char('P') | KeyCode::F(11) => self.stampa(),
-            KeyCode::Up => self.report_top = self.report_top.saturating_sub(1),
-            KeyCode::Down => {
-                if self.report_top + 1 < self.report.len() {
-                    self.report_top += 1;
-                }
-            }
-            KeyCode::PageUp => self.report_top = self.report_top.saturating_sub(10),
-            KeyCode::PageDown => {
-                self.report_top = (self.report_top + 10).min(self.report.len().saturating_sub(1))
-            }
             _ => {}
         }
     }
@@ -1591,7 +1545,15 @@ mod tests {
         let t = app.tree.as_ref().unwrap();
         app.list
             .iter()
-            .map(|r| t.name(r.id).to_string_lossy().into_owned())
+            .map(|r| {
+                // la riga radice si chiama come la chiama il disegno: il
+                // punto della shell, non il nome della cartella
+                if r.is_root {
+                    ".".to_string()
+                } else {
+                    t.name(r.id).to_string_lossy().into_owned()
+                }
+            })
             .collect()
     }
 
@@ -1609,19 +1571,28 @@ mod tests {
     #[test]
     fn lista_solo_cartelle_per_taglia() {
         let app = app_on_fixture("lista");
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]); // 3000, 310, 120
-        assert_eq!(app.list[0].size, 3000);
-        assert_eq!(app.list[1].size, 310);
-        assert_eq!(app.list[2].size, 120);
+        // la riga radice in cima, poi le cartelle in taglia decrescente
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
+        assert!(app.list[0].is_root);
+        assert_eq!(app.list[1].size, 3000);
+        assert_eq!(app.list[2].size, 310);
+        assert_eq!(app.list[3].size, 120);
     }
 
     #[test]
     fn invio_entra_e_backspace_risale_riselezionando() {
         let mut app = app_on_fixture("nav");
-        let alpha = app.list[0].id;
+        // sulla riga radice l'invio non va da nessuna parte (si e' gia'
+        // lì): lo dice il flash
+        app.on_key(key(KeyCode::Enter));
+        assert_eq!(app.current, 0);
+        assert!(app.status_now().unwrap().contains("gia"));
+        // su alpha, invece, si entra
+        app.on_key(key(KeyCode::Down)); // alpha
+        let alpha = app.list[app.sel].id;
         app.on_key(key(KeyCode::Enter));
         assert_eq!(app.current, alpha);
-        assert!(list_names(&app).is_empty()); // alpha non ha sotto-cartelle
+        assert_eq!(list_names(&app), vec!["."]); // alpha non ha sotto-cartelle: resta la radice
         app.on_key(key(KeyCode::Backspace));
         assert_eq!(app.current, 0);
         assert_eq!(app.list[app.sel].id, alpha); // la selezione torna su alpha
@@ -1630,10 +1601,14 @@ mod tests {
     #[test]
     fn l_anteprima_mostra_i_figli_della_selezione() {
         let app = app_on_fixture("prev");
-        // selezionata alpha (la piu' grande): la sua anteprima sono i 2 file
-        assert_eq!(preview_names(&app), vec!["data.dat", "lib.dll"]); // T.D
-        assert_eq!(app.preview[0].size, 2000);
-        assert_eq!(app.preview_total, 3000);
+        // selezionata la riga radice: l'anteprima sono i figli della
+        // cartella corrente, cartelle e file insieme (T.D)
+        assert_eq!(
+            preview_names(&app),
+            vec!["alpha\\", "gamma\\", "beta\\", "readme.txt"]
+        );
+        assert_eq!(app.preview[0].size, 3000);
+        assert_eq!(app.preview_total, 3530);
     }
 
     #[test]
@@ -1642,11 +1617,15 @@ mod tests {
         assert_eq!(app.view.order, Order::TD);
         app.on_key(key(KeyCode::Char('S')));
         assert_eq!(app.view.order, Order::TC);
-        assert_eq!(list_names(&app), vec!["beta", "gamma", "alpha"]); // taglia crescente
-        // il dettaglio cambia insieme: e' la stessa lente. Con T.C la riga 0
-        // e' beta (120 B): il suo dettaglio in taglia crescente
-        assert_eq!(preview_names(&app), vec!["note.txt", "sub\\"]);
+        assert_eq!(list_names(&app), vec![".", "beta", "gamma", "alpha"]); // taglia crescente
+        // il dettaglio cambia insieme: e' la stessa lente. Con T.C la riga
+        // selezionata e' la radice: il suo dettaglio in taglia crescente
+        assert_eq!(
+            preview_names(&app),
+            vec!["readme.txt", "beta\\", "gamma\\", "alpha\\"]
+        );
         // e scendendo su alpha (3.000 B) il dettaglio segue, sempre in T.C
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down));
         assert_eq!(preview_names(&app), vec!["lib.dll", "data.dat"]);
@@ -1660,9 +1639,9 @@ mod tests {
             app.on_key(key(KeyCode::Char(c)));
         }
         app.on_key(key(KeyCode::Enter));
-        assert_eq!(list_names(&app), vec!["alpha", "gamma"]); // beta senza .dll
-        assert_eq!(app.list[0].size, 1000); // semantica -f: taglia filtrata
-        assert_eq!(app.list[1].size, 300);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma"]); // beta senza .dll
+        assert_eq!(app.list[1].size, 1000); // semantica -f: taglia filtrata
+        assert_eq!(app.list[2].size, 300);
         // filtro rimosso: il prompt arriva precompilato col filtro attivo
         // (si puo' ritoccare); si svuota con Backspace e INVIO
         app.on_key(key(KeyCode::Char('F')));
@@ -1670,7 +1649,7 @@ mod tests {
             app.on_key(key(KeyCode::Backspace));
         }
         app.on_key(key(KeyCode::Enter));
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
     }
 
     #[test]
@@ -1682,12 +1661,12 @@ mod tests {
         }
         app.on_key(key(KeyCode::Enter));
         // la lista attraverso la lente *.dll: beta sparisce (senza .dll)
-        assert_eq!(list_names(&app), vec!["alpha", "gamma"]);
-        assert_eq!(app.list[0].size, 1000); // semantica -f: taglia filtrata
-        // il dettaglio della selezione con la STESSA lente: solo lib.dll
-        assert_eq!(preview_names(&app), vec!["lib.dll"]);
-        assert_eq!(app.preview[0].size, 1000);
-        assert_eq!(app.preview_total, 1000);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma"]);
+        assert_eq!(app.list[1].size, 1000); // semantica -f: taglia filtrata
+        // il dettaglio della selezione (la radice) con la STESSA lente: le
+        // cartelle che hanno un .dll dentro, le altre no
+        assert_eq!(preview_names(&app), vec!["alpha\\", "gamma\\"]);
+        assert_eq!(app.preview_total, 1300); // lib.dll 1000 + y.dll 300
     }
 
     #[test]
@@ -1743,7 +1722,7 @@ mod tests {
     }
 
     #[test]
-    fn la_lettera_nuda_non_stampa_neppure_dal_report() {
+    fn la_lettera_nuda_non_stampa() {
         let fx = fixture("shift-rep");
         let tree = Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
@@ -1751,12 +1730,10 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         app.stampa_dir = Some(dir.clone());
-        app.on_key(key(KeyCode::Char('R'))); // il report si apre
-        assert_eq!(app.mode, Mode::Report);
-        // la p nuda non stampa: il flash insegna, e la finestra resta
-        // aperta (si legge, non si perde il posto)
+        // la p nuda non stampa: il flash insegna lo Shift, e si resta dove
+        // si sta (la foto e' un comando, non un reflesso)
         app.on_key(key(KeyCode::Char('p')));
-        assert_eq!(app.mode, Mode::Report);
+        assert!(matches!(app.mode, Mode::Main));
         assert!(app.status_now().unwrap().contains("Shift+P"));
         assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 0); // nessuna foto
         let _ = std::fs::remove_dir_all(&dir);
@@ -1775,28 +1752,34 @@ mod tests {
     }
 
     #[test]
-    fn r_apre_la_finestra_del_report_f9_muove_la_classifica() {
+    fn f9_muove_la_classifica_e_le_cifre_tagliano_il_top() {
         let mut app = app_on_fixture("report");
-        let sel = app.sel;
-        app.on_key(key(KeyCode::Char('R')));
-        assert!(matches!(app.mode, Mode::Report));
-        // i 7 file della fixture in ordine di taglia decrescente (il taglio
-        // a 10 li tiene tutti): data.dat 2000 in testa, z.tmp 10 in coda
-        assert_eq!(app.report.len(), 7);
-        assert_eq!(app.report[0].0, 2000);
-        assert!(app.report[0].1.ends_with("data.dat"));
-        assert_eq!(app.report[6].0, 10);
-        // le frecce scorrono il report, l'albero non si tocca
+        // la selezione parte dalla riga radice: la classifica e' quella
+        // dell'intera cartella corrente — il globale, alla radice dello
+        // scan. I 7 file della fixture, data.dat 2000 in testa
+        assert!(app.list[app.sel].is_root);
+        assert_eq!(app.pane.len(), 7);
+        assert_eq!(app.pane[0].0, 2000);
+        assert!(app.pane[0].1.ends_with("data.dat"));
+        assert_eq!(app.pane[6].0, 10); // z.tmp in coda
+        // F9 nasconde la classifica (e niente lavoro per nulla)
+        app.on_key(key(KeyCode::F(9)));
+        assert!(!app.view.show_report);
+        assert!(app.pane.is_empty());
+        app.on_key(key(KeyCode::F(9)));
+        assert_eq!(app.pane.len(), 7); // ricalcolata al ritorno
+        // le cifre riscrivono il top, senza finestre: 2 tiene i primi 2
+        app.on_key(key(KeyCode::Char('2')));
+        assert_eq!(app.report_n, 2);
+        assert_eq!(app.pane.len(), 2);
+        // 25: la fixture ha solo 7 file, il taglio non le inventa
+        app.on_key(key(KeyCode::Char('5')));
+        assert_eq!(app.report_n, 25);
+        assert_eq!(app.pane.len(), 7);
+        // un altro tasto chiude la scrittura: la prossima cifra riparte
         app.on_key(key(KeyCode::Down));
-        assert_eq!(app.report_top, 1);
-        assert_eq!(app.sel, sel);
-        app.on_key(key(KeyCode::Esc));
-        assert!(matches!(app.mode, Mode::Main));
-        app.on_key(key(KeyCode::Char('R')));
-        assert!(matches!(app.mode, Mode::Report));
-        assert_eq!(app.report_top, 0); // si ricalcola a ogni apertura
-        app.on_key(key(KeyCode::Char('R'))); // anche Shift+R chiude
-        assert!(matches!(app.mode, Mode::Main));
+        app.on_key(key(KeyCode::Char('3')));
+        assert_eq!(app.report_n, 3);
     }
 
     #[test]
@@ -1805,11 +1788,17 @@ mod tests {
         // ricorsivi — scorri l'albero e la risposta ti segue. F9 la mostra
         // e la nasconde, senza mai aprire finestre
         let mut app = app_on_fixture("report-rel");
-        // la selezione parte da alpha: i suoi due file, il piu' grande in testa
+        // si parte dalla riga radice: la classifica e' dell'intera
+        // cartella — tutti i file della fixture
+        assert!(app.list[app.sel].is_root);
+        assert_eq!(app.pane.len(), 7);
+        // giu' su alpha: la classifica cambia insieme alla selezione —
+        // i suoi due file, il piu' grande in testa
+        app.on_key(key(KeyCode::Down)); // alpha
         assert_eq!(app.pane.len(), 2);
         assert_eq!(app.pane[0].0, 2000);
         assert!(app.pane[0].1.ends_with("data.dat"));
-        // giu' su gamma: la classifica cambia insieme alla selezione
+        // ancora giu' su gamma: la classifica cambia di nuovo
         app.on_key(key(KeyCode::Down));
         assert_eq!(app.pane.len(), 2); // y.dll 300, z.tmp 10
         assert_eq!(app.pane[0].0, 300);
@@ -1825,80 +1814,71 @@ mod tests {
     }
 
     #[test]
-    fn il_report_passa_dalla_lente_come_tutto_il_resto() {
+    fn la_classifica_passa_dalla_lente_come_tutto_il_resto() {
         let mut app = app_on_fixture("report-fil");
-        // lente *.dll: nel report finiscono solo i file che matchano
+        // lente *.dll: nella classifica della radice finiscono solo i file
+        // che matchano
         app.view.filter = Some(Filter::build("*.dll").unwrap());
-        app.on_key(key(KeyCode::Char('R')));
-        assert!(matches!(app.mode, Mode::Report));
+        app.refresh();
         let names: Vec<String> = app
-            .report
+            .pane
             .iter()
             .map(|(_, p)| p.file_name().unwrap().to_string_lossy().into_owned())
             .collect();
         assert_eq!(names, vec!["lib.dll", "y.dll"]); // 1000, 300
-        // tolta la lente, il report torna a vedere tutti i file
-        app.on_key(key(KeyCode::Esc));
+        // tolta la lente, la classifica torna a vedere tutti i file
         app.view.filter = None;
-        app.on_key(key(KeyCode::Char('R')));
-        assert_eq!(app.report.len(), 7);
+        app.refresh();
+        assert_eq!(app.pane.len(), 7);
     }
 
     #[test]
-    fn il_report_e_della_cartella_dove_si_sta() {
-        // il report segue il drill-down: -big della cartella corrente
-        // (sottoalbero compreso), non dell'intero scan — alla radice si
-        // vedono tutti, dentro gamma solo i suoi. Tag a se' stante: il
-        // fixture vive su disco e i test girano in parallelo
+    fn la_classifica_segue_il_drill_down_con_la_riga_radice() {
+        // la riga radice in cima e' la cartella corrente: selezionata, la
+        // classifica e' dell'intera cartella (il globale); entrati in
+        // gamma, la riga radice diventa gamma e la classifica la segue.
+        // Tag a se' stante: il fixture vive su disco e i test girano in
+        // parallelo
         let mut app = app_on_fixture("report-drill");
-        app.on_key(key(KeyCode::Char('R')));
-        assert_eq!(app.report.len(), 7); // alla radice: tutta la fixture
-        app.on_key(key(KeyCode::Esc));
-        app.on_key(key(KeyCode::Down)); // gamma (alpha 3000, gamma 310)
+        assert_eq!(app.pane.len(), 7); // alla radice: tutta la fixture
+        app.on_key(key(KeyCode::Down)); // alpha (alpha 3000, gamma 310)
+        app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Enter)); // drill-down dentro gamma
-        app.on_key(key(KeyCode::Char('R')));
-        assert_eq!(app.report.len(), 2); // y.dll 300, z.tmp 10
-        assert_eq!(app.report[0].0, 300);
-        assert!(app.report[0].1.ends_with("y.dll"));
+        // la riga radice adesso e' gamma: la classifica e' la sua
+        assert!(app.list[app.sel].is_root);
+        assert_eq!(app.list[app.sel].id, app.current);
+        assert_eq!(app.pane.len(), 2); // y.dll 300, z.tmp 10
+        assert_eq!(app.pane[0].0, 300);
+        assert!(app.pane[0].1.ends_with("y.dll"));
         // il big della radice non c'entra: e' fuori dal sottoalbero
-        assert!(!app.report.iter().any(|(_, p)| p.ends_with("data.dat")));
-        // e risalendo il report torna a vedere tutti
-        app.on_key(key(KeyCode::Esc));
+        assert!(!app.pane.iter().any(|(_, p)| p.ends_with("data.dat")));
+        // e risalendo la riga radice torna quella di prima
         app.on_key(key(KeyCode::Left));
-        app.on_key(key(KeyCode::Char('R')));
-        assert_eq!(app.report.len(), 7);
+        assert_eq!(app.pane.len(), 7);
     }
 
     #[test]
-    fn il_top_del_report_si_cambia_a_cifre_in_finestra() {
-        // il report parte da 10 e le cifre lo riscrivono al volo: la
-        // finestra si ricalcola a ogni colpo, senza chiudersi
+    fn il_top_della_classifica_si_cambia_a_cifre() {
+        // la classifica parte da 10 e le cifre la riscrivono al volo,
+        // senza finestre: si allarga sotto gli occhi, TAB la scorre
         let mut app = app_on_fixture("report-top");
-        app.on_key(key(KeyCode::Char('R')));
         assert_eq!(app.report_n, 10);
-        assert_eq!(app.report.len(), 7); // la fixture ne ha 7
+        assert_eq!(app.pane.len(), 7); // la fixture ne ha 7
         app.on_key(key(KeyCode::Char('2'))); // la prima cifra riparte da zero
         assert_eq!(app.report_n, 2);
-        assert_eq!(app.report.len(), 2);
-        assert_eq!(app.report[1].0, 1000); // il taglio tiene i primi 2
+        assert_eq!(app.pane.len(), 2);
+        assert_eq!(app.pane[1].0, 1000); // il taglio tiene i primi 2
         app.on_key(key(KeyCode::Char('5'))); // la seconda si accoda: 25
         assert_eq!(app.report_n, 25);
-        assert_eq!(app.report.len(), 7); // ma i file sono quelli che sono
-        app.on_key(key(KeyCode::Backspace)); // toglie l'ultima cifra: 2
-        assert_eq!(app.report_n, 2);
-        assert_eq!(app.report.len(), 2);
-        // + e - spostano di dieci; dopo, una cifra riparte da zero
-        app.on_key(key(KeyCode::Char('+')));
-        assert_eq!(app.report_n, 12);
-        app.on_key(key(KeyCode::Char('-')));
-        assert_eq!(app.report_n, 2);
+        assert_eq!(app.pane.len(), 7); // ma i file sono quelli che sono
+        // un tasto qualunque chiude la scrittura: la prossima cifra riparte
+        app.on_key(key(KeyCode::Enter)); // sulla radice: flash, non drill
         app.on_key(key(KeyCode::Char('3')));
         assert_eq!(app.report_n, 3);
-        // il top scelto e' della sessione: riaperta la finestra, resta
-        app.on_key(key(KeyCode::Esc));
-        app.on_key(key(KeyCode::Char('R')));
+        assert_eq!(app.pane.len(), 3);
+        // il top scelto e' della sessione: scorre l'albero, e resta
+        app.on_key(key(KeyCode::Down));
         assert_eq!(app.report_n, 3);
-        assert_eq!(app.report.len(), 3);
     }
 
     #[test]
@@ -1910,7 +1890,7 @@ mod tests {
         app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Enter));
         assert_eq!(app.view.order, Order::AC);
-        assert_eq!(list_names(&app), vec!["alpha", "beta", "gamma"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "beta", "gamma"]);
     }
 
     #[test]
@@ -1944,18 +1924,18 @@ mod tests {
     fn dettaglio_totali_in_cima_taglia_file_cartelle() {
         let app = app_on_fixture("dettaglio");
         let t = app.tree.as_ref().unwrap();
-        let alpha = app.list[0].id; // selezione di default: la piu' grande
-        // senza filtro: i totali strutturali della selezione
-        // (alpha: 2 file, 0 sotto-cartelle, 1000 + 2000 byte)
+        // senza filtro: i totali della selezione di default — la riga
+        // radice, cioe' l'intera cartella (7 file, 5 cartelle, 3.430 B)
         assert_eq!(
-            crate::ui::detail_totals(t, alpha, None, &app.cat),
-            " 2,9 KB - 2 file - 0 cartelle"
+            crate::ui::detail_totals(t, app.current, None, &app.cat),
+            " 3,4 KB - 7 file - 5 cartelle"
         );
-        // col filtro: la lente conta solo cio' che lascia passare
+        // col filtro: la lente conta solo cio' che lascia passare (nella
+        // radice: lib.dll e y.dll)
         let fl = Filter::build("*.dll").unwrap();
         assert_eq!(
-            crate::ui::detail_totals(t, alpha, Some(&fl), &app.cat),
-            " 1000 B - 1 file dentro *.dll"
+            crate::ui::detail_totals(t, app.current, Some(&fl), &app.cat),
+            " 1,3 KB - 2 file dentro *.dll"
         );
     }
 
@@ -2002,7 +1982,8 @@ mod tests {
         let mut app = App::with_tree(fx.clone(), tree);
         // si entra in alpha: la foto e' del suo sottoalbero, non di tutta la
         // scansione — la radice della stampa segue il drill-down, come il
-        // report Shift+R / F9
+        // resto della navigazione
+        app.on_key(key(KeyCode::Down)); // alpha
         app.on_key(key(KeyCode::Enter));
         let dir = std::env::temp_dir().join(format!("mfd-stampa-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
@@ -2080,6 +2061,7 @@ mod tests {
         assert!(!testo.contains("y.dll")); // dentro gamma/x: chiuso, invisibile
         assert!(!testo.contains("note.txt")); // dentro beta: chiuso, invisibile
         // si apre tutto il sottoalbero di gamma (a) e si ristampa
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Char('A')));
         app.on_key(key(KeyCode::Char('P')));
@@ -2108,6 +2090,7 @@ mod tests {
         app.stampa_dir = Some(dir.clone());
         // si apre il sottoalbero di gamma (a): y.dll diventa visibile;
         // beta resta nascosto (senza match, come nella lista)
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Char('A')));
         app.on_key(key(KeyCode::Char('P')));
@@ -2151,8 +2134,10 @@ mod tests {
         let fx = fixture("dettaglio");
         let tree = Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
-        // la selezione parte dalla riga piu' grande: alpha (3000 B)
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]);
+        // la selezione parte dalla riga radice: si scende su alpha (3000 B)
+        // per fotografare anche il suo dettaglio
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
+        app.on_key(key(KeyCode::Down)); // alpha
         let dir = std::env::temp_dir().join(format!("mfd-dettaglio-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
@@ -2173,65 +2158,32 @@ mod tests {
     }
 
     #[test]
-    fn p_dalla_finestra_del_report_fotografa_il_report() {
-        // col report aperto (r / F9) la stampa fotografa quello che la
-        // finestra mostra: i big col ranking — e la famiglia del file lo
-        // dice nel nome (mfd-report-, non mfd-stampa-)
-        let fx = fixture("reportp");
-        let tree = Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
-        let mut app = App::with_tree(fx.clone(), tree);
-        app.on_key(key(KeyCode::Char('R')));
-        assert!(matches!(app.mode, Mode::Report));
-        let dir = std::env::temp_dir().join(format!("mfd-reportp-test-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        app.stampa_dir = Some(dir.clone());
-        app.on_key(key(KeyCode::Char('P')));
-        let nome = fx.file_name().unwrap().to_string_lossy().into_owned();
-        let testo = std::fs::read_to_string(dir.join(format!("mfd-report-{}.json", nome))).unwrap();
-        assert!(!dir.join(format!("mfd-stampa-{}.json", nome)).exists());
-        // il taglio chiesto in finestra (dieci di fabbrica) e i big in
-        // ordine, col ranking davanti e i path assoluti
-        assert!(testo.contains(r#""report": {"#));
-        assert!(testo.contains(r#""top": 10,"#));
-        let data = fx.join("alpha").join("data.dat").display().to_string().replace('\\', "\\\\");
-        assert!(testo.contains(&format!(r#"{{"rank": 1, "bytes": 2000, "path": "{}"}}"#, data)));
-        assert!(testo.contains(r#"{"rank": 2, "bytes": 1000, "path": ""#)); // lib.dll
-        // la foto e' del report, non della schermata: niente albero
-        assert!(!testo.contains(r#""tree":"#));
-        // e la finestra resta aperta: la stampa non chiude quello che si
-        // sta leggendo
-        assert!(matches!(app.mode, Mode::Report));
-        assert!(app.status_now().unwrap().contains("stampa salvata"));
-        let _ = std::fs::remove_dir_all(&dir);
-        let _ = std::fs::remove_dir_all(&fx);
-    }
-
-    #[test]
     fn x_apre_e_chiude_il_ramo_sotto_il_cursore() {
         let mut app = app_on_fixture("x");
-        // la lista parte piatta: alpha, gamma, beta (l'ordine di taglia)
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]);
-        assert_eq!(app.list.iter().map(|r| r.depth).collect::<Vec<_>>(), vec![0, 0, 0]);
+        // la lista parte piatta: la radice, poi alpha, gamma, beta (la taglia)
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
+        assert_eq!(app.list.iter().map(|r| r.depth).collect::<Vec<_>>(), vec![0, 0, 0, 0]);
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma: la prima con sotto-cartelle
         app.on_key(key(KeyCode::Char('X')));
         // il ramo aperto mostra i figli indentati sotto il padre, al posto
         // giusto nell'ordine di lente (gamma 310 B, x 300 B, beta 120 B)
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "x", "beta"]);
-        assert_eq!(app.list[2].depth, 1);
-        assert!(app.expanded.contains(&app.list[1].id));
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "x", "beta"]);
+        assert_eq!(app.list[3].depth, 1);
+        assert!(app.expanded.contains(&app.list[2].id));
         // x di nuovo: il ramo si chiude e tutto cio' che stava sotto sparisce
         app.on_key(key(KeyCode::Char('X')));
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
         assert!(app.expanded.is_empty());
     }
 
     #[test]
     fn f4_e_l_alias_di_x() {
         let mut app = app_on_fixture("f4");
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::F(4)));
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "x", "beta"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "x", "beta"]);
     }
 
     #[test]
@@ -2239,14 +2191,14 @@ mod tests {
         let fx = deep_fixture("a");
         let tree = Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
-        assert_eq!(list_names(&app), vec!["d1"]);
-        app.on_key(key(KeyCode::Char('A')));
+        assert_eq!(list_names(&app), vec![".", "d1"]);
+        // A sulla riga radice apre TUTTO l'albero della cartella corrente:
         // quattro livelli in colonna, la profondita' illimitata di -d a
-        // scelta per un ramo per volta
-        assert_eq!(list_names(&app), vec!["d1", "d2", "d3", "d4"]);
+        app.on_key(key(KeyCode::Char('A')));
+        assert_eq!(list_names(&app), vec![".", "d1", "d2", "d3", "d4"]);
         assert_eq!(
             app.list.iter().map(|r| r.depth).collect::<Vec<_>>(),
-            vec![0, 1, 2, 3]
+            vec![0, 0, 1, 2, 3]
         );
         let _ = std::fs::remove_dir_all(&fx);
     }
@@ -2257,10 +2209,11 @@ mod tests {
         // *.log vive solo in beta/sub: la lente lascia vedere solo beta
         app.view.filter = Some(Filter::build("*.log").unwrap());
         app.refresh();
-        assert_eq!(list_names(&app), vec!["beta"]);
+        assert_eq!(list_names(&app), vec![".", "beta"]);
+        app.on_key(key(KeyCode::Down)); // beta
         app.on_key(key(KeyCode::Char('X'))); // apre beta: sub ha un match
-        assert_eq!(list_names(&app), vec!["beta", "sub"]);
-        assert_eq!(app.list[1].depth, 1);
+        assert_eq!(list_names(&app), vec![".", "beta", "sub"]);
+        assert_eq!(app.list[2].depth, 1);
         // i rami senza match non si vedono ne' si attraversano, anche se
         // alpha e gamma sono piu' grandi: la lente vale a ogni livello
     }
@@ -2271,6 +2224,7 @@ mod tests {
         assert_eq!(app.focus, Focus::List);
         // albero chiuso: TAB funziona lo stesso — il cambio pannello alla
         // Total Commander non ha condizioni, il dettaglio si legge sempre
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma: dettaglio di 2 righe
         app.on_key(key(KeyCode::Tab));
         assert_eq!(app.focus, Focus::Detail);
@@ -2278,17 +2232,18 @@ mod tests {
         assert!(app.expanded.is_empty()); // l'albero resta chiuso
         app.on_key(key(KeyCode::Down)); // muove il cursore del dettaglio
         assert_eq!(app.dsel, 1);
-        assert_eq!(app.sel, 1); // gamma: la selezione dell'albero non si muove
+        assert_eq!(app.sel, 2); // gamma: la selezione dell'albero non si muove
         app.on_key(key(KeyCode::Tab)); // il cursore torna all'albero
         assert_eq!(app.focus, Focus::List);
         app.on_key(key(KeyCode::Down)); // adesso si muove la selezione (beta)
-        assert_eq!(app.sel, 2);
+        assert_eq!(app.sel, 3);
         assert_eq!(app.dsel, 0); // e il cursore del dettaglio riparte
     }
 
     #[test]
     fn invio_e_sinistra_dal_dettaglio_non_navigano() {
         let mut app = app_on_fixture("invio-dettaglio");
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma: il dettaglio e' [x\, z.tmp]
         app.on_key(key(KeyCode::Tab)); // il cursore passa al dettaglio
         assert_eq!(preview_names(&app), vec!["x\\", "z.tmp"]);
@@ -2308,6 +2263,7 @@ mod tests {
     #[test]
     fn chiudere_lultimo_ramo_lascia_il_cursore_nel_dettaglio() {
         let mut app = app_on_fixture("ultimo-ramo");
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Char('X'))); // apre gamma
         app.on_key(key(KeyCode::Tab)); // cursore in lettura nel dettaglio
@@ -2317,21 +2273,22 @@ mod tests {
         // TAB riporta sempre all'albero, non c'e' motivo di cacciarlo
         assert_eq!(app.focus, Focus::Detail);
         assert!(app.expanded.is_empty());
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "beta"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "beta"]);
     }
 
     #[test]
     fn i_rami_aperti_sopravvivono_al_drill_down() {
         let mut app = app_on_fixture("drill-rami");
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Char('X'))); // apre gamma
         let gamma = app.list[app.sel].id;
         app.on_key(key(KeyCode::Enter)); // drill-down dentro gamma
         assert_eq!(app.current, gamma);
-        assert_eq!(list_names(&app), vec!["x"]);
+        assert_eq!(list_names(&app), vec![".", "x"]);
         app.on_key(key(KeyCode::Backspace)); // risale
         // il ramo resta aperto: chi risale ritrova la vista che aveva
-        assert_eq!(list_names(&app), vec!["alpha", "gamma", "x", "beta"]);
+        assert_eq!(list_names(&app), vec![".", "alpha", "gamma", "x", "beta"]);
         assert!(app.expanded.contains(&gamma));
     }
 
@@ -2340,7 +2297,7 @@ mod tests {
         let mut app = app_on_fixture("rotella");
         app.on_scroll(true); // un detent giu': come la freccia
         assert_eq!(app.sel, 1);
-        assert_eq!(list_names(&app)[1], "gamma");
+        assert_eq!(list_names(&app)[1], "alpha");
         app.on_scroll(false); // e uno su': torna
         assert_eq!(app.sel, 0);
         app.on_scroll(false); // sopra la prima riga si resta, come la freccia
@@ -2348,21 +2305,18 @@ mod tests {
         // col cursore in lettura gira il dettaglio, non la lista
         app.on_key(key(KeyCode::Tab));
         app.on_scroll(true);
-        assert_eq!(app.dsel, 1); // l'anteprima di alpha: data.dat, lib.dll
+        assert_eq!(app.dsel, 1); // il dettaglio della radice: la riga dopo alpha
         assert_eq!(app.sel, 0); // la selezione dell'albero non si muove
     }
 
     #[test]
-    fn la_rotella_fa_scorrere_la_finestra_del_report() {
+    fn la_rotella_sulla_classifica_muove_il_suo_cursore() {
         let mut app = app_on_fixture("rotella-report");
-        app.on_key(key(KeyCode::Char('R'))); // il report dei big della cartella
-        assert_eq!(app.report.len(), 7); // i 7 file della fixture
-        app.on_scroll(true); // la finestra scorre di una riga
-        assert_eq!(app.report_top, 1);
-        app.on_scroll(false);
-        assert_eq!(app.report_top, 0);
-        app.on_scroll(false); // sopra la prima riga si resta
-        assert_eq!(app.report_top, 0);
+        app.hits = fake_hits(); // il pannello della classifica c'e' (y 24-37)
+        app.on_mouse(mouse(MouseEventKind::ScrollDown, 40, 30));
+        assert_eq!(app.focus, Focus::Report); // la rotella porta li' il cursore
+        assert_eq!(app.pane_sel, 1);
+        assert_eq!(app.sel, 0); // l'albero non si tocca
     }
 
     #[test]
@@ -2450,9 +2404,9 @@ mod tests {
     fn il_click_seleziona_la_riga_puntata() {
         let mut app = app_on_fixture("click-sel");
         app.hits = fake_hits();
-        // la terza riga (beta) sta a y=4: il cursore ci va sopra
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 4));
-        assert_eq!(app.sel, 2);
+        // la quarta riga (beta) sta a y=5: la radice ha preso il posto d'onore
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 5));
+        assert_eq!(app.sel, 3);
         assert_eq!(app.focus, Focus::List);
         // l'anteprima segue la selezione, come con le frecce: il dettaglio
         // racconta beta, non alpha
@@ -2463,14 +2417,14 @@ mod tests {
     fn il_doppio_click_entra_come_invio() {
         let mut app = app_on_fixture("click-doppio");
         app.hits = fake_hits();
-        let beta = app.list[2].id;
+        let beta = app.list[3].id;
         // il primo click seleziona (e se ne prende nota)...
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 4));
-        assert_eq!(app.sel, 2);
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 5));
+        assert_eq!(app.sel, 3);
         assert_eq!(app.current, 0); // ...ma non entra
         // ...il secondo, subito e sulla stessa riga (due colonne di
         // tolleranza): INVIO
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 11, 4));
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 11, 5));
         assert_eq!(app.current, beta); // si entra in beta
         assert_eq!(app.sel, 0); // e la lista riparte da capo, come da tastiera
     }
@@ -2479,12 +2433,12 @@ mod tests {
     fn il_doppio_click_stanco_resta_una_selezione() {
         let mut app = app_on_fixture("click-lento");
         app.hits = fake_hits();
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 4));
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 5));
         // il click di un'ora fa non conta piu': il doppio ha una scadenza
-        app.last_click = Some((Instant::now() - Duration::from_secs(3600), 10, 4));
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 4));
+        app.last_click = Some((Instant::now() - Duration::from_secs(3600), 10, 5));
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 5));
         assert_eq!(app.current, 0); // non si entra: e' solo un'altra selezione
-        assert_eq!(app.sel, 2);
+        assert_eq!(app.sel, 3);
     }
 
     #[test]
@@ -2506,13 +2460,13 @@ mod tests {
     fn il_tasto_destro_apre_il_ramo_cliccato() {
         let mut app = app_on_fixture("click-destro");
         app.hits = fake_hits();
-        let gamma = app.list[1].id;
-        // il destro sulla seconda riga (gamma): cursore lì e ramo aperto
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Right), 10, 3));
-        assert_eq!(app.sel, 1);
+        let gamma = app.list[2].id;
+        // il destro sulla terza riga (gamma): cursore lì e ramo aperto
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Right), 10, 4));
+        assert_eq!(app.sel, 2);
         assert!(app.expanded.contains(&gamma)); // x / F4, senza tastiera
         // di nuovo: il ramo si chiude (e' un toggle, come x)
-        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Right), 10, 3));
+        app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Right), 10, 4));
         assert!(!app.expanded.contains(&gamma));
     }
 
@@ -2559,11 +2513,11 @@ mod tests {
     #[test]
     fn il_click_nelle_finestre_non_fa_nulla() {
         let mut app = app_on_fixture("click-finestra");
-        app.on_key(key(KeyCode::Char('R'))); // il report copre i pannelli
+        app.on_key(key(KeyCode::F(1))); // l'aiuto copre i pannelli
         app.hits = fake_hits(); // ...e le zone dei pannelli ci sono comunque
         app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Left), 10, 4));
         app.on_mouse(mouse(MouseEventKind::Down(MouseButton::Right), 10, 4));
-        assert_eq!(app.mode, Mode::Report); // niente selezioni ne' invii:
+        assert!(matches!(app.mode, Mode::Help)); // niente selezioni ne' invii:
         assert_eq!(app.sel, 0); // ESC e INVIO restano tasti
     }
 

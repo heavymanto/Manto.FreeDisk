@@ -12,7 +12,7 @@
       <p>
         <a href="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml"><img src="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
         <img src="https://img.shields.io/badge/walk-181.513%20file%20in%201%2C4%20s-brightgreen" alt="181.513 file in 1,4 s" />
-        <img src="https://img.shields.io/badge/frontends-mfd--cli%200.8.0%20%C2%B7%20mfd--tui%200.2.1-blue" alt="mfd-cli 0.8.0 e mfd-tui 0.2.1" />
+        <img src="https://img.shields.io/badge/frontends-mfd--cli%200.9.0%20%C2%B7%20mfd--tui%200.2.1-blue" alt="mfd-cli 0.9.0 e mfd-tui 0.2.1" />
         <img src="https://img.shields.io/badge/lingue-7-blue" alt="sette lingue" />
         <img src="https://img.shields.io/badge/licenza-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
@@ -26,46 +26,38 @@
 
 ---
 
-L'idea nasce da un fastidio concreto. Le memorie costano care e un
-disco piu' capiente non e' un'opzione: il disco resta pieno, e i tool
-piu' noti non rispondono ne' in un colpo d'occhio ne' con un comando
-diretto. Cosi' me lo sono scritto. Potevo farlo in C# — il mio
-linguaggio, da vent'anni — ma ho scelto Rust, affiancato da GLM 5.3,
-open weight, on-premise. Ha funzionato: i file enormi dimenticati sono
-emersi subito — backup, macchine virtuali abbandonate — e un buon 30%
-di dati vecchi e' finito nel mirino.
+L'idea nasce da un fastidio: il disco sempre pieno, e nessun tool che
+dicesse in un colpo d'occhio dove era finito lo spazio. Cosi' me lo
+sono scritto. Potevo farlo in C#, il mio linguaggio da vent'anni: ho
+scelto Rust, affiancato da GLM 5.3 (open weight, on-premise). Ha
+funzionato — i file enormi dimenticati sono saltati fuori subito
+(backup, macchine virtuali abbandonate) e un bel 30% di dati vecchi
+e' finito nel mirino.
 
-**Manto.FreeDisk** e' un analizzatore di spazio disco costruito attorno a
-una domanda sola: *dove sono finiti i miei gigabyte*. La scansione usa
-un thread per core e, su Windows, legge le dimensioni dei file mentre
-enumera le cartelle — senza chiederle una a una. La risposta si legge o
-si naviga: `mfd-cli` la da' in un comando (la mappa delle cartelle e la
-classifica dei file piu' grossi, insieme), `mfd-tui` fa girare l'albero
-a frecce. Sette lingue, e una fotografia JSON per confrontare due
-momenti con un diff.
+**Manto.FreeDisk** risponde a una domanda sola: *dove sono finiti i
+miei gigabyte*. Uno scanner veloce — un thread per core, le
+dimensioni lette mentre enumera — e due modi di guardare la risposta:
+`mfd-cli` la stampa (la mappa delle cartelle e i file piu' grossi,
+insieme), `mfd-tui` la fa navigare a frecce. Sette lingue, e una
+fotografia JSON per confrontare due momenti con un diff.
 
-Con il progetto e' nato anche un esperimento di misura. Che Node sia
-lento e beva RAM, che Rust sia veloce: cose che tutti danno per scontate
-e nessuno quantifica. Allora il cuore dello scanner — il walker che
-legge l'albero — e' stato scritto tre volte: in Node (il prototipo con
-cui tutto e' iniziato, oggi congelato), in Rust e in C#. Stesse
-cartelle, stesso protocollo, totali incrociati:
+Poi c'era una domanda da fare a me stesso: **quanto vale davvero
+Rust?** Dicono sia piu' veloce e beva meno memoria degli altri — ma
+quanto, esattamente? Per saperlo ho scritto lo stesso scanner tre
+volte, in Node, Rust e C#, e l'ho cronometrato sugli stessi file,
+con gli stessi totali:
 
-> Il luogo comune e' caduto per meta'. Sulla CPU Rust e C# sono
-> appaiati — il C# JIT davanti di un capello, in questa sessione — e
-> Node resta ~6 volte dietro.
+> La velocita' e' una sorpresa: Rust e C# sono appaiati — Node resta
+> ~6 volte dietro. La memoria e' il verdetto: Rust percorre l'albero
+> con 12,5 MB, C# con ~59, Node con ~251. Un quinto. Un ventesimo.
 >
-> Sulla RAM il luogo comune regge, ma adesso ha un numero: Rust percorre
-> l'albero con 12,5 MB, il walker C# con ~59, Node con ~251. Un quinto.
-> Un ventesimo.
->
-> Per questo, e perche' c'e' un prodotto da spedire, Rust e' il motore:
-> il gemello C# resta una proof of concept — il walker, senza CLI e TUI
-> attorno, la sua promozione e' il prossimo capitolo del roadmap — e
-> Node resta il prototipo della fase 0. Una macchina, una sessione, gli
-> output grezzi in [bench/results/](bench/results); il metodo in
-> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nulla e' dato per ovvio: si
-> misura.
+> Per questo Rust e' il motore. C# resta una proof of concept (il
+> suo sviluppo e' il prossimo capitolo del
+> [roadmap](docs/ROADMAP.md)), Node il prototipo con cui tutto e'
+> iniziato. Una macchina, una sessione, gli output grezzi in
+> [bench/results/](bench/results); il metodo in
+> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nulla e' dato per ovvio:
+> si misura.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
@@ -89,9 +81,9 @@ Niente da installare: estrai ed esegui — e basta. I due binari
 funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
 le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
-[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-win-x64.zip)
-[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-linux-x64.tar.gz)
-[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0-mantofreedisk-0.8.0-macos-aarch64.tar.gz)
+[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-win-x64.zip)
+[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-linux-x64.tar.gz)
+[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0-mantofreedisk-0.9.0-macos-aarch64.tar.gz)
 
 **Opzionale**: se vuoi i comandi disponibili ovunque (non solo dalla
 cartella estratta), lancia `install.ps1` (Windows) o `install.sh`
@@ -190,12 +182,9 @@ dettaglio:
 
 ![mfd-tui: l'albero aperto e il cursore in lettura nel dettaglio](docs/img/tui-tree.png)
 
-La finestra report (`Shift+R`/F9) mette in classifica i file piu' grossi
-della cartella corrente — il top si cambia con le cifre:
-
-![mfd-tui: la finestra report](docs/img/tui-report.png)
-
-E F1 documenta tutta la tastiera in una finestra sola:
+Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
+file piu' grossi) e F1 documenta tutta la tastiera in una finestra
+sola:
 
 ![mfd-tui: l'aiuto F1](docs/img/tui-help.png)
 
@@ -205,13 +194,9 @@ flash dice dove:
 ![mfd-tui: F2 salva le impostazioni](docs/img/tui-save.png)
 
 `Shift+P` / F11 stampa la fotografia JSON di quello che stai guardando —
-dalla schermata principale o dalla finestra report, il flash dice il file:
+il flash dice il file:
 
 ![mfd-tui: la stampa dalla schermata principale](docs/img/tui-print-home.png)
-
-La stessa stampa da dentro la finestra report:
-
-![mfd-tui: la stampa dalla finestra report](docs/img/tui-print-report.png)
 
 Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
 Console (il default), CLI:

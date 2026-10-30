@@ -34,7 +34,6 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             match &app.mode {
                 Mode::Help => draw_help(f, app, &t),
                 Mode::Warnings => draw_warnings(f, app, &t),
-                Mode::Report => draw_report(f, app, &t),
                 Mode::SortMenu => draw_sort_menu(f, app, &t),
                 Mode::ThemeMenu => draw_theme_menu(f, app, &t),
                 Mode::FilterPrompt => draw_filter_prompt(f, app, &t),
@@ -349,10 +348,15 @@ fn draw_main(f: &mut Frame, app: &mut App) {
         Constraint::Min(3),    // albero | dettaglio
     ];
     // il pannello della classifica vuole il suo spazio: su un terminale
-    // basso (meno di 24 righe) non ci sta senza schiacciare l'albero, e
-    // la navigazione viene prima — il pannello aspetta uno schermo vero
-    let want_pane = app.view.show_report && area.height >= 24;
+    // basso non ci sta senza schiacciare l'albero, e la navigazione
+    // viene prima — il pannello aspetta uno schermo vero
+    let want_pane = app.view.show_report && area.height >= 25;
     if want_pane {
+        // il respiro prima della classifica: lo stesso che tiene l'albero
+        // dal dettaglio. Una riga sola, perche' le celle sono piu' alte
+        // che larghe: una riga vuota pesa agli occhi quanto il buco di
+        // tre colonne tra i due box sopra
+        cons.push(Constraint::Length(1));
         cons.push(Constraint::Length(14)); // la classifica (bordi, intestazione, separatore, 10 righe)
     }
     cons.push(Constraint::Length(1)); // lo status transitorio
@@ -377,12 +381,24 @@ fn draw_main(f: &mut Frame, app: &mut App) {
     };
     f.render_widget(Paragraph::new(status).style(t.screen), chunks[chunks.len() - 2]);
     f.render_widget(Paragraph::new(footer(t, &app.cat)).style(t.screen), chunks[chunks.len() - 1]);
-    let cols = Layout::horizontal([Constraint::Percentage(56), Constraint::Percentage(44)])
-        .split(chunks[1]);
+    // tre zone in orizzontale: l'albero, il respiro, il dettaglio. I due
+    // box non si toccano mai (un muro accanto a un muro si leggerebbe
+    // come un muro solo, doppio) e pesano UGUALE: due Fill gemelli si
+    // dividono cio' che resta dopo il respiro, meta' e meta' esatte a
+    // qualunque larghezza. Il respiro e' di due colonne: le celle sono
+    // circa il doppio piu' alte che larghe, due colonne pesano come la
+    // riga vuota che sta sopra la classifica — lo stesso vuoto ovunque
+    let cols = Layout::horizontal([
+        Constraint::Fill(1),
+        Constraint::Length(2),
+        Constraint::Fill(1),
+    ])
+    .split(chunks[1]);
     draw_list(f, app, cols[0]);
-    draw_preview(f, app, cols[1]);
+    draw_preview(f, app, cols[2]);
     if want_pane {
-        draw_classifica(f, app, chunks[2]);
+        // chunks: [fascia, pannelli, respiro, classifica, status, footer]
+        draw_classifica(f, app, chunks[3]);
     }
 }
 
@@ -476,14 +492,15 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     } else {
         t.border_idle
     };
-    // la geometria: le colonne della griglia (SIZE 10, % 4, BARRA 24, NOME
-    // il resto) con un muro tra l'una e l'altra. Su un terminale stretto
-    // la barra si mette via da sola: il nome vale piu' della barra (la %
-    // resta a dire la proporzione)
+    // la geometria: le colonne numeriche (SIZE 10, % 4, BARRA 24) coi
+    // loro muri; i nomi vivono nello spazio aperto oltre l'ultimo muro,
+    // fino al bordo pieno del pannello. Su un terminale stretto la barra
+    // si mette via da sola: il nome vale piu' della barra (la % resta a
+    // dire la proporzione)
     let inner_w = (area.width as usize).saturating_sub(2);
     let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + 24 + 1 + 8;
-    let name_w = inner_w.saturating_sub(if show_bar { 44 } else { 20 });
-    // la finestra delle righe: muro, intestazione, separatore, righe, muro
+    let name_w = inner_w.saturating_sub(if show_bar { 41 } else { 16 });
+    // la finestra delle righe: muro, intestazione, gradino, righe, muro
     let vis = (area.height as usize).saturating_sub(4);
     let top = scroll_top(app.sel, vis);
     let sopra = top > 0;
@@ -521,9 +538,10 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     }
     spans.push(Span::styled("┐", border));
     lines.push(spans.into());
-    // --- l'intestazione: le etichette gialle CENTRATE nelle loro colonne
-    // (la size sta a destra come nella griglia, ma l'etichetta galleggia:
-    // e' una didascalia, non un allineamento)
+    // --- l'intestazione: le etichette numeriche centrate nelle loro
+    // colonne (sono didascalie, non allineamenti), la NOME a sinistra
+    // come i suoi dati — su una colonna larga un'etichetta centrata
+    // galleggerebbe staccata
     let mut hdr: Vec<(String, Style)> = vec![
         (fmt_c(app.cat.t("lista.dim"), 10), t.header),
         ("│".into(), border),
@@ -531,10 +549,16 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
         ("│".into(), border),
     ];
     if show_bar {
-        hdr.push((fmt_c(app.cat.t("lista.barra"), 24), t.header));
+        // la barra non ha etichetta: e' la sua stessa etichetta — la
+        // grammatica della famiglia (la CLI non la etichetta, la cella
+        // resta muta tra i suoi muri, come ogni colonna grafica che sia)
+        hdr.push((" ".repeat(24), t.header));
         hdr.push(("│".into(), border));
     }
-    hdr.push((fmt_c(app.cat.t("lista.nome"), name_w), t.header));
+    hdr.push((
+        trunc(&format!("  {}", app.cat.t("lista.nome")), name_w),
+        t.header,
+    ));
     let mut spans: Vec<Span> = vec![Span::styled("│", border)];
     spans.extend(hdr.into_iter().map(|(s, st)| Span::styled(s, st)));
     spans.push(Span::styled("│", border));
@@ -588,20 +612,38 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
             // fascia dichiara il parent e la TOTALE ne tiene i numeri
             let pct = if disp_total > 0 { r.size * 100 / disp_total } else { 0 };
             let mark = if i == app.sel { ">" } else { " " };
+            // la riga radice veste da TOTALE: la taglia in tinta titolo,
+            // % e barra VUOTE (non corre con i figli — la grammatica della
+            // TOTALE della CLI), il nome e' il punto della shell: dove sei
+            let (data_st, pct_cell, bar_cell, name_cell) = if r.is_root {
+                (
+                    t.title,
+                    " ".repeat(4),
+                    " ".repeat(24),
+                    // il punto sta dove partono i nomi (mark + toggle): la
+                    // colonna ha un bordo sinistro pulito, il punto non
+                    // galleggia due colonne piu' in la'
+                    format!("{}  .", mark),
+                )
+            } else {
+                (
+                    t.fg,
+                    fmt_r(&format!("{}%", pct), 4),
+                    bar24(r.size, disp_total),
+                    format!("{}{}{}{}\\", mark, indent, toggle, name),
+                )
+            };
             let mut parts: Vec<(String, Style)> = vec![
-                (fmt_r(&fmt_bytes(r.size), 10), t.fg),
+                (fmt_r(&fmt_bytes(r.size), 10), data_st),
                 ("│".into(), border),
-                (fmt_r(&format!("{}%", pct), 4), t.fg),
+                (pct_cell, data_st),
                 ("│".into(), border),
             ];
             if show_bar {
-                parts.push((bar24(r.size, disp_total), t.bar));
+                parts.push((bar_cell, if r.is_root { t.title } else { t.bar }));
                 parts.push(("│".into(), border));
             }
-            parts.push((
-                trunc(&format!("{}{}{}{}\\", mark, indent, toggle, name), name_w),
-                t.fg,
-            ));
+            parts.push((trunc(&name_cell, name_w), data_st));
             let mut spans: Vec<Span> = vec![Span::styled("│", border)];
             spans.extend(parts.into_iter().map(|(s, st)| Span::styled(s, st)));
             spans.push(Span::styled("│", border));
@@ -717,7 +759,14 @@ fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
     // parente del ramo a destra — la classifica segue la selezione
     let base = app.selected_id().unwrap_or(app.current);
     let parente = tree.path_of(base).display().to_string();
-    let titolo = app.cat.tf("cli.top_files", &["10"]);
+    // il titolo dice il taglio CHIESTO: le cifre della navigazione lo
+    // riscrivono al volo (25 file, 100...) e il singolare ha la sua parola
+    let n_str = app.report_n.to_string();
+    let titolo = if app.report_n == 1 {
+        app.cat.t("cli.top_file").to_string()
+    } else {
+        app.cat.tf("cli.top_files", &[&n_str])
+    };
     let destro = format!(" {} ", shorten(&parente, path_w / 3));
     let mid = path_w.saturating_sub(titolo.chars().count() + destro.chars().count());
     let lpad = mid / 2;
@@ -817,8 +866,18 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     let t = &app.theme;
     let Some(tree) = app.tree.clone() else { return };
     let sel_name = app
-        .selected_id()
-        .map(|id| tree.name(id).to_string_lossy().into_owned())
+        .list
+        .get(app.sel)
+        .map(|r| {
+            // la riga radice si chiama punto, come nel disegno: il nome
+            // del nodo radice e' una stringa vuota e il titolo non può
+            // restare muto
+            if r.is_root {
+                ".".to_string()
+            } else {
+                tree.name(r.id).to_string_lossy().into_owned()
+            }
+        })
         .unwrap_or_else(|| "-".to_string());
     // il bordo dice dov'e' il cursore: col cursore a destra si scorre il
     // dettaglio in lettura, l'albero resta il posto dove si naviga
@@ -1145,81 +1204,6 @@ fn render_warning(w: &Warning, cat: &Catalog) -> String {
     format!("{}: {}", what, w.message)
 }
 
-/// La finestra del report (r o F9): i file piu' grossi della cartella
-/// dove si sta — il sottoalbero di current, radice compresa — perche' un
-/// report fermo sulla radice dello scan direbbe sempre la stessa cosa:
-/// e' il report che segue la navigazione. La riga e' quella di -big della
-/// CLI (mfd-core top_files_under, nessuna logica duplicata): dimensione e
-/// full path, piu' il numero del ranking e % e barra sul totale della
-/// cartella (la stessa regola del titolo della lista). Il top si cambia
-/// in finestra: le cifre lo riscrivono, + e - lo spostano di dieci. La
-/// lente vale anche qui: col filtro attivo contano solo i file che
-/// matchano (dichiarato in finestra), e la barra segue il g dei pannelli.
-fn draw_report(f: &mut Frame, app: &App, t: &Theme) {
-    let Some(tree) = app.tree.clone() else { return };
-    // il denominatore di % e barre: il totale della cartella corrente
-    // attraverso la lente, la stessa regola del titolo della lista
-    let total = match &app.view.filter {
-        Some(fl) => tree.subtree_match(app.current, fl).0,
-        None => tree.metrics(app.current).bytes,
-    };
-    let n = app.report.len();
-    // il titolo dice il taglio chiesto e DOVE si sta: il path lungo si
-    // taglia in testa, mai in coda (la parte profonda identifica), e i
-    // 76 sono la larghezza interna della finestra (78 - 2)
-    let pre = app.cat.tf("report.titolo", &[&group(app.report_n as i64)]);
-    let budget = 76usize.saturating_sub(pre.chars().count());
-    let title = format!("{}{}", pre, fit_path(&tree.path_of(app.current), budget));
-    let inner = window(f, t, &title, 78, 60);
-    let mut lines: Vec<Line> = Vec::new();
-    if n == 0 {
-        // succede in una cartella di sole sotto-cartelle, o con una lente
-        // senza match: la finestra lo dice senza ambiguita'
-        let msg = if app.view.filter.is_some() {
-            app.cat.t("report.vuoto_fil")
-        } else {
-            app.cat.t("report.vuoto")
-        };
-        lines.push(Line::from(msg.to_string()).style(t.fg));
-    } else {
-        if let Some(fl) = &app.view.filter {
-            lines.push(
-                Line::from(format!("{}: {}", app.cat.t("lens.fil"), fl.display()))
-                    .style(t.hint),
-            );
-            lines.push(Line::from(""));
-        }
-        let show_bar = app.view.show_bar;
-        // la riga di -big con davanti il ranking e in mezzo % e barra: il
-        // path deve stare in quello che resta, e se non ci sta si sacrifica
-        // la testa (mai il nome del file, che e' la parte per cui si guarda)
-        let chrome = if show_bar { 47 } else { 22 };
-        let avail = (inner.width as usize).saturating_sub(chrome);
-        for (i, (s, p)) in app.report.iter().enumerate().skip(app.report_top) {
-            let pct = if total > 0 {
-                format!("{}%", ((*s as f64 / total as f64) * 100.0).round() as i64)
-            } else {
-                "0%".to_string()
-            };
-            let mut spans = vec![
-                Span::styled(format!("{:>2}. ", i + 1), t.key),
-                Span::styled(fmt_r(&fmt_bytes(*s), 10), t.fg),
-                Span::raw("  "),
-                Span::styled(fmt_r(&pct, 4), t.fg),
-            ];
-            if show_bar {
-                spans.push(Span::raw(" "));
-                spans.push(Span::styled(bar24(*s, total), t.bar));
-            }
-            spans.push(Span::raw("  "));
-            spans.push(Span::styled(fit_path(p, avail), t.fg));
-            lines.push(Line::from(spans));
-        }
-    }
-    lines.push(Line::from(""));
-    lines.push(Line::from(app.cat.t("report.chiudi").to_string()).style(t.hint));
-    f.render_widget(Paragraph::new(lines).style(t.dialog), inner);
-}
 
 /// Il path del report nella larghezza che resta: se non ci sta si tiene la
 /// coda (il nome del file e' la parte per cui si guarda) e si dichiara il
@@ -1439,6 +1423,33 @@ mod tests {
         out
     }
 
+    /// Lo specchio: stampa la schermata intera su file per leggerla con
+    /// occhi propri prima di farla guardare a chiunque (`cargo test
+    /// debug_dump -- --ignored`). Ignorato dalla CI: e' un attrezzo
+    /// diagnostico, non un contratto
+    #[test]
+    #[ignore]
+    fn debug_dump_schermata() {
+        let fx = fixture("dump");
+        let tree =
+            Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
+        let mut app = App::with_tree(fx.clone(), tree);
+        // 123x42: la larghezza del terminale dell'utente
+        let mut terminal = Terminal::new(TestBackend::new(123, 42)).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let buf = terminal.backend().buffer();
+        let mut out = String::new();
+        for y in 0..42 {
+            for x in 0..123 {
+                out.push_str(buf[(x, y)].symbol());
+            }
+            out.push('\n');
+        }
+        let p = std::env::temp_dir().join("mfd-schermata.txt");
+        std::fs::write(&p, out).unwrap();
+        let _ = std::fs::remove_dir_all(&fx);
+    }
+
     #[test]
     fn il_dettaglio_mostra_totali_e_piu_di_una_riga() {
         let fx = fixture("righe");
@@ -1449,16 +1460,17 @@ mod tests {
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
         // i totali in cima al DETTAGLIO restano visibili: la riga della lente
-        // (ord/fil) sta sulla riga sotto, non sopra di loro
-        assert!(screen.contains("DETTAGLIO: alpha"), "titolo: {screen:?}");
+        // (ord/fil) sta sulla riga sotto, non sopra di loro. Selezione di
+        // default: la riga radice — il dettaglio racconta la cartella
+        assert!(screen.contains("DETTAGLIO: ."), "titolo: {screen:?}");
         assert!(
-            screen.contains("2,9 KB - 2 file - 0 cartelle"),
+            screen.contains("3,0 KB - 3 file - 3 cartelle"),
             "totali: {screen:?}"
         );
         // il dettaglio elenca TUTTE le sue righe: il bug ne mostrava una sola
         // (la tabella finiva nell'area da 1 riga riservata al separatore)
-        assert!(screen.contains("data.dat"), "prima riga: {screen:?}");
-        assert!(screen.contains("lib.dll"), "seconda riga: {screen:?}");
+        assert!(screen.contains("alpha\\"), "prima riga: {screen:?}");
+        assert!(screen.contains("beta\\"), "seconda riga: {screen:?}");
         let _ = std::fs::remove_dir_all(&fx);
     }
 
@@ -1532,11 +1544,14 @@ mod tests {
             },
         ));
         let mut app = App::with_tree(dir.clone(), tree);
+        app.on_key(key(KeyCode::Down));
         app.on_key(key(KeyCode::Down)); // gamma
         app.on_key(key(KeyCode::Char('X'))); // apre il ramo
         let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
+        // la riga radice in testa, col suo punto
+        assert!(screen.contains(" ."), "radice: {screen:?}");
         // il ramo chiuso col + (beta ha una sotto-cartella), quello aperto
         // col - sulla selezione (gamma: freccia + trattino), il figlio
         // indentato (x, foglia dell'albero: due spazi, niente simbolo)
@@ -1556,8 +1571,7 @@ mod tests {
             Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
         // TAB porta in lettura anche con l'albero chiuso
-        app.on_key(key(KeyCode::Down)); // beta
-        app.on_key(key(KeyCode::Up)); // alpha, di nuovo: dettaglio a 2 righe
+        app.on_key(key(KeyCode::Down)); // alpha: dettaglio a 2 righe
         app.on_key(key(KeyCode::Tab)); // il cursore passa al dettaglio
         app.on_key(key(KeyCode::Down)); // seconda riga: lib.dll
         let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
@@ -1571,27 +1585,23 @@ mod tests {
     }
 
     #[test]
-    fn il_report_disegna_ranking_taglia_e_nome_dei_big() {
+    fn la_classifica_disegna_taglia_e_nome_dei_big() {
         let fx = fixture("report-render");
         let tree =
             Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
-        app.on_key(key(KeyCode::Char('R'))); // apre il report
+        // la riga radice e' selezionata: la classifica in fondo e' il
+        // report dell'intera cartella — il globale, alla radice dello scan
         let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
-        // il titolo dice il taglio chiesto (10 di default) e DOVE: il nome
-        // della cartella corrente, anche quando il path si taglia in testa
-        assert!(screen.contains("REPORT: i 10 file piu' grossi di "), "titolo: {screen:?}");
-        assert!(screen.contains("report-render"), "dove: {screen:?}");
-        // ...e la prima riga e' il piu' grande: ranking, taglia e nome (il
-        // path lungo si taglia in testa, ma il nome del file resta visibile)
-        assert!(screen.contains(" 1. "), "ranking: {screen:?}");
+        // il titolo dichiara il taglio chiesto (10 di fabbrica)...
+        assert!(screen.contains("I 10 FILE PIU' GRANDI"), "titolo: {screen:?}");
+        // ...e le righe sono in ordine: il piu' grande in testa
         assert!(screen.contains("2,0 KB"), "taglia: {screen:?}");
-        assert!(screen.contains("data.dat"), "nome: {screen:?}");
-        assert!(screen.contains("cifre o + e - cambiano il top"), "tasti: {screen:?}");
-        assert!(screen.contains("ESC o Shift+R chiude"), "chiudi: {screen:?}");
-        // e il footer dichiara il nuovo tasto funzione
+        assert!(screen.contains("data.dat"), "primo: {screen:?}");
+        assert!(screen.contains("lib.dll"), "secondo: {screen:?}");
+        // e il footer dichiara il tasto che la nasconde
         assert!(screen.contains("Report"), "footer: {screen:?}");
         let _ = std::fs::remove_dir_all(&fx);
     }
@@ -1614,7 +1624,7 @@ mod tests {
         }
         let tree = Arc::new(scan(&dir, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(dir.clone(), tree);
-        app.sel = 14; // l'ultima riga: la piu' piccola, in fondo all'ordine
+        app.sel = 15; // l'ultima riga (f01): la radice ha preso la prima
         app.refresh();
         let mut terminal = Terminal::new(TestBackend::new(120, 12)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
@@ -1701,7 +1711,8 @@ mod tests {
 
     #[test]
     fn le_frecce_dello_scroll_si_vedono_sul_bordo() {
-        // dodici cartelle in un terminale basso: il pannello SX mostra la
+        // dodici cartelle in un terminale basso (25 righe: il minimo che
+        // tiene la classifica col suo respiro): il pannello SX mostra la
         // ▼ (sotto c'e' altro), e dopo un po' di frecce compare la ▲ —
         // una lista lunga non sembra finita dove il pannello finisce
         let dir = std::env::temp_dir().join(format!(
@@ -1716,7 +1727,7 @@ mod tests {
         }
         let tree = Arc::new(scan(&dir, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(dir.clone(), tree);
-        let mut terminal = Terminal::new(TestBackend::new(120, 24)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(120, 25)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
         assert!(screen.contains('▼'), "freccia giu' in fondo: {screen:?}");

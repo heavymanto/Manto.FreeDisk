@@ -2,7 +2,7 @@
 
 Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
-## [Unreleased]
+## [0.9.0] - 2026-10-30
 
 ### Added
 - **The TUI wears the CLI's clothes**: the tree panel is drawn by hand,
@@ -58,6 +58,24 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   the visible window is built. On a big folder (WinSxS: ~1.800 children)
   the idle redraw ate half a core — 45% CPU standing still; now it sits
   at ~1,5%.
+
+### Changed
+- **One report, no window**: the report window (`Shift+R`) is gone. The
+  bottom ranking is the report — and it follows the selection. The root
+  row `.` (the current folder, pinned on top of the tree, dressed like
+  the CLI's TOTAL: size in title color, % and bar empty, named after
+  the shell's here) is its handle: selected, the ranking is the whole
+  folder — the global one, at the scan root. `TAB` walks the ranking
+  too, digits rewrite its top anywhere in the navigation, and the
+  wheel/click on it move its cursor (the status line says the full path
+  of the pointed row). The report JSON is the CLI's job (`-report
+  -json`); the TUI prints the view.
+- **The panels breathe**: two equal boxes (twin `Fill`s), 2 blank
+  columns between them and 1 blank row before the ranking — the same
+  void in every direction. The ranking panel needs a 25-row terminal
+  now (was 24): below that, it waits.
+- **The bar column has no label** — like the CLI: a graphic column
+  speaks for itself. The NAME label sits left, over its data.
 
 ### Added
 - **Issue templates**: three doors for the public — bug (command,

@@ -12,7 +12,7 @@
       <p>
         <a href="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml"><img src="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
         <img src="https://img.shields.io/badge/walk-181.513%20files%20in%201%2C4%20s-brightgreen" alt="181.513 files in 1,4 s" />
-        <img src="https://img.shields.io/badge/frontends-mfd--cli%200.8.0%20%C2%B7%20mfd--tui%200.2.1-blue" alt="mfd-cli 0.8.0 and mfd-tui 0.2.1" />
+        <img src="https://img.shields.io/badge/frontends-mfd--cli%200.9.0%20%C2%B7%20mfd--tui%200.2.1-blue" alt="mfd-cli 0.9.0 and mfd-tui 0.2.1" />
         <img src="https://img.shields.io/badge/languages-7-blue" alt="seven languages" />
         <img src="https://img.shields.io/badge/license-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
@@ -26,42 +26,34 @@
 
 ---
 
-The idea comes from a concrete annoyance. Storage costs dearly and a
-bigger drive is not an option: the disk stays full, and the best-known
-tools answer neither at a glance nor with one direct command. So I
-wrote my own. I could have done it in C# — my language, for twenty
-years — but I chose Rust, helped by GLM 5.3, open weight, on-premise.
-It worked: huge forgotten files surfaced at once — backups, abandoned
-virtual machines — and a good 30% of stale data ended up in the
-crosshairs.
+The idea comes from an annoyance: the disk always full, and no tool
+that said at a glance where the space had gone. So I wrote my own. I
+could have done it in C#, my language for twenty years: I chose Rust,
+helped by GLM 5.3 (open weight, on-premise). It worked — huge
+forgotten files surfaced at once (backups, abandoned virtual machines)
+and a good 30% of stale data ended up in the crosshairs.
 
-**Manto.FreeDisk** is a disk-space analyzer built around one question:
-*where did my gigabytes go*. The scan uses one thread per core and, on
-Windows, reads file sizes while it enumerates the folders — without
-asking for them one by one. The answer is read or navigated: `mfd-cli`
-gives it in one command (the folder map and the biggest-files ranking,
-together), `mfd-tui` runs the tree with the arrow keys. Seven
-languages, and a JSON picture to compare two moments with a diff.
+**Manto.FreeDisk** answers one question: *where did my gigabytes go*.
+A fast scanner — one thread per core, sizes read while it enumerates —
+and two ways to read the answer: `mfd-cli` prints it (the folder map
+and the biggest files, together), `mfd-tui` runs the tree with the
+arrow keys. Seven languages, and a JSON picture to compare two
+moments with a diff.
 
-The project was born with a measurement attached. That Node is slow and
-drinks RAM, that Rust is fast: things everyone takes for granted and
-nobody quantifies. So the heart of the scanner — the walker that reads
-the tree — was written three times: in Node (the prototype it all
-started with, now frozen), in Rust, and in C#. Same folders, same
-protocol, cross-checked totals:
+Then there was a question I had to ask myself: **how much is Rust
+really worth?** They say it's faster and drinks less memory than the
+others — but how much, exactly? To find out I wrote the same scanner
+three times, in Node, Rust and C#, and timed it on the same files,
+with the same totals:
 
-> The cliché fell halfway. On CPU, Rust and C# are tied — the C# JIT a
-> hair ahead, in this session — and Node sits ~6× behind.
+> Speed is the surprise: Rust and C# are tied — Node sits ~6× behind.
+> Memory is the verdict: Rust walks the tree on 12,5 MB, C# on ~59,
+> Node on ~251. One fifth. One twentieth.
 >
-> On RAM the cliché holds, but now it has a number: Rust walks the tree
-> on 12,5 MB, the C# walker on ~59, Node on ~251. One fifth. One
-> twentieth.
->
-> For that, and because there is a product to ship, Rust is the engine:
-> the C# twin stays a proof of concept — the walker, without the CLI
-> and the TUI around it, its promotion is the roadmap's next chapter —
-> and Node stays the phase-0 prototype. One machine, one session, the
-> raw outputs in [bench/results/](bench/results); the method in
+> That's why Rust is the engine. C# stays a proof of concept (its
+> development is the roadmap's next chapter), Node the prototype it
+> all started with. One machine, one session, the raw outputs in
+> [bench/results/](bench/results); the method in
 > [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nothing is taken for
 > granted: it gets measured.
 
@@ -87,9 +79,9 @@ Nothing to install: extract and run — that's it. Both binaries work
 right away, in portable mode: English is embedded, and the other six
 languages are found in `lang/` next to the binaries.
 
-[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-win-x64.zip)
-[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-linux-x64.tar.gz)
-[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.8.0/mantofreedisk-0.8.0-macos-aarch64.tar.gz)
+[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-win-x64.zip)
+[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-linux-x64.tar.gz)
+[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-macos-aarch64.tar.gz)
 
 **Optional**: if you want the commands available everywhere (not just
 from the extracted folder), run `install.ps1` (Windows) or `install.sh`
@@ -187,12 +179,8 @@ detail:
 
 ![mfd-tui: the tree open and the reading cursor in the detail](docs/img/tui-tree.png)
 
-The report window (`Shift+R` / F9) ranks the biggest files of the current
-folder — the top is editable with the digits:
-
-![mfd-tui: the report window](docs/img/tui-report.png)
-
-And `F1` documents the whole keyboard in one window:
+Digits rewrite the ranking's cut on the fly (`25` = the 25 biggest
+files), and `F1` documents the whole keyboard in one window:
 
 ![mfd-tui: the F1 help](docs/img/tui-help.png)
 
@@ -201,14 +189,10 @@ says where:
 
 ![mfd-tui: F2 saves the settings](docs/img/tui-save.png)
 
-`Shift+P` / F11 prints the JSON picture of what you are looking at — the
-main screen or the report window, the flash says the file:
+`Shift+P` / F11 prints the JSON picture of what you are looking at —
+the flash says the file:
 
 ![mfd-tui: the print from the main screen](docs/img/tui-print-home.png)
-
-The same print from inside the report window:
-
-![mfd-tui: the print from the report window](docs/img/tui-print-report.png)
 
 Four themes, chosen with `Shift+T` / F3 — night blue, Debian installer,
 console (the default), CLI:
@@ -239,7 +223,6 @@ Every picture comes from the same serializer, promoted into the engine
 | the whole tree | every folder, every file — what a diff needs | `mfd-cli -d a -json <folder>` |
 | the report | the N biggest files, ranking and full paths | `mfd-cli -big N -json <folder>` |
 | the view | both TUI panes, as you left them | `mfd-tui`, `Shift+P` |
-| the report window | the open report, top and big files | `Shift+R`, then `Shift+P` |
 
 A real print — the seven-file demo folder, branches closed, the selection
 on `alpha` (`mfd-stampa-demo-tui.json`):
