@@ -36,29 +36,34 @@ virtual machines — and a good 30% of stale data ended up in the
 crosshairs.
 
 **Manto.FreeDisk** is a disk-space analyzer built around one question:
-*where did my gigabytes go*. It scans a tree with one worker per core,
-reads file sizes straight from directory enumeration (no per-file `stat`
-on Windows), and turns them into a colored grid, a ranking of the biggest
-files, a navigable tree — or a JSON picture machines can diff.
+*where did my gigabytes go*. The scan uses one thread per core and, on
+Windows, reads file sizes while it enumerates the folders — without
+asking for them one by one. The answer is read or navigated: `mfd-cli`
+gives it in one command (the folder map and the biggest-files ranking,
+together), `mfd-tui` runs the tree with the arrow keys. Seven
+languages, and a JSON picture to compare two moments with a diff.
 
 The project was born with a measurement attached. That Node is slow and
 drinks RAM, that Rust is fast: things everyone takes for granted and
-nobody quantifies. So the same parallel walker was written three times
-— Node (the phase-0 prototype, now frozen), Rust, and a C# proof of
-concept — same folders, same protocol, cross-checked totals:
+nobody quantifies. So the heart of the scanner — the walker that reads
+the tree — was written three times: in Node (the prototype it all
+started with, now frozen), in Rust, and in C#. Same folders, same
+protocol, cross-checked totals:
 
-> The cliché fell halfway. On CPU, Rust and C# are tied — this session
-> even has the C# JIT a hair ahead — and Node sits ~6× behind. On RAM
-> it holds, but now it has a magnitude: Rust walks the tree on 12,5 MB,
-> the C# walker on ~59, Node on ~251 — not "less": one fifth, one
-> twentieth. That, and a product to ship, is why Rust is the engine;
-> the C# twin is a proof of concept today — the walker, measured,
-> without the CLI and the TUI around it: its promotion is the roadmap's
-> next chapter. Node stays frozen as the phase-0 prototype. One
-> machine, one session, the raw outputs in
-> [bench/results/](bench/results); the method in
-> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). The project's rule is all
-> there: nothing is taken for granted, everything gets measured.
+> The cliché fell halfway. On CPU, Rust and C# are tied — the C# JIT a
+> hair ahead, in this session — and Node sits ~6× behind.
+>
+> On RAM the cliché holds, but now it has a number: Rust walks the tree
+> on 12,5 MB, the C# walker on ~59, Node on ~251. One fifth. One
+> twentieth.
+>
+> For that, and because there is a product to ship, Rust is the engine:
+> the C# twin stays a proof of concept — the walker, without the CLI
+> and the TUI around it, its promotion is the roadmap's next chapter —
+> and Node stays the phase-0 prototype. One machine, one session, the
+> raw outputs in [bench/results/](bench/results); the method in
+> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nothing is taken for
+> granted: it gets measured.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5

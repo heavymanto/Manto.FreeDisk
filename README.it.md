@@ -36,33 +36,36 @@ emersi subito — backup, macchine virtuali abbandonate — e un buon 30%
 di dati vecchi e' finito nel mirino.
 
 **Manto.FreeDisk** e' un analizzatore di spazio disco costruito attorno a
-una domanda sola: *dove sono finiti i miei gigabyte*. Scansiona un albero
-con un worker per core, legge le dimensioni dei file direttamente dai dati
-di enumerazione delle cartelle (niente `stat` per file, su Windows), e li
-trasforma in una griglia colorata, una classifica dei file piu' grossi, un
-albero navigabile — o una fotografia JSON che le macchine sanno fare a
-diff.
+una domanda sola: *dove sono finiti i miei gigabyte*. La scansione usa
+un thread per core e, su Windows, legge le dimensioni dei file mentre
+enumera le cartelle — senza chiederle una a una. La risposta si legge o
+si naviga: `mfd-cli` la da' in un comando (la mappa delle cartelle e la
+classifica dei file piu' grossi, insieme), `mfd-tui` fa girare l'albero
+a frecce. Sette lingue, e una fotografia JSON per confrontare due
+momenti con un diff.
 
 Con il progetto e' nato anche un esperimento di misura. Che Node sia
-lento e beva RAM, che Rust sia veloce: cose che tutti danno per
-scontate e nessuno quantifica. Lo stesso walker parallelo, allora,
-scritto tre volte — Node (il prototipo della fase 0, oggi congelato),
-Rust e una proof of concept in C# — stesse cartelle, stesso protocollo,
-totali incrociati:
+lento e beva RAM, che Rust sia veloce: cose che tutti danno per scontate
+e nessuno quantifica. Allora il cuore dello scanner — il walker che
+legge l'albero — e' stato scritto tre volte: in Node (il prototipo con
+cui tutto e' iniziato, oggi congelato), in Rust e in C#. Stesse
+cartelle, stesso protocollo, totali incrociati:
 
 > Il luogo comune e' caduto per meta'. Sulla CPU Rust e C# sono
-> appaiati — questa sessione ha il C# JIT persino un capello davanti —
-> e Node resta ~6 volte dietro. Sulla RAM regge, ma adesso ha un
-> quanto: Rust percorre l'albero con 12,5 MB, il walker C# con ~59,
-> Node con ~251 — non "meno": un quinto, un ventesimo. Questo, e un
-> prodotto da spedire, e' il perche' Rust e' il motore; il gemello C#
-> oggi e' una proof of concept — il walker, misurato, senza la CLI e
-> la TUI attorno: la sua promozione e' il prossimo capitolo del
-> roadmap. Node resta congelato come prototipo della fase 0. Una
-> macchina, una sessione, gli output grezzi in
-> [bench/results/](bench/results); il metodo in
-> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). La regola del progetto e'
-> tutta qui': nulla e' dato per ovvio, si misura.
+> appaiati — il C# JIT davanti di un capello, in questa sessione — e
+> Node resta ~6 volte dietro.
+>
+> Sulla RAM il luogo comune regge, ma adesso ha un numero: Rust percorre
+> l'albero con 12,5 MB, il walker C# con ~59, Node con ~251. Un quinto.
+> Un ventesimo.
+>
+> Per questo, e perche' c'e' un prodotto da spedire, Rust e' il motore:
+> il gemello C# resta una proof of concept — il walker, senza CLI e TUI
+> attorno, la sua promozione e' il prossimo capitolo del roadmap — e
+> Node resta il prototipo della fase 0. Una macchina, una sessione, gli
+> output grezzi in [bench/results/](bench/results); il metodo in
+> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nulla e' dato per ovvio: si
+> misura.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
