@@ -6,11 +6,11 @@
 //! duplicazione voluta — il core non formatta, la forma e' dei frontend — ma
 //! la barra e' un marchio di prodotto e resta identica ovunque.
 
-use crate::app::{ord_key, scroll_top, App, Focus, HitRows, Hits, Mode, ORDERS};
+use crate::app::{ord_key, scroll_top, App, Focus, HitRows, Hits, Mode, ORDERS, PANE_ROWS};
 use crate::theme::{Theme, ThemeId};
 use mfd_core::lang::Catalog;
 use mfd_core::{Filter, Progress, Row as CoreRow, Tree, Warning, WarningKind};
-use ratatui::layout::{Alignment, Constraint, Layout, Rect};
+use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{
@@ -302,24 +302,123 @@ fn fmt_r(s: &str, w: usize) -> String {
     format!("{:>w$}", s, w = w)
 }
 
-/// La schermata principale: due pannelli (lista + anteprima), riga di stato
-/// transitoria e barra dei tasti funzione in fondo (sezione 4 del design).
+/// Stringa centrata in `w` colonne: la colonna SIZE della classifica la
+/// vuole cosi' — il numero galleggia tra i suoi muri, non sta aggrappato
+/// a destra come nella griglia (li' e' una colonna di allineamento, qui
+/// una lettura).
+fn fmt_c(s: &str, w: usize) -> String {
+    let cut: String = s.chars().take(w).collect();
+    format!("{:^w$}", cut, w = w)
+}
+
+/// Stringa troncata a `w` colonne tenendo la CODA (il nome sta in coda:
+/// e' la parte che identifica) — il contrario di fit_path, per i nomi
+/// dell'albero che crescono a sinistra con l'indentazione.
+fn trunc(s: &str, w: usize) -> String {
+    let n = s.chars().count();
+    if n <= w {
+        format!("{:<w$}", s, w = w)
+    } else if w <= 3 {
+        " ".repeat(w)
+    } else {
+        let tail: String = s.chars().skip(n + 3 - w).collect();
+        format!("...{}", tail)
+    }
+}
+
+/// Una freccia dello scroll dipinta sopra il bordo di un pannello: dice
+/// "qui si scorre" senza rubare una riga ai dati — gialla come le
+/// intestazioni, si vede da tre metri.
+fn paint_arrow(f: &mut Frame, x: u16, y: u16, c: &str, style: Style) {
+    if let Some(cell) = f.buffer_mut().cell_mut(Position::new(x, y)) {
+        cell.set_symbol(c).set_style(style);
+    }
+}
+
+/// La schermata principale: il quadro della CLI, vivo — la fascia del
+/// percorso in cima (dove si lavora, tutto largo), l'albero e il dettaglio
+/// in mezzo, la classifica in fondo (F9 la mostra e la nasconde). Le note
+/// stanno fuori dal quadro, come nella CLI: lo status transitorio e la
+/// barra dei tasti funzione chiudono lo schermo.
 fn draw_main(f: &mut Frame, app: &mut App) {
     let area = f.area();
     let t = &app.theme;
     paint_bg(f, area, t);
-    let chunks = Layout::vertical([Constraint::Min(3), Constraint::Length(1), Constraint::Length(1)])
-        .split(area);
+    let mut cons: Vec<Constraint> = vec![
+        Constraint::Length(1), // la fascia del percorso
+        Constraint::Min(3),    // albero | dettaglio
+    ];
+    // il pannello della classifica vuole il suo spazio: su un terminale
+    // basso (meno di 24 righe) non ci sta senza schiacciare l'albero, e
+    // la navigazione viene prima — il pannello aspetta uno schermo vero
+    let want_pane = app.view.show_report && area.height >= 24;
+    if want_pane {
+        cons.push(Constraint::Length(14)); // la classifica (bordi, intestazione, separatore, 10 righe)
+    }
+    cons.push(Constraint::Length(1)); // lo status transitorio
+    cons.push(Constraint::Length(1)); // la barra dei tasti
+    let chunks = Layout::vertical(cons).split(area);
+    draw_fascia(f, app, chunks[0]);
     let status = match app.status_now() {
         Some(s) => Line::from(format!(" {}", s)).style(t.status),
-        None => Line::from(""),
+        None => {
+            // il cursore nella classifica dichiara il suo file: nel pannello
+            // il path si accorcia, qui lo si legge per intero — la riga
+            // con i puntini trova la sua risposta senza allargare nulla
+            if app.focus == Focus::Report {
+                app.pane
+                    .get(app.pane_sel)
+                    .map(|(_, p)| Line::from(format!(" {}", p.display())).style(t.hint))
+                    .unwrap_or_default()
+            } else {
+                Line::from("")
+            }
+        }
     };
-    f.render_widget(Paragraph::new(status).style(t.screen), chunks[1]);
-    f.render_widget(Paragraph::new(footer(t, &app.cat)).style(t.screen), chunks[2]);
+    f.render_widget(Paragraph::new(status).style(t.screen), chunks[chunks.len() - 2]);
+    f.render_widget(Paragraph::new(footer(t, &app.cat)).style(t.screen), chunks[chunks.len() - 1]);
     let cols = Layout::horizontal([Constraint::Percentage(56), Constraint::Percentage(44)])
-        .split(chunks[0]);
+        .split(chunks[1]);
     draw_list(f, app, cols[0]);
     draw_preview(f, app, cols[1]);
+    if want_pane {
+        draw_classifica(f, app, chunks[2]);
+    }
+}
+
+/// La fascia del percorso: il posto d'onore della CLI, qui in cima allo
+/// schermo — la cartella dove si lavora, tutto largo, in blu come i path
+/// della famiglia, con il TOTALE del ramo a destra: dichiarato col suo
+/// nome, cosi' il numero non e' mai orfano — la somma dei size dell'albero
+/// sotto e' lui (attraverso la lente, quando c'e'). La lente sta accanto
+/// al percorso. Lunga: si accorcia in testa, la coda resta — la coda e'
+/// dove si e'.
+fn draw_fascia(f: &mut Frame, app: &App, area: Rect) {
+    let t = &app.theme;
+    let Some(tree) = app.tree.clone() else { return };
+    let disp_total = match &app.view.filter {
+        Some(fl) => tree.subtree_match(app.current, fl).0,
+        None => tree.metrics(app.current).bytes,
+    };
+    let mut path = tree.path_of(app.current).display().to_string();
+    if let Some(fl) = &app.view.filter {
+        path.push(' ');
+        path.push_str(&app.cat.tf("cli.filtro", &[&fl.display()]));
+    }
+    let tot = app.cat.tf("tui.fascia_tot", &[&fmt_bytes(disp_total)]);
+    let w = area.width as usize;
+    let budget = w.saturating_sub(tot.chars().count() + 4);
+    let shown = shorten(&path, budget);
+    // il TOT a destra: il percorso a sinistra, il totale chiuso in fondo
+    // alla riga — la barra di titolo del quadro
+    let pad = w.saturating_sub(shown.chars().count() + tot.chars().count() + 2);
+    let line = Line::from(vec![
+        Span::raw(" "),
+        Span::styled(shown, t.dir),
+        Span::raw(" ".repeat(pad)),
+        Span::styled(tot, t.title),
+    ]);
+    f.render_widget(Paragraph::new(line).style(t.screen), area);
 }
 
 /// La barra dei tasti funzione, alla Total Commander. Le scritte si
@@ -355,90 +454,126 @@ fn footer<'a>(t: &Theme, cat: &'a Catalog) -> Line<'a> {
 
 /// Il pannello di sinistra: L'ALBERO dei figli-cartella del nodo corrente
 /// (decisione 3: i file vivono nel dettaglio), i rami aperti (x / F4)
-/// indentati sotto il padre. Le colonne della griglia senza la %:
-/// l'indentazione mangia spazio orizzontale e la barra da 24 mostra gia'
-/// la proporzione — la barra e' il marchio, la % e' la didascalia. La
-/// selezione a video inverso con la freccia `>`.
+/// indentati sotto il padre. Il vestito e' quello della griglia della
+/// CLI: le colonne con i loro muri verticali, le giunzioni sugli angoli
+/// — l'albero e' la griglia che si naviga. La selezione a video inverso
+/// con la freccia `>`; le frecce dello scroll (▲ ▼) vivono sul bordo e
+/// dicono che sopra o sotto c'e' ancora roba: una lista lunga non si
+/// nasconde piu' dietro un pannello che sembra finito.
 fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     let t = &app.theme;
     let Some(tree) = app.tree.clone() else { return };
     let cur = app.current;
-    // il titolo dichiara lo stato, come la CLI stampa "(filtro: ...)":
-    // path, totale attraverso la lente, ordinamento, filtro
+    // il totale della cartella corrente attraverso la lente: la base di
+    // percentuali e barre — lo dichiara la fascia in cima, qui lo usano i conti
     let disp_total = match &app.view.filter {
         Some(fl) => tree.subtree_match(cur, fl).0,
         None => tree.metrics(cur).bytes,
     };
-    let mut parts = vec![
-        tree.path_of(cur).display().to_string(),
-        fmt_bytes(disp_total),
-        format!(
-            "{}: {}",
-            app.cat.t("lens.ord"),
-            app.cat.t(ord_key(app.view.order))
-        ),
-    ];
-    if let Some(fl) = &app.view.filter {
-        parts.push(format!("{}: {}", app.cat.t("lens.fil"), fl.display()));
-    }
-    let title = format!(" {} ", parts.join(" - "));
-    // il bordo attivo dice dov'e' il cursore: l'albero naviga, il dettaglio
-    // si legge (finche' TAB non glielo da')
+    // il bordo attivo dice dov'e' il cursore: l'albero naviga, il resto si legge
     let border = if app.focus == Focus::List {
         t.border_active
     } else {
         t.border_idle
     };
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(border)
-        .title(Span::styled(title, t.title))
-        .style(t.screen);
-    let inner = block.inner(area);
+    // la geometria: le colonne della griglia (SIZE 10, % 4, BARRA 24, NOME
+    // il resto) con un muro tra l'una e l'altra. Su un terminale stretto
+    // la barra si mette via da sola: il nome vale piu' della barra (la %
+    // resta a dire la proporzione)
+    let inner_w = (area.width as usize).saturating_sub(2);
+    let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + 24 + 1 + 8;
+    let name_w = inner_w.saturating_sub(if show_bar { 44 } else { 20 });
+    // la finestra delle righe: muro, intestazione, separatore, righe, muro
+    let vis = (area.height as usize).saturating_sub(4);
+    let top = scroll_top(app.sel, vis);
+    let sopra = top > 0;
+    let sotto = vis > 0 && top + vis < app.list.len();
     // il pannello intero e' cliccabile: click = cursore all'albero
+    let inner = Rect {
+        x: area.x + 1,
+        y: area.y + 1,
+        width: inner_w as u16,
+        height: area.height.saturating_sub(2),
+    };
     app.hits.list_pane = Some(inner);
-    f.render_widget(block, area);
-    if app.list.is_empty() {
-        let empty = Paragraph::new(
-            Line::from(app.cat.t("lista.vuota").to_string()).style(t.hint),
-        )
-        .style(t.screen)
-        .alignment(Alignment::Center);
-        f.render_widget(empty, inner);
-        return;
+
+    let mut lines: Vec<Line> = Vec::new();
+    // --- il muro di sopra: ┌───┬───┬───┬───┐ (con la ▲ se sopra c'e' altro)
+    let mut spans: Vec<Span> = vec![Span::styled(
+        format!(
+            "┌{}┬{}{}┬",
+            "─".repeat(10),
+            "─".repeat(4),
+            if show_bar {
+                format!("┬{}", "─".repeat(24))
+            } else {
+                String::new()
+            }
+        ),
+        border,
+    )];
+    if sopra && name_w >= 8 {
+        spans.push(Span::styled("─".repeat(name_w - 5), border));
+        spans.push(Span::styled("▲", t.header));
+        spans.push(Span::styled("─".repeat(4), border));
+    } else {
+        spans.push(Span::styled("─".repeat(name_w), border));
     }
-    let show_bar = app.view.show_bar;
-    let header: Vec<String> = if show_bar {
-        vec![
-            fmt_r(app.cat.t("lista.dim"), 10),
-            app.cat.t("lista.barra").to_string(),
-            app.cat.t("lista.nome").to_string(),
-        ]
+    spans.push(Span::styled("┐", border));
+    lines.push(spans.into());
+    // --- l'intestazione: le etichette gialle CENTRATE nelle loro colonne
+    // (la size sta a destra come nella griglia, ma l'etichetta galleggia:
+    // e' una didascalia, non un allineamento)
+    let mut hdr: Vec<(String, Style)> = vec![
+        (fmt_c(app.cat.t("lista.dim"), 10), t.header),
+        ("│".into(), border),
+        (fmt_c("%", 4), t.header),
+        ("│".into(), border),
+    ];
+    if show_bar {
+        hdr.push((fmt_c(app.cat.t("lista.barra"), 24), t.header));
+        hdr.push(("│".into(), border));
+    }
+    hdr.push((fmt_c(app.cat.t("lista.nome"), name_w), t.header));
+    let mut spans: Vec<Span> = vec![Span::styled("│", border)];
+    spans.extend(hdr.into_iter().map(|(s, st)| Span::styled(s, st)));
+    spans.push(Span::styled("│", border));
+    lines.push(spans.into());
+    // --- il separatore dell'intestazione: ├─┼─┼─┼─┤
+    lines.push(Line::from(Span::styled(
+        format!(
+            "├{}┼{}{}┼{}┤",
+            "─".repeat(10),
+            "─".repeat(4),
+            if show_bar {
+                format!("┼{}", "─".repeat(24))
+            } else {
+                String::new()
+            },
+            "─".repeat(name_w),
+        ),
+        border,
+    )));
+    // --- le righe: dalla finestra (top) per quante ne stanno (vis)
+    if app.list.is_empty() {
+        lines.push(Line::from(Span::styled(
+            format!(
+                "│{}│",
+                fmt_c(app.cat.t("lista.vuota"), inner_w.saturating_sub(2))
+            ),
+            t.hint,
+        )));
     } else {
-        vec![
-            fmt_r(app.cat.t("lista.dim"), 10),
-            app.cat.t("lista.nome").to_string(),
-        ]
-    };
-    let widths: Vec<Constraint> = if show_bar {
-        vec![
-            Constraint::Length(10),
-            Constraint::Length(24),
-            Constraint::Min(8),
-        ]
-    } else {
-        vec![Constraint::Length(10), Constraint::Min(8)]
-    };
-    let rows: Vec<TRow> = app
-        .list
-        .iter()
-        .enumerate()
-        .map(|(i, r)| {
+        let last = (top + vis).min(app.list.len());
+        for i in top..last {
+            let r = &app.list[i];
             let name = tree.name(r.id).to_string_lossy().into_owned();
             // il ramo: due spazi di indentazione per livello, il + / -
-            // davanti al nome (solo le cartelle con figli: le altre sono
-            // foglie dell'albero), e la barra laterale dei nomi-cartella
-            let indent = "  ".repeat(r.depth);
+            // davanti al nome (solo le cartelle con figli) — ma
+            // l'indentazione non mangia il nome: su un pannello stretto
+            // si comprime prima lei
+            let cap = name_w.saturating_sub(6) / 2;
+            let indent = "  ".repeat(r.depth.min(cap));
             let toggle = if r.has_subdirs {
                 if app.expanded.contains(&r.id) {
                     "- "
@@ -448,37 +583,223 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
             } else {
                 "  "
             };
-            let mut cells: Vec<String> = vec![fmt_r(&fmt_bytes(r.size), 10)];
+            // la percentuale: relativa alla cartella corrente (il parent),
+            // che riga non e' — come la CLI: il 100% non dice niente, la
+            // fascia dichiara il parent e la TOTALE ne tiene i numeri
+            let pct = if disp_total > 0 { r.size * 100 / disp_total } else { 0 };
+            let mark = if i == app.sel { ">" } else { " " };
+            let mut parts: Vec<(String, Style)> = vec![
+                (fmt_r(&fmt_bytes(r.size), 10), t.fg),
+                ("│".into(), border),
+                (fmt_r(&format!("{}%", pct), 4), t.fg),
+                ("│".into(), border),
+            ];
             if show_bar {
-                cells.push(bar24(r.size, disp_total));
+                parts.push((bar24(r.size, disp_total), t.bar));
+                parts.push(("│".into(), border));
             }
-            if i == app.sel {
-                cells.push(format!(">{}{}{}\\", indent, toggle, name));
-                TRow::new(cells).style(t.selected)
+            parts.push((
+                trunc(&format!("{}{}{}{}\\", mark, indent, toggle, name), name_w),
+                t.fg,
+            ));
+            let mut spans: Vec<Span> = vec![Span::styled("│", border)];
+            spans.extend(parts.into_iter().map(|(s, st)| Span::styled(s, st)));
+            spans.push(Span::styled("│", border));
+            // la riga selezionata si inverte per intero: ogni span veste il
+            // selected (gli span con stile proprio vincerebbero la riga)
+            let line = if i == app.sel {
+                Line::from(
+                    spans
+                        .into_iter()
+                        .map(|s| Span::styled(s.content, t.selected))
+                        .collect::<Vec<_>>(),
+                )
             } else {
-                cells.push(format!(" {}{}{}\\", indent, toggle, name));
-                TRow::new(cells)
+                Line::from(spans)
+            };
+            lines.push(line);
+        }
+    }
+    // --- i muri laterali continuano finche' il pannello e' alto: le righe
+    // mancanti sono righe vuote tra i muri, il fondo sta sempre in fondo
+    while lines.len() + 1 < area.height as usize {
+        lines.push(Line::from(vec![
+            Span::styled("│", border),
+            Span::raw(" ".repeat(inner_w)),
+            Span::styled("│", border),
+        ]));
+    }
+    // --- il muro di sotto: └───┴───┴───┴───┘ (con la ▼ se sotto c'e' altro)
+    let mut spans: Vec<Span> = vec![Span::styled(
+        format!(
+            "└{}┴{}{}┴",
+            "─".repeat(10),
+            "─".repeat(4),
+            if show_bar {
+                format!("┴{}", "─".repeat(24))
+            } else {
+                String::new()
             }
-        })
-        .collect();
-    let table = Table::new(rows, widths)
-        .header(TRow::new(header).style(t.header))
-        .column_spacing(2);
-    // l'offset di scroll e' posseduto, non ricreato da ratatui a ogni
-    // frame: il click deve fare lo stesso conto del render o sbaglierebbe
-    // riga (la prima riga dell'area interna e' l'header della tabella)
-    let visible = inner.height.saturating_sub(1) as usize;
-    let top = scroll_top(app.sel, visible);
-    let mut state = TableState::default()
-        .with_selected(Some(app.sel))
-        .with_offset(top);
-    f.render_stateful_widget(table, inner, &mut state);
-    // le righe cliccabili: l'header non e' una riga di dati
-    if inner.height > 1 {
+        ),
+        border,
+    )];
+    if sotto && name_w >= 8 {
+        spans.push(Span::styled("─".repeat(name_w - 5), border));
+        spans.push(Span::styled("▼", t.header));
+        spans.push(Span::styled("─".repeat(4), border));
+    } else {
+        spans.push(Span::styled("─".repeat(name_w), border));
+    }
+    spans.push(Span::styled("┘", border));
+    lines.push(spans.into());
+
+    f.render_widget(Paragraph::new(lines).style(t.screen), area);
+    // le righe cliccabili: sotto intestazione e separatore, dalla finestra
+    // corrente — il click fa lo stesso conto del render o sbaglierebbe riga
+    if inner.height > 2 {
         app.hits.list = Some(HitRows {
             rect: Rect {
-                y: inner.y + 1,
-                height: inner.height - 1,
+                y: inner.y + 2,
+                height: inner.height - 2,
+                ..inner
+            },
+            top,
+            stride: 1,
+        });
+    }
+}
+
+/// La classifica in fondo: i 10 file piu' grandi del ramo selezionato,
+/// ricorsivi — il report della CLI, vivo: scorri l'albero e la risposta
+/// ti segue (F9 la mostra e la nasconde). Il vestito e' la sezione report
+/// del quadro della CLI: due colonne col muro in mezzo, la SIZE centrata
+/// nella sua (li' galleggia, non sta aggrappata a destra), il titolo
+/// nell'intestazione accanto al PARENTE in blu — di chi sono questi dieci
+/// (il path si accorcia in testa se serve: la coda e' il nome, la parte
+/// che parla). TAB ci porta il cursore: le frecce la leggono riga per
+/// riga, la status dice il path per intero di quella puntata.
+fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
+    let t = &app.theme;
+    let Some(tree) = app.tree.clone() else { return };
+    let focused = app.focus == Focus::Report;
+    let border = if focused { t.border_active } else { t.border_idle };
+    // la geometria: SIZE centrata in 12, il path in tutto il resto — un
+    // muro in mezzo, come la sezione report della CLI
+    let inner_w = (area.width as usize).saturating_sub(2);
+    let size_w = 12usize;
+    let path_w = inner_w.saturating_sub(size_w + 1);
+    let vis = (area.height as usize).saturating_sub(4).max(PANE_ROWS);
+    let top = app.pane_top.min(app.pane.len().saturating_sub(vis));
+    let sopra = top > 0;
+    let sotto = vis > 0 && top + vis < app.pane.len();
+    // il pannello e' cliccabile (click e rotella portano qui il cursore)
+    let inner = Rect {
+        x: area.x + 1,
+        y: area.y + 1,
+        width: inner_w as u16,
+        height: area.height.saturating_sub(2),
+    };
+    app.hits.report_pane = Some(area);
+
+    let mut lines: Vec<Line> = Vec::new();
+    // --- il muro di sopra (▲ se sopra c'e' altro)
+    let mut spans: Vec<Span> = vec![Span::styled(format!("┌{}┬", "─".repeat(size_w)), border)];
+    if sopra && path_w >= 8 {
+        spans.push(Span::styled("─".repeat(path_w - 5), border));
+        spans.push(Span::styled("▲", t.header));
+        spans.push(Span::styled("─".repeat(4), border));
+    } else {
+        spans.push(Span::styled("─".repeat(path_w), border));
+    }
+    spans.push(Span::styled("┐", border));
+    lines.push(spans.into());
+    // --- l'intestazione: la colonna dichiarata, il titolo centrato, il
+    // parente del ramo a destra — la classifica segue la selezione
+    let base = app.selected_id().unwrap_or(app.current);
+    let parente = tree.path_of(base).display().to_string();
+    let titolo = app.cat.tf("cli.top_files", &["10"]);
+    let destro = format!(" {} ", shorten(&parente, path_w / 3));
+    let mid = path_w.saturating_sub(titolo.chars().count() + destro.chars().count());
+    let lpad = mid / 2;
+    let hdr: Vec<(String, Style)> = vec![
+        (fmt_c(app.cat.t("lista.dim"), size_w), t.header),
+        ("│".into(), border),
+        (
+            format!(
+                "{}{}{}",
+                " ".repeat(lpad),
+                titolo,
+                " ".repeat(mid - lpad)
+            ),
+            t.header,
+        ),
+        (destro, t.dir),
+    ];
+    let mut spans: Vec<Span> = vec![Span::styled("│", border)];
+    spans.extend(hdr.into_iter().map(|(s, st)| Span::styled(s, st)));
+    spans.push(Span::styled("│", border));
+    lines.push(spans.into());
+    // --- il separatore: ├────┼────┤
+    lines.push(Line::from(Span::styled(
+        format!("├{}┼{}┤", "─".repeat(size_w), "─".repeat(path_w)),
+        border,
+    )));
+    // --- le righe: size centrata, il path accorciato in testa (il nome
+    // sta in coda); la riga del cursore si inverte quando TAB e' qui
+    let last = (top + vis).min(app.pane.len());
+    for i in top..last {
+        let (s, p) = &app.pane[i];
+        let sel = focused && i == app.pane_sel;
+        let parts: Vec<(String, Style)> = vec![
+            (fmt_c(&fmt_bytes(*s), size_w), t.fg),
+            ("│".into(), border),
+            // il path riempie la colonna fino in fondo: il muro di chiusura
+            // sta a fine TABELLA, non a fine testo (trunc imbottisce a destra
+            // quello che fit_path ha accorciato in testa)
+            (trunc(&fit_path(p, path_w), path_w), t.dir),
+        ];
+        let mut spans: Vec<Span> = vec![Span::styled("│", border)];
+        spans.extend(parts.into_iter().map(|(s, st)| Span::styled(s, st)));
+        spans.push(Span::styled("│", border));
+        let line = if sel {
+            Line::from(
+                spans
+                    .into_iter()
+                    .map(|s| Span::styled(s.content, t.selected))
+                    .collect::<Vec<_>>(),
+            )
+        } else {
+            Line::from(spans)
+        };
+        lines.push(line);
+    }
+    // --- i muri laterali fino al fondo (il pannello e' alto fisso)
+    while lines.len() + 1 < area.height as usize {
+        lines.push(Line::from(vec![
+            Span::styled("│", border),
+            Span::raw(" ".repeat(inner_w)),
+            Span::styled("│", border),
+        ]));
+    }
+    // --- il muro di sotto (▼ se sotto c'e' altro)
+    let mut spans: Vec<Span> = vec![Span::styled(format!("└{}┴", "─".repeat(size_w)), border)];
+    if sotto && path_w >= 8 {
+        spans.push(Span::styled("─".repeat(path_w - 5), border));
+        spans.push(Span::styled("▼", t.header));
+        spans.push(Span::styled("─".repeat(4), border));
+    } else {
+        spans.push(Span::styled("─".repeat(path_w), border));
+    }
+    spans.push(Span::styled("┘", border));
+    lines.push(spans.into());
+
+    f.render_widget(Paragraph::new(lines).style(t.screen), area);
+    // le righe cliccabili: sotto intestazione e separatore, dalla finestra
+    if !app.pane.is_empty() && inner.height > 2 {
+        app.hits.report = Some(HitRows {
+            rect: Rect {
+                y: inner.y + 2,
+                height: inner.height - 2,
                 ..inner
             },
             top,
@@ -516,14 +837,24 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     // click = cursore in lettura, come TAB
     app.hits.detail_pane = Some(area);
     f.render_widget(block, area);
-    let rows_area = Layout::vertical([
+    // il fondo riserva la riga del warning SOLO quando c'e' un warning da
+    // dire: senza, le righe del dettaglio hanno tutto il pannello — una
+    // lista lunga non si ferma due righe prima facendo credere che sia
+    // finita li' (regressione vista dall'utente)
+    let n_warn = app
+        .selected_id()
+        .map(|sid| tree.warnings().count_under(&tree.path_of(sid)))
+        .unwrap_or(0);
+    let mut cons = vec![
         Constraint::Length(1), // i totali della selezione: il dato piu' importante
         Constraint::Length(1), // la lente dichiarata
         Constraint::Length(1), // separatore
         Constraint::Min(1),    // le righe
-        Constraint::Length(2), // i warning del ramo
-    ])
-    .split(inner);
+    ];
+    if n_warn > 0 {
+        cons.push(Constraint::Length(1)); // il warning del ramo, quando c'e'
+    }
+    let rows_area = Layout::vertical(cons).split(inner);
     // il totale delle dimensioni di quello che sta sotto: e' il dato piu'
     // importante del dettaglio, quindi apre il pannello, non lo chiude
     if let Some(sid) = app.selected_id() {
@@ -550,14 +881,29 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         Paragraph::new(Line::from(sep).style(t.border_idle)).style(t.screen),
         rows_area[2],
     );
-    let prow: Vec<TRow> = app
-        .preview
+    // il top delle righe cliccabili segue il render: col cursore si scrolla
+    // su dsel, senza si parte dall'alto (il click che da' il focus trovera'
+    // le righe dove le vede)
+    let top = if focused {
+        scroll_top(app.dsel, rows_area[3].height as usize)
+    } else {
+        0
+    };
+    // si costruiscono SOLO le righe visibili: il dettaglio di una cartella
+    // grossa (WinSxS: ~1.800 righe) ricostruito a ogni frame mangiava
+    // mezzo processore da fermo — la finestra che si vede e' tutto cio'
+    // che serve al render
+    let vis = rows_area[3].height as usize;
+    let last = (top + vis).min(app.preview.len());
+    let prow: Vec<TRow> = app.preview[top..last]
         .iter()
         .enumerate()
         .map(|(i, p)| {
             // il cursore del dettaglio: la freccia `>` come nella lista,
-            // a video inverso quando il focus e' qui
-            let mark = if focused && i == app.dsel { ">" } else { " " };
+            // a video inverso quando il focus e' qui (l'indice e' assoluto:
+            // la fetta parte da top)
+            let abs = top + i;
+            let mark = if focused && abs == app.dsel { ">" } else { " " };
             let (cells, kind) = match &p.row {
                 CoreRow::Dir(j) => (
                     vec![
@@ -574,7 +920,7 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
                     t.file,
                 ),
             };
-            if focused && i == app.dsel {
+            if focused && abs == app.dsel {
                 TRow::new(cells).style(t.selected)
             } else {
                 TRow::new(cells).style(kind)
@@ -582,19 +928,11 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         })
         .collect();
     let table = Table::new(prow, [Constraint::Min(6), Constraint::Length(10)]).column_spacing(1);
-    // il top delle righe cliccabili segue il render: col cursore si scrolla
-    // su dsel, senza si parte dall'alto (il click che da' il focus trovera'
-    // le righe dove le vede)
-    let top = if focused {
-        scroll_top(app.dsel, rows_area[3].height as usize)
-    } else {
-        0
-    };
     if focused {
-        // il cursore esiste solo col focus: e' lui che scrolla il pannello
+        // il cursore esiste solo col focus: e' lui che scrolla il pannello.
+        // La fetta parte da top, quindi il selezionato e' relativo a lei
         let mut state = TableState::default()
-            .with_selected(Some(app.dsel))
-            .with_offset(top);
+            .with_selected(Some(app.dsel.saturating_sub(top)));
         f.render_stateful_widget(table, rows_area[3], &mut state);
     } else {
         f.render_widget(table, rows_area[3]);
@@ -608,19 +946,32 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     }
     // il fondo: solo i warning del ramo — i totali e la lente in cifre stanno
     // in cima al pannello, dove si guardano per primi
-    let mut info: Vec<Line> = Vec::new();
-    if let Some(sid) = app.selected_id() {
-        let w = tree.warnings().count_under(&tree.path_of(sid));
-        if w > 0 {
-            let msg = if w == 1 {
-                app.cat.t("dettaglio.warn1").to_string()
-            } else {
-                app.cat.tf("dettaglio.warnN", &[&group(w as i64)])
-            };
-            info.push(Line::from(msg).style(t.hint));
-        }
+    if n_warn > 0 {
+        let msg = if n_warn == 1 {
+            app.cat.t("dettaglio.warn1").to_string()
+        } else {
+            app.cat.tf("dettaglio.warnN", &[&group(n_warn as i64)])
+        };
+        f.render_widget(
+            Paragraph::new(Line::from(msg).style(t.hint)).style(t.screen),
+            rows_area[4],
+        );
     }
-    f.render_widget(Paragraph::new(info).style(t.screen), rows_area[4]);
+    // le frecce dello scroll sul bordo: sopra o sotto c'e' altro — il
+    // pannello non sembra finito quando non lo e'
+    let vis = rows_area[3].height as usize;
+    if vis > 0 && top > 0 {
+        paint_arrow(f, area.x + area.width.saturating_sub(3), area.y, "▲", t.header);
+    }
+    if vis > 0 && top + vis < app.preview.len() {
+        paint_arrow(
+            f,
+            area.x + area.width.saturating_sub(3),
+            area.y + area.height.saturating_sub(1),
+            "▼",
+            t.header,
+        );
+    }
 }
 
 /// La riga di totali in cima al DETTAGLIO: totale, file e cartelle della
@@ -709,13 +1060,13 @@ fn kline(t: &Theme, key: &str, desc: &str) -> Line<'static> {
 }
 
 /// L'aiuto (F1 o ?): la tabella dei tasti della sezione 5 del design. Le
-/// 23 voci e le 13 righe di coda arrivano dal vocabolario (aiuto.k01..k23,
-/// d01..d23, h01..h13): la tabella si traduce intera, niente resta cablato
+/// 24 voci e le 13 righe di coda arrivano dal vocabolario (aiuto.k01..k24,
+/// d01..d24, h01..h13): la tabella si traduce intera, niente resta cablato
 /// — e la voce Shift+<lettera> e' l'ultima arrivata, col suo posto in fila.
 fn draw_help(f: &mut Frame, app: &App, t: &Theme) {
     let inner = window(f, t, app.cat.t("aiuto.titolo"), 72, 96);
     let mut lines: Vec<Line> = Vec::new();
-    for i in 1..=23 {
+    for i in 1..=24 {
         let k = format!("aiuto.k{:02}", i);
         let d = format!("aiuto.d{:02}", i);
         lines.push(kline(t, app.cat.t(&k), app.cat.t(&d)));
@@ -1225,7 +1576,7 @@ mod tests {
         let tree =
             Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
         let mut app = App::with_tree(fx.clone(), tree);
-        app.on_key(key(KeyCode::F(9))); // apre il report
+        app.on_key(key(KeyCode::Char('R'))); // apre il report
         let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
@@ -1269,11 +1620,16 @@ mod tests {
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
         // la lista e' scrollata e il render lo dichiara: la prima riga
-        // visibile e' f07, la selezione f01 sta in fondo con la freccia
+        // visibile e' f06 (la fascia del percorso si e' presa una riga:
+        // una in meno da scorrere), la selezione f01 sta in fondo con la
+        // freccia
         let z = app.hits.list.expect("la zona della lista c'e'");
         assert!(z.top > 0, "la lista scrolla: top={}", z.top);
-        assert_eq!(z.rect.y, 2); // sotto il bordo e l'header della tabella
-        assert!(screen.contains("f07"), "prima riga visibile: {screen:?}");
+        // sotto la fascia, il bordo del pannello, l'intestazione e il suo
+        // separatore (il vestito della griglia ha una riga in piu'):
+        // le righe dati partono a y=4
+        assert_eq!(z.rect.y, 4);
+        assert!(screen.contains("f05"), "prima riga visibile: {screen:?}");
         assert!(screen.contains(">  f01"), "selezione visibile in fondo: {screen:?}");
         // il click sulla prima riga visibile seleziona la riga che si vede
         app.on_mouse(MouseEvent {
@@ -1290,7 +1646,88 @@ mod tests {
             .name(app.list[app.sel].id)
             .to_string_lossy()
             .into_owned();
-        assert_eq!(name, "f07", "il click prende la riga disegnata");
+        assert_eq!(name, "f05", "il click prende la riga disegnata");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn tab_arriva_anche_alla_classifica_e_le_frecce_la_leggono() {
+        let fx = fixture("tab-report");
+        let tree =
+            Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
+        let mut app = App::with_tree(fx.clone(), tree);
+        let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        // due TAB: albero -> dettaglio -> classifica (il pannello c'e',
+        // l'ultimo frame l'ha disegnato: 30 righe lo tengono)
+        app.on_key(key(KeyCode::Tab));
+        app.on_key(key(KeyCode::Tab));
+        assert_eq!(app.focus, Focus::Report, "due TAB e si legge la classifica");
+        // le frecce muovono il cursore della classifica, non la selezione
+        let sel = app.sel;
+        app.on_key(key(KeyCode::Down));
+        assert_eq!(app.pane_sel, 1, "il cursore della classifica scende");
+        assert_eq!(app.sel, sel, "l'albero non si tocca");
+        // il terzo TAB chiude il giro: si torna all'albero
+        app.on_key(key(KeyCode::Tab));
+        assert_eq!(app.focus, Focus::List, "il giro e' completo");
+        // F9 spegne il pannello: il cursore non resta senza casa
+        app.on_key(key(KeyCode::Tab));
+        app.on_key(key(KeyCode::Tab));
+        assert_eq!(app.focus, Focus::Report);
+        app.on_key(key(KeyCode::F(9)));
+        assert_eq!(app.focus, Focus::List, "senza pannello si torna all'albero");
+        assert!(!app.view.show_report);
+        let _ = std::fs::remove_dir_all(&fx);
+    }
+
+    #[test]
+    fn la_classifica_veste_il_box_della_cli_con_la_size_centrata() {
+        let fx = fixture("classifica-box");
+        let tree =
+            Arc::new(scan(&fx, &ScanOptions { depth: usize::MAX, filter: None }));
+        let mut app = App::with_tree(fx.clone(), tree);
+        let mut terminal = Terminal::new(TestBackend::new(120, 30)).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let screen = screen_text(&terminal);
+        // la size galleggia al centro della sua colonna, tra i due muri —
+        // non sta aggrappata a destra come nella griglia
+        assert!(screen.contains("│   2,0 KB   │"), "size centrata: {screen:?}");
+        // il muro tra le colonne e la giunzione del separatore: il vestito
+        // della sezione report della CLI
+        assert!(screen.contains('┼'), "giunzioni: {screen:?}");
+        let _ = std::fs::remove_dir_all(&fx);
+    }
+
+    #[test]
+    fn le_frecce_dello_scroll_si_vedono_sul_bordo() {
+        // dodici cartelle in un terminale basso: il pannello SX mostra la
+        // ▼ (sotto c'e' altro), e dopo un po' di frecce compare la ▲ —
+        // una lista lunga non sembra finita dove il pannello finisce
+        let dir = std::env::temp_dir().join(format!(
+            "mfd-ui-test-scroll-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        for i in 0..12 {
+            std::fs::create_dir_all(dir.join(format!("d{:02}", i))).unwrap();
+            std::fs::write(dir.join(format!("d{:02}/f.bin", i)), vec![0u8; 100 * (i + 1)])
+                .unwrap();
+        }
+        let tree = Arc::new(scan(&dir, &ScanOptions { depth: usize::MAX, filter: None }));
+        let mut app = App::with_tree(dir.clone(), tree);
+        let mut terminal = Terminal::new(TestBackend::new(120, 24)).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let screen = screen_text(&terminal);
+        assert!(screen.contains('▼'), "freccia giu' in fondo: {screen:?}");
+        assert!(!screen.contains('▲'), "in cima non c'e' niente sopra: {screen:?}");
+        // tre giu': la finestra scorre, adesso sopra c'e' altro
+        app.on_key(key(KeyCode::Down));
+        app.on_key(key(KeyCode::Down));
+        app.on_key(key(KeyCode::Down));
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let screen = screen_text(&terminal);
+        assert!(screen.contains('▲'), "freccia su dopo lo scroll: {screen:?}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

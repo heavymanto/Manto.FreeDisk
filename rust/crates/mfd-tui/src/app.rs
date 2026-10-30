@@ -53,6 +53,9 @@ pub struct ViewState {
     pub order: Order,
     pub filter: Option<Filter>,
     pub show_bar: bool,
+    /// la classifica in fondo (F9): il report della CLI, sempre visibile —
+    /// o nascosto, quando serve tutto lo schermo per navigare
+    pub show_report: bool,
 }
 
 impl Default for ViewState {
@@ -61,6 +64,7 @@ impl Default for ViewState {
             order: Order::TD, // come la griglia: la piu' grande in cima
             filter: None,
             show_bar: true,
+            show_report: true, // il quadro e' il default: mappa e colpevoli insieme
         }
     }
 }
@@ -79,15 +83,16 @@ pub enum Mode {
     LangMenu,
 }
 
-/// Dove sta il cursore: l'albero (la lista, a sinistra) o il dettaglio (la
-/// lente, a destra). TAB porta il cursore in lettura nel dettaglio, albero
-/// aperto o chiuso (il cambio pannello di TC), e solo per scorrere: chi
-/// naviga sta nell'albero (INVIO entra, <- risale), chi legge sta nel
-/// dettaglio.
+/// Dove sta il cursore: l'albero (la lista, a sinistra), il dettaglio (la
+/// lente, a destra) o la classifica in fondo (il report vivo). TAB gira
+/// per i tre posti, albero aperto o chiuso (il cambio pannello di TC), e
+/// porta il cursore in LETTURA: chi naviga sta nell'albero (INVIO entra,
+/// <- risale), chi legge sta nel dettaglio o nella classifica.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Focus {
     List,
     Detail,
+    Report,
 }
 
 /// Il top del report (Shift+R / F9) quando si apre: dieci, come li chiede la
@@ -99,6 +104,13 @@ const REPORT_DEFAULT: usize = 10;
 /// Il tetto del top riscritto a cifre: oltre non si chiede — la finestra
 /// scorre, e mille righe non sono piu' un report ma un elenco.
 const REPORT_MAX: usize = 1000;
+
+/// Le righe della classifica in fondo: il pannello e' fatto di bordi,
+/// intestazione, separatore e queste righe — il top della domanda
+/// ("quali sono i 10 piu' grandi?") e la finestra che lo contiene
+/// misurano uguale. Il cursore di TAB le percorre; lo scroll segue la
+/// stessa regola dell'albero, pronto a qualunque lunghezza.
+pub const PANE_ROWS: usize = 10;
 
 /// Le lettere dei comandi, in minuscolo: Q esce, S ordina, T il tema, F il
 /// filtro, G la barra, W i warning, R il report, P la stampa, L la lingua,
@@ -156,6 +168,10 @@ pub struct Hits {
     pub detail_pane: Option<Rect>,
     /// le righe del dettaglio: click = cursore sulla riga puntata
     pub detail: Option<HitRows>,
+    /// il pannello della classifica, bordi compresi: click/rotella = TAB
+    pub report_pane: Option<Rect>,
+    /// le righe della classifica: click = cursore sulla riga puntata
+    pub report: Option<HitRows>,
     /// le voci del menu aperto (ordinamento, tema)
     pub menu: Option<HitRows>,
 }
@@ -264,6 +280,19 @@ pub struct App {
     /// all'apertura e rinnovata quando cambia il top (la rinnova anche chi
     /// la riapre altrove: il report segue il drill-down)
     pub report: Vec<(i64, PathBuf)>,
+    /// la classifica in fondo (F9): i 10 piu' grandi del ramo selezionato,
+    /// ricorsivi — la stessa risposta del report, viva: si rinnova a ogni
+    /// movimento della selezione, refresh la fotografa
+    pub pane: Vec<(i64, PathBuf)>,
+    /// il cursore della classifica (TAB la raggiunge): la riga del report
+    /// vivo che si sta leggendo — le frecce la muovono e la status ne
+    /// dice il path per intero (nel pannello si accorcia)
+    pub pane_sel: usize,
+    /// lo scroll della classifica: quante righe stanno sopra la finestra.
+    /// Col top a dieci e dieci righe visibili resta fermo — ma la regola
+    /// e' quella dell'albero (il cursore resta visibile), pronta a
+    /// qualunque lunghezza il top dovesse prendere
+    pub pane_top: usize,
     /// scroll della finestra del report
     pub report_top: usize,
     /// il top del report: parte da dieci, in finestra le cifre lo
@@ -329,6 +358,9 @@ impl App {
             cancelling: false,
             warn_top: 0,
             report: Vec::new(),
+            pane: Vec::new(),
+            pane_sel: 0,
+            pane_top: 0,
             report_top: 0,
             report_n: REPORT_DEFAULT,
             report_typing: false,
@@ -696,6 +728,20 @@ impl App {
         }
         self.preview = preview;
         self.preview_total = preview_total;
+        // --- la classifica in fondo: i 10 piu' grandi del ramo selezionato,
+        // ricorsivi — il report della CLI, vivo: scorri l'albero e la
+        // risposta ti segue. Si calcola solo quando il pannello e' in
+        // vista (F9 lo apre e lo chiude): niente lavoro per nulla
+        if self.view.show_report {
+            let base = sel_id.unwrap_or(self.current);
+            self.pane = tree.top_files_under(base, PANE_ROWS, self.view.filter.as_ref());
+        } else {
+            self.pane.clear();
+        }
+        // il ramo e' un'altra fotografia: il cursore della classifica
+        // riparte dalla riga piu' grande, la finestra dall'alto
+        self.pane_sel = 0;
+        self.pane_top = 0;
     }
 
     /// Un livello dell'albero della lista: i figli-cartella di `node` in
@@ -825,6 +871,12 @@ impl App {
         self.on_key(KeyEvent::new(code, KeyModifiers::NONE));
     }
 
+    /// La rotella e' sulla classifica dell'ultimo frame? (Solo in Main:
+    /// sopra una finestra aperta vince la finestra.)
+    fn wheel_on_report(&self, x: u16, y: u16) -> bool {
+        self.mode == Mode::Main && self.hits.report_pane.is_some_and(|r| in_rect(r, x, y))
+    }
+
     /// Il mouse: la rotella si veste da freccia (on_scroll per il verticale,
     /// on_scroll_h per il tilt orizzontale — sinistra risale, destra entra),
     /// i click da tasti — il click seleziona la riga della lista (o porta il
@@ -837,8 +889,24 @@ impl App {
     /// crossterm non li vede.
     pub fn on_mouse(&mut self, m: MouseEvent) {
         match m.kind {
-            MouseEventKind::ScrollDown => self.on_scroll(true),
-            MouseEventKind::ScrollUp => self.on_scroll(false),
+            // la rotella sulla classifica muove il suo cursore (e ci porta
+            // il focus, come il click): gira dove le frecce funzionano
+            MouseEventKind::ScrollDown => {
+                if self.wheel_on_report(m.column, m.row) {
+                    self.focus = Focus::Report;
+                    self.move_pane_sel(1);
+                } else {
+                    self.on_scroll(true);
+                }
+            }
+            MouseEventKind::ScrollUp => {
+                if self.wheel_on_report(m.column, m.row) {
+                    self.focus = Focus::Report;
+                    self.move_pane_sel(-1);
+                } else {
+                    self.on_scroll(false);
+                }
+            }
             // il tilt: <- e -> vestite da rotella
             MouseEventKind::ScrollLeft => self.on_scroll_h(false),
             MouseEventKind::ScrollRight => self.on_scroll_h(true),
@@ -913,6 +981,19 @@ impl App {
                         self.dsel = idx; // e il cursore va sulla riga puntata
                     }
                 }
+                return;
+            }
+        }
+        if let Some(pane) = hits.report_pane {
+            if in_rect(pane, x, y) {
+                // anche la classifica si legge: click = TAB, la riga puntata
+                self.focus = Focus::Report;
+                if let Some(idx) = hits.report.as_ref().and_then(|z| hit_row(z, x, y)) {
+                    if idx < self.pane.len() {
+                        self.pane_sel = idx;
+                        self.pane_top = scroll_top(self.pane_sel, PANE_ROWS);
+                    }
+                }
             }
         }
     }
@@ -937,6 +1018,12 @@ impl App {
     }
 
     fn on_key_main(&mut self, k: KeyEvent) {
+        // il cursore della classifica non resta mai senza casa: se il
+        // pannello non c'e' (F9, o uno schermo troppo basso), si torna
+        // all'albero prima di ascoltare qualunque tasto
+        if self.focus == Focus::Report && self.hits.report_pane.is_none() {
+            self.focus = Focus::List;
+        }
         match k.code {
             // Shift+Q o F10: si esce. La q nuda non esce piu' — le
             // lettere dei comandi vogliono lo SHIFT, i tasti F son diretti
@@ -996,7 +1083,23 @@ impl App {
             // Shift+R / F9: il report dei file piu' grossi della cartella dove
             // si sta — -big con la radice che segue il drill-down,
             // attraverso la lente come tutto il resto
-            KeyCode::Char('R') | KeyCode::F(9) => self.open_report(),
+            // Shift+R: la finestra del report, il posto dove leggerlo per
+            // intero (scroll, taglio a piacere, stampa). F9 e' l'interruttore
+            // del pannello: sono due modi di guardare la stessa risposta
+            KeyCode::Char('R') => self.open_report(),
+            // F9: la classifica in fondo si mostra e si nasconde — quando
+            // serve tutto lo schermo per navigare si chiude, quando serve
+            // la risposta intera si apre. La scelta si ricorda (F2); il
+            // pannello che appare e sparisce e' gia' tutto il feedback
+            KeyCode::F(9) => {
+                self.view.show_report = !self.view.show_report;
+                // il cursore non resta mai senza casa: la classifica sparsa
+                // rimanda all'albero
+                if !self.view.show_report && self.focus == Focus::Report {
+                    self.focus = Focus::List;
+                }
+                self.refresh();
+            }
             // Shift+P / F11: la stampa — la fotografia JSON della cartella dove
             // si sta, come la si vede (i rami aperti, la lente), su file
             // (il contratto di --json, mfd-core): la reportistica senza
@@ -1016,18 +1119,22 @@ impl App {
             KeyCode::Up => match self.focus {
                 Focus::List => self.move_sel(-1),
                 Focus::Detail => self.move_dsel(-1),
+                Focus::Report => self.move_pane_sel(-1),
             },
             KeyCode::Down => match self.focus {
                 Focus::List => self.move_sel(1),
                 Focus::Detail => self.move_dsel(1),
+                Focus::Report => self.move_pane_sel(1),
             },
             KeyCode::PageUp => match self.focus {
                 Focus::List => self.move_sel(-10),
                 Focus::Detail => self.move_dsel(-10),
+                Focus::Report => self.move_pane_sel(-(PANE_ROWS as i64)),
             },
             KeyCode::PageDown => match self.focus {
                 Focus::List => self.move_sel(10),
                 Focus::Detail => self.move_dsel(10),
+                Focus::Report => self.move_pane_sel(PANE_ROWS as i64),
             },
             KeyCode::Home => match self.focus {
                 Focus::List => {
@@ -1036,6 +1143,10 @@ impl App {
                     self.refresh();
                 }
                 Focus::Detail => self.dsel = 0,
+                Focus::Report => {
+                    self.pane_sel = 0;
+                    self.pane_top = 0;
+                }
             },
             KeyCode::End => match self.focus {
                 Focus::List => {
@@ -1044,6 +1155,10 @@ impl App {
                     self.refresh();
                 }
                 Focus::Detail => self.dsel = self.preview.len().saturating_sub(1),
+                Focus::Report => {
+                    self.pane_sel = self.pane.len().saturating_sub(1);
+                    self.pane_top = scroll_top(self.pane_sel, PANE_ROWS);
+                }
             },
             // INVIO o ->: drill-down dall'ALBERO. Col cursore nel dettaglio
             // non fanno nulla: il dettaglio si scorre in lettura, non si
@@ -1068,22 +1183,13 @@ impl App {
             // cursore — l'equivalente interattivo di -d a, un ramo per
             // volta
             KeyCode::Char('A') => self.expand_subtree(),
-            // TAB: porta il cursore in lettura nel dettaglio, albero aperto
-            // o chiuso — il cambio pannello alla Total Commander: leggere
-            // non dipende dall'albero, e il bordo dice sempre dove si sta.
-            // Dal dettaglio TAB torna: e' l'unica via d'uscita della lettura
-            KeyCode::Tab | KeyCode::BackTab => {
-                self.focus = match self.focus {
-                    Focus::List => Focus::Detail,
-                    Focus::Detail => Focus::List,
-                };
-                let dove = if self.focus == Focus::Detail {
-                    "flash.cursore_dettaglio"
-                } else {
-                    "flash.cursore_albero"
-                };
-                self.flash_t(dove);
-            }
+            // TAB: il giro dei tre posti — albero, dettaglio, classifica —
+            // albero aperto o chiuso (il cambio pannello alla Total
+            // Commander: leggere non dipende dall'albero, e il bordo dice
+            // sempre dove si sta). Shift+TAB gira al contrario. La
+            // classifica entra nel giro solo quando c'e' (F9 la toglie)
+            KeyCode::Tab => self.cycle_focus(true),
+            KeyCode::BackTab => self.cycle_focus(false),
             _ => {}
         }
     }
@@ -1123,6 +1229,51 @@ impl App {
             s = n - 1;
         }
         self.dsel = s as usize;
+    }
+
+    /// Il giro di TAB: albero -> dettaglio -> classifica -> albero. La
+    /// classifica sta nel giro solo quando il suo pannello e' disegnato
+    /// (lo sa l'ultimo frame, cioe' hits): senza, il giro resta in due.
+    fn cycle_focus(&mut self, forward: bool) {
+        let has_pane = self.hits.report_pane.is_some();
+        self.focus = match (self.focus, forward, has_pane) {
+            (Focus::List, true, _) => Focus::Detail,
+            (Focus::Detail, true, true) => Focus::Report,
+            (Focus::Detail, true, false) => Focus::List,
+            (Focus::Report, true, _) => Focus::List,
+            (Focus::List, false, true) => Focus::Report,
+            (Focus::List, false, false) => Focus::Detail,
+            (Focus::Detail, false, _) => Focus::List,
+            (Focus::Report, false, _) => Focus::Detail,
+        };
+        let dove = match self.focus {
+            Focus::List => "flash.cursore_albero",
+            Focus::Detail => "flash.cursore_dettaglio",
+            Focus::Report => "flash.cursore_classifica",
+        };
+        self.flash_t(dove);
+    }
+
+    /// Il cursore della classifica: muove senza ricalcolare (il report del
+    /// ramo non cambia perche' il cursore si sposta — cambia quando cambia
+    /// la selezione) e la finestra lo segue con la stessa regola
+    /// dell'albero: il cursore resta visibile.
+    fn move_pane_sel(&mut self, delta: i64) {
+        if self.pane.is_empty() {
+            self.pane_sel = 0;
+            self.pane_top = 0;
+            return;
+        }
+        let n = self.pane.len() as i64;
+        let mut s = self.pane_sel as i64 + delta;
+        if s < 0 {
+            s = 0;
+        }
+        if s >= n {
+            s = n - 1;
+        }
+        self.pane_sel = s as usize;
+        self.pane_top = scroll_top(self.pane_sel, PANE_ROWS);
     }
 
     /// INVIO o -> (albero): drill-down netto nella cartella selezionata
@@ -1624,7 +1775,7 @@ mod tests {
     }
 
     #[test]
-    fn r_e_f9_aprono_il_report_esc_e_r_lo_chiudono() {
+    fn r_apre_la_finestra_del_report_f9_muove_la_classifica() {
         let mut app = app_on_fixture("report");
         let sel = app.sel;
         app.on_key(key(KeyCode::Char('R')));
@@ -1641,7 +1792,7 @@ mod tests {
         assert_eq!(app.sel, sel);
         app.on_key(key(KeyCode::Esc));
         assert!(matches!(app.mode, Mode::Main));
-        app.on_key(key(KeyCode::F(9)));
+        app.on_key(key(KeyCode::Char('R')));
         assert!(matches!(app.mode, Mode::Report));
         assert_eq!(app.report_top, 0); // si ricalcola a ogni apertura
         app.on_key(key(KeyCode::Char('R'))); // anche Shift+R chiude
@@ -1649,11 +1800,36 @@ mod tests {
     }
 
     #[test]
+    fn la_classifica_in_fondo_segue_la_selezione() {
+        // il report della CLI, vivo: i 10 piu' grandi del ramo selezionato,
+        // ricorsivi — scorri l'albero e la risposta ti segue. F9 la mostra
+        // e la nasconde, senza mai aprire finestre
+        let mut app = app_on_fixture("report-rel");
+        // la selezione parte da alpha: i suoi due file, il piu' grande in testa
+        assert_eq!(app.pane.len(), 2);
+        assert_eq!(app.pane[0].0, 2000);
+        assert!(app.pane[0].1.ends_with("data.dat"));
+        // giu' su gamma: la classifica cambia insieme alla selezione
+        app.on_key(key(KeyCode::Down));
+        assert_eq!(app.pane.len(), 2); // y.dll 300, z.tmp 10
+        assert_eq!(app.pane[0].0, 300);
+        assert!(app.pane[0].1.ends_with("y.dll"));
+        // F9: si nasconde (e niente lavoro per nulla), si ripresenta
+        app.on_key(key(KeyCode::F(9)));
+        assert!(!app.view.show_report);
+        assert!(app.pane.is_empty());
+        assert!(matches!(app.mode, Mode::Main)); // mai una finestra
+        app.on_key(key(KeyCode::F(9)));
+        assert!(app.view.show_report);
+        assert_eq!(app.pane.len(), 2); // ricalcolata al ritorno
+    }
+
+    #[test]
     fn il_report_passa_dalla_lente_come_tutto_il_resto() {
         let mut app = app_on_fixture("report-fil");
         // lente *.dll: nel report finiscono solo i file che matchano
         app.view.filter = Some(Filter::build("*.dll").unwrap());
-        app.on_key(key(KeyCode::F(9)));
+        app.on_key(key(KeyCode::Char('R')));
         assert!(matches!(app.mode, Mode::Report));
         let names: Vec<String> = app
             .report
@@ -1664,7 +1840,7 @@ mod tests {
         // tolta la lente, il report torna a vedere tutti i file
         app.on_key(key(KeyCode::Esc));
         app.view.filter = None;
-        app.on_key(key(KeyCode::F(9)));
+        app.on_key(key(KeyCode::Char('R')));
         assert_eq!(app.report.len(), 7);
     }
 
@@ -1672,8 +1848,9 @@ mod tests {
     fn il_report_e_della_cartella_dove_si_sta() {
         // il report segue il drill-down: -big della cartella corrente
         // (sottoalbero compreso), non dell'intero scan — alla radice si
-        // vedono tutti, dentro gamma solo i suoi
-        let mut app = app_on_fixture("report-rel");
+        // vedono tutti, dentro gamma solo i suoi. Tag a se' stante: il
+        // fixture vive su disco e i test girano in parallelo
+        let mut app = app_on_fixture("report-drill");
         app.on_key(key(KeyCode::Char('R')));
         assert_eq!(app.report.len(), 7); // alla radice: tutta la fixture
         app.on_key(key(KeyCode::Esc));
@@ -1697,7 +1874,7 @@ mod tests {
         // il report parte da 10 e le cifre lo riscrivono al volo: la
         // finestra si ricalcola a ogni colpo, senza chiudersi
         let mut app = app_on_fixture("report-top");
-        app.on_key(key(KeyCode::F(9)));
+        app.on_key(key(KeyCode::Char('R')));
         assert_eq!(app.report_n, 10);
         assert_eq!(app.report.len(), 7); // la fixture ne ha 7
         app.on_key(key(KeyCode::Char('2'))); // la prima cifra riparte da zero
@@ -2247,6 +2424,12 @@ mod tests {
             detail_pane: Some(Rect::new(61, 1, 18, 22)),
             detail: Some(HitRows {
                 rect: Rect::new(61, 5, 18, 15),
+                top: 0,
+                stride: 1,
+            }),
+            report_pane: Some(Rect::new(1, 24, 78, 14)),
+            report: Some(HitRows {
+                rect: Rect::new(2, 27, 76, 10),
                 top: 0,
                 stride: 1,
             }),

@@ -27,6 +27,8 @@ pub struct Settings {
     /// la specifica del filtro (glob o REG(...)); None: nessuno
     pub filter: Option<String>,
     pub show_bar: bool,
+    /// la classifica in fondo (F9): il quadro di fabbrica la mostra
+    pub show_report: bool,
     /// il codice della lingua scelta (l / F12 nel TUI); None: fabbrica,
     /// l'inglese incorporato
     pub lang: Option<String>,
@@ -39,6 +41,7 @@ impl Default for Settings {
             order: Order::TD,
             filter: None,
             show_bar: true,
+            show_report: true,
             lang: None,
         }
     }
@@ -56,6 +59,7 @@ impl Settings {
                 .as_ref()
                 .map(|f| f.display().to_string()),
             show_bar: app.view.show_bar,
+            show_report: app.view.show_report,
             lang: if app.cat.active.code == "en" {
                 None // il fabbrica non si salva: e' il default di partenza
             } else {
@@ -77,6 +81,9 @@ impl Settings {
             .and_then(|s| Filter::build(s).ok());
         // la barra e' un marchio: o c'e' o non c'e', in entrambi i pannelli
         app.view.show_bar = self.show_bar;
+        // la classifica in fondo (F9): il quadro la mostra, chi la chiude
+        // al prossimo avvio la ritrova chiusa — la stanza resta come l'hai lasciata
+        app.view.show_report = self.show_report;
         // la lingua salvata si adotta in silenzio (e' l'avvio, non una
         // scelta: il flash non c'entra). Un codice che non esiste piu'
         // (file cancellato dal profilo) si ignora: si resta dov'eravamo
@@ -97,6 +104,10 @@ impl Settings {
         out.push_str(&format!(
             "barra={}\n",
             if self.show_bar { "on" } else { "off" }
+        ));
+        out.push_str(&format!(
+            "classifica={}\n",
+            if self.show_report { "on" } else { "off" }
         ));
         if let Some(l) = &self.lang {
             out.push_str(&format!("lingua={}\n", l));
@@ -133,6 +144,11 @@ impl Settings {
                 "barra" => match val.trim() {
                     "on" => s.show_bar = true,
                     "off" => s.show_bar = false,
+                    _ => {}
+                },
+                "classifica" => match val.trim() {
+                    "on" => s.show_report = true,
+                    "off" => s.show_report = false,
                     _ => {}
                 },
                 // il codice lingua lo valida chi lo usa (il TUI lo cerca
@@ -202,6 +218,7 @@ mod tests {
             order: Order::AC,
             filter: Some("*.dll".to_string()),
             show_bar: false,
+            show_report: false,
             lang: Some("it".to_string()),
         };
         assert_eq!(Settings::from_text(&s.to_text()), s);
