@@ -4,6 +4,18 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
 ## [Unreleased]
 
+### Added
+- **The TUI wears the CLI's clothes**: the tree panel is drawn by hand,
+  column walls and junctions like the grid (`┬ ┼ ┴`), the labels centered
+  in their columns; the bottom ranking is the report section of the
+  picture — two columns, the SIZE centered, the parent path on the
+  header's right. `TAB` now cycles three places — tree, detail, ranking —
+  with a reading cursor on the ten files and the full path of the pointed
+  row in the status line; the mouse follows (wheel and click on the
+  ranking move the cursor). `▲ ▼` arrows appear on the panel borders when
+  there is more to scroll above or below, in every panel. The help (`F1`
+  and `-h`) documents `TAB` as its 24th voice, in all seven languages.
+
 ### Changed
 - **The picture, in one box**: `mfd-cli` now answers with the whole
   picture — the folder grid above and the 10 biggest files below, one
@@ -38,6 +50,14 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   minimum width now follows the active language's own headers, so no
   translation can ever break out of its column (regression test included,
   English catalog with short counts).
+- **The detail list no longer stops two rows short of the bottom**: the
+  warnings row was reserved unconditionally — now it is taken only when
+  there is a warning to say, and a long list fills the whole panel
+  instead of looking finished early.
+- **The detail pane no longer rebuilds every row at every frame**: only
+  the visible window is built. On a big folder (WinSxS: ~1.800 children)
+  the idle redraw ate half a core — 45% CPU standing still; now it sits
+  at ~1,5%.
 
 ### Added
 - **Issue templates**: three doors for the public — bug (command,

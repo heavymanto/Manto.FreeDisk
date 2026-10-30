@@ -40,22 +40,27 @@ The question mfd-cli exists for. Point it at a folder and read the grid:
 ```
 > mfd-cli C:\Windows
 
+--- C:\Windows ----------------------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    41,4 GB  100%  ########################      181.507    102.992  C:\Windows
-    18,5 GB   44%  ###########.............      124.088     92.330  |-- WinSxS\
-     7,1 GB   17%  ####....................       20.437      1.651  |-- System32\
+    18,1 GB   43%  ##########..............      122.666     92.331  |-- WinSxS\
+     7,1 GB   17%  ####....................       20.068      1.650  |-- System32\
      6,8 GB   16%  ####....................        4.441      3.745  |-- assembly\
-     4,0 GB    9%  ##......................          922        100  |-- Installer\
+     4,4 GB   10%  ###.....................          927        101  |-- Installer\
      1,4 GB    3%  #.......................        7.704      1.943  |-- SystemApps\
      1,2 GB    3%  #.......................        4.909        387  |-- SysWOW64\
-    691,5 MB    1%  ........................        2.800      1.929  |-- Microsoft.NET\
-    461,0 MB    1%  ........................          658          0  |-- Fonts\
+   691,5 MB    1%  ........................        2.800      1.929  |-- Microsoft.NET\
+   461,0 MB    1%  ........................          658          0  |-- Fonts\
 
-(108 rows in all; here the first ones)
+(107 rows in all; here the first ones)
 -------------------------------------------------------------------------------
-    41,4 GB                                      181.507    102.992  TOTAL: 108 entries
-
+    41,4 GB                                      178.972    103.007  TOTAL: 107 entries
+--- THE 10 BIGGEST FILES ------------------------------------------------------
+   350,5 MB  C:\Windows\Installer\46390ac1.msi
+   348,5 MB  C:\Windows\Installer\3b7172f7.msi
+   327,7 MB  C:\Windows\System32\Microsoft-Edge-WebView\msedge.dll
+   ...
+-------------------------------------------------------------------------------
     WARNING  - opening folder C:\Windows\CSC: Accesso negato.
              ...
              ... and 46 more reports
@@ -63,21 +68,28 @@ The question mfd-cli exists for. Point it at a folder and read the grid:
 
 Row by row:
 
-- **The first row is the root**: 41,4 GB is the recursive total of the whole
-  tree; 181.507 files and 102.992 folders are the counts of the entire
-  subtree. The % is born here: the root is 100%, the zero point of the bar.
+- **The title band on top says where you are** (`--- C:\Windows ---`):
+  the scanned path, the only thing the root row used to say. The root is
+  not a row anymore — its 100% told nothing the TOTAL doesn't already
+  tell. The % of every row is born from that total: the whole tree is
+  the 100%, the zero point of the bar.
 - **The `|--` rows are the subfolders** (connectors like `tree`): WinSxS
-  holds 18,5 GB, that is 44% of the total. The size is RECURSIVE: everything
+  holds 18,1 GB, that is 43% of the total. The size is RECURSIVE: everything
   inside it, at any depth.
 - **The bar is proportional**: 24 characters, `#` full and `.` empty. WinSxS
-  at 44% has 11 full characters out of 24: it reads at a glance, without
+  at 43% has 10 full characters out of 24: it reads at a glance, without
   looking at the numbers.
+- **Below the TOTAL, the ten biggest files** of the whole tree, full
+  paths, fixed size-descending order: the grid says where the space
+  sits, the ranking says which files hold it — one command, both
+  answers. `-report N` prints just this section, `-grid` just the grid
+  above.
 - **On a real terminal the grid dresses like duf**
   (github.com/muesli/duf) — rounded box, bars and % colored by thresholds,
   blue names, the bold TOTAL row closing the box. A photograph says it
   better than a description:
 
-  ![The grid on a real terminal: mfd-cli -top 10](docs/img/cli-grid.png)
+  ![The grid on a real terminal: mfd-cli -grid -top 10](docs/img/cli-grid.png)
 
   The names stay whole: the box is as wide as it takes, like the ASCII grid.
   `NO_COLOR` turns the colors off but keeps the box, `MFD_ASCII=1` goes back
@@ -91,13 +103,13 @@ Row by row:
 - **The default order is size, descending** (`T.D`): the biggest on top,
   which is what you want when you are hunting for space.
 - **The TOTAL closes the grid, aligned**: behind a thread of separator,
-  every total under its own column — `41,4 GB` under SIZE, `181.507` under
-  FILES, `102.992` under FOLDERS — and in the NAME column the label with the
-  entry count (`TOTAL: 108 entries`). These are the same numbers the TUI
+  every total under its own column — `41,4 GB` under SIZE, `178.972` under
+  FILES, `103.007` under FOLDERS — and in the NAME column the label with the
+  entry count (`TOTAL: 107 entries`). These are the same numbers the TUI
   detail pane (entry 10) puts on top of the right panel; when the table is
-  long, the root on top is already off-screen, and the total stays within
+  long, the first rows are already off-screen, and the total stays within
   reach. `-top` leaves it alone too (entry 6): rows are cut, totals are not.
-- **The WARNING rows close the grid**, right under the TOTAL: the first cell
+- **The WARNING rows close the whole output**, after the ranking: the first cell
   is the label, the other columns merge into one text cell — entry 2 is about
   them.
 
@@ -108,17 +120,20 @@ exactly like the `tree` command.
 ## 2. What are the notices at the bottom? Did I break something?
 
 No. The folders Windows does not let you open are **warnings, not errors**:
-the scan goes on and ends with exit code 0. They close the grid under the
-TOTAL, one report per row with its dash. A real example from the scan above:
+the scan goes on and ends with exit code 0. They close the whole output —
+after the TOTAL and the biggest-files ranking — one report per row with its
+dash. A real example from the scan above:
 
 ```
  -------------------------------------------------------------------------------
-    41,4 GB                                      181.507    102.992  TOTAL: 108 entries
+    41,4 GB                                      178.972    103.007  TOTAL: 107 entries
+--- THE 10 BIGGEST FILES ------------------------------------------------------
+   350,5 MB  C:\Windows\Installer\46390ac1.msi
+   ...
+-------------------------------------------------------------------------------
     WARNING  - opening folder C:\Windows\CSC: Accesso negato.
-             - opening folder C:\Windows\appcompat\Programs: Accesso negato.
-             - opening folder C:\Windows\appcompat\Backup: Accesso negato.
-             - opening folder C:\Windows\appcompat\AIDD: Accesso negato.
-             - opening folder C:\Windows\appcompat\appraiser: Accesso negato.
+             - opening folder C:\Windows\LiveKernelReports: Accesso negato.
+             - opening folder C:\Windows\ServiceState: Accesso negato.
              - opening folder C:\Windows\WUModels: Accesso negato.
              - opening folder C:\Windows\appcompat\UA: Accesso negato.
              - opening folder C:\Windows\Temp: Accesso negato.

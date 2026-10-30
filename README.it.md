@@ -26,17 +26,14 @@
 
 ---
 
-L'idea nasce da un fastidio vero e attuale. Le memorie costano ancora
-care e un disco piu' capiente non e' un'opzione: il disco resta pieno,
-e i tool piu' noti non danno una risposta in un colpo d'occhio o con
-un comando diretto. Cosi' ho smesso di cercare quello giusto e ho
-deciso di farmelo da solo. Potevo scriverlo in C# — il mio linguaggio
-preferito, da vent'anni — ma ho preferito provare Rust, con un po' di
-vibe coding: ad affiancarmi, GLM 5.3, open weight, on-premise. Ha
-funzionato: con questo tool i file enormi dimenticati saltano subito
-all'occhio — backup, macchine virtuali ormai inutilizzate — e un buon
-30% di dati vecchi e' finito nel mirino. L'esperimento qui sotto
-racconta il resto della storia.
+L'idea nasce da un fastidio concreto. Le memorie costano care e un
+disco piu' capiente non e' un'opzione: il disco resta pieno, e i tool
+piu' noti non rispondono ne' in un colpo d'occhio ne' con un comando
+diretto. Cosi' me lo sono scritto. Potevo farlo in C# — il mio
+linguaggio, da vent'anni — ma ho scelto Rust, affiancato da GLM 5.3,
+open weight, on-premise. Ha funzionato: i file enormi dimenticati sono
+emersi subito — backup, macchine virtuali abbandonate — e un buon 30%
+di dati vecchi e' finito nel mirino.
 
 **Manto.FreeDisk** e' un analizzatore di spazio disco costruito attorno a
 una domanda sola: *dove sono finiti i miei gigabyte*. Scansiona un albero
@@ -46,21 +43,26 @@ trasforma in una griglia colorata, una classifica dei file piu' grossi, un
 albero navigabile — o una fotografia JSON che le macchine sanno fare a
 diff.
 
-E' nato come esperimento aperto: lo stesso walker parallelo scritto tre
-volte — Node (il prototipo della fase 0, oggi congelato), Rust e una proof
-of concept in C# — stesse cartelle, stesso protocollo, totali incrociati:
+Con il progetto e' nato anche un esperimento di misura. Che Node sia
+lento e beva RAM, che Rust sia veloce: cose che tutti danno per
+scontate e nessuno quantifica. Lo stesso walker parallelo, allora,
+scritto tre volte — Node (il prototipo della fase 0, oggi congelato),
+Rust e una proof of concept in C# — stesse cartelle, stesso protocollo,
+totali incrociati:
 
-> Rust e C# girano alla stessa velocita' — questa sessione ha il C# JIT
-> persino un capello davanti. Node resta ~6 volte dietro. La RAM e'
-> dove si dividono: Rust percorre l'albero con 12,5 MB, il walker C#
-> con ~59, Node con ~251 — un quinto, un ventesimo. Questo, e un
+> Il luogo comune e' caduto per meta'. Sulla CPU Rust e C# sono
+> appaiati — questa sessione ha il C# JIT persino un capello davanti —
+> e Node resta ~6 volte dietro. Sulla RAM regge, ma adesso ha un
+> quanto: Rust percorre l'albero con 12,5 MB, il walker C# con ~59,
+> Node con ~251 — non "meno": un quinto, un ventesimo. Questo, e un
 > prodotto da spedire, e' il perche' Rust e' il motore; il gemello C#
 > oggi e' una proof of concept — il walker, misurato, senza la CLI e
 > la TUI attorno: la sua promozione e' il prossimo capitolo del
 > roadmap. Node resta congelato come prototipo della fase 0. Una
 > macchina, una sessione, gli output grezzi in
 > [bench/results/](bench/results); il metodo in
-> [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). La regola del progetto e'
+> tutta qui': nulla e' dato per ovvio, si misura.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
@@ -105,20 +107,22 @@ rustup ha appena scritto. Tutto il resto sono due comandi:
 ```powershell
 cd rust
 cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in target\release\
-.\target\release\mfd-cli.exe -big 10 C:\Windows
+.\target\release\mfd-cli.exe C:\Windows
 ```
 
 Poi fate la domanda per cui questo tool esiste — dove e' finito lo
-spazio? — e leggete la risposta: in classifica, full path, ordine fisso di
-taglia decrescente. Quello e' Windows visto da dentro: un pacchetto
-d'installazione da 348,5 MB in cima, e `msedge.dll` quattro volte, perche'
-WinSxS conserva le versioni dei componenti. Aggiungete `-json` e la stessa
-fotografia arriva in JSON (`mfd-cli -big 10 -json > big.json`).
+spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le
+cartelle piu' pesanti, percentuali e barre), sotto la classifica dei
+file piu' grossi, full path e ordine fisso di taglia decrescente.
+Quello e' Windows visto da dentro: un pacchetto d'installazione da
+348,5 MB in cima, e `msedge.dll` quattro volte, perche' WinSxS conserva
+le versioni dei componenti. Aggiungete `-json` e la stessa fotografia
+arriva in JSON (`mfd-cli -json > quadro.json`).
 
 <div align="center">
 <br />
-<img src="docs/img/cli-big.png" alt="I dieci file piu' grandi di C:\Windows, in classifica con full path, come si vestono su un terminale vero" width="100%" />
-<sub>🔍 <b>La risposta, in classifica</b> — mfd-cli -big 10 C:\Windows: full path, ordine fisso, e il blocco WARNING che dichiara cosa la scansione non ha potuto leggere. (Foto scattata su Windows, console host.)</sub>
+<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows: la mappa del disco sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
+<sub>🔍 <b>Il quadro</b> — mfd-cli C:\Windows: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto, e il blocco WARNING che dichiara cosa la scansione non ha potuto leggere. (Foto scattata su Windows, console host.)</sub>
 </div>
 
 <details>
@@ -140,14 +144,14 @@ precompilati via GitHub Releases sono in programma.
 
 | `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
 |:---:|:---:|
-| ![La griglia su un terminale vero: mfd-cli -top 10](docs/img/cli-grid.png) | ![mfd-tui: i due pannelli a fine scansione](docs/img/tui-start.png) |
+| ![La griglia su un terminale vero: mfd-cli -grid -top 10](docs/img/cli-grid.png) | ![mfd-tui: i due pannelli e la classifica a fine scansione](docs/img/tui-start.png) |
 
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
-| **Cosa e'** | la griglia di ripartizione, look duf, a qualsiasi profondita' | un navigatore a due pannelli sulla stessa scansione |
+| **Cosa e'** | il quadro: griglia di ripartizione e classifica dei piu' grossi, un comando solo | un navigatore a due pannelli con la classifica in fondo, sulla stessa scansione |
 | **Si avvia** | `mfd-cli <cartella>` | `mfd-tui <cartella>` |
 | **La lente** | `-f` (glob o `REG(...)`), `-o`, `-top` | la stessa lente: `Shift+S` ordina, `Shift+F` filtra |
-| **Le mosse chiave** | `-big N` classifica i piu' grossi, `-json` fotografa | `Shift+X` apre l'albero, `Shift+R` il report, `F1` la tastiera |
+| **Le mosse chiave** | `-report N` solo la classifica, `-grid` solo la griglia, `-json` fotografa | `Shift+X` apre l'albero, `TAB` gira albero/dettaglio/classifica, `F1` la tastiera |
 | **Il resto** | `-d a` albero intero, 7 lingue, contratto ASCII | 4 temi, stampa JSON con `Shift+P`, `F2` salva, il mouse si veste da tasto |
 | **Manuale** | [FAQ](docs/FAQ.md), voci 1-9 e 11-16 · `mfd-cli -h` | [FAQ](docs/FAQ.md#10-is-there-a-version-to-navigate-not-just-to-read), voce 10 · `F1` nell'app |
 
@@ -158,11 +162,11 @@ sullo stesso terminale. (Gli output parlano la lingua della sessione; i
 messaggi del sistema nei blocchi WARNING, come "Accesso negato", arrivano
 tal quali dal Windows italiano su cui girano le scansioni.)
 
-![L'albero completo: mfd-cli -d a -top 12](docs/img/cli-tree.png)
+![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
 
 ![La griglia parla la lingua della sessione: -lang it](docs/img/cli-lang.png)
 
-![La lente del filtro, dichiarata accanto alla radice: -f REG(...)](docs/img/cli-filter.png)
+![La lente del filtro, dichiarata nella fascia del titolo: -f REG(...)](docs/img/cli-filter.png)
 
 Riferimento completo: `mfd-cli -h`. Esempi reali spiegati riga per riga:
 [docs/FAQ.md](docs/FAQ.md) — la FAQ e' un pilastro del progetto: ogni voce e'
@@ -170,8 +174,11 @@ una domanda vera, un comando vero e il suo output vero.
 
 ### `mfd-tui` in azione
 
-Una scansione, poi si naviga a frecce. Ogni `Shift+X` apre un ramo in piu' —
-l'albero cresce un livello alla volta:
+Una scansione, poi si naviga a frecce. La classifica dei file piu' grossi
+del ramo selezionato sta sempre in fondo — `F9` la toglie quando serve
+tutto lo schermo — e `TAB` gira il cursore in lettura per albero,
+dettaglio e classifica. Ogni `Shift+X` apre un ramo in piu' — l'albero
+cresce un livello alla volta:
 
 ![mfd-tui: rami aperti uno alla volta con Shift+X](docs/img/tui-expand.png)
 
