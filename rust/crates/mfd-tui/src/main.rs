@@ -62,6 +62,22 @@ fn print_help(cat: &Catalog) {
     print!("{}", cat.t("tui.help"));
 }
 
+/// Un path della riga di comando in forma assoluta e pulita: i relativi si
+/// risolvono, i . e .. si sciolgono — chi li ha digitati sa dov'e', chi
+/// legge la fascia merita il percorso intero, c:\lll\kkkk\kkk come lo
+/// scriverebbe chiunque. canonicalize su Windows mette il prefisso
+/// verbatim \\?\ : si toglie, il percorso deve restare leggibile
+fn assoluta(p: &str) -> std::path::PathBuf {
+    let path = std::path::PathBuf::from(p);
+    let pulita = std::fs::canonicalize(&path).unwrap_or(path);
+    if let Some(s) = pulita.to_str() {
+        if let Some(stripped) = s.strip_prefix(r"\\?\") {
+            return std::path::PathBuf::from(stripped);
+        }
+    }
+    pulita
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     // --lang <codice> (o --lang=codice): la lingua della sessione, che
@@ -112,10 +128,11 @@ fn main() {
         return;
     }
     let root = match pos.as_slice() {
-        [p] => std::path::PathBuf::from(p),
-        // naked = .: e' quello che tutti si aspettano (du, ncdu, dua);
-        // l'aiuto resta su -h
-        [] => std::path::PathBuf::from("."),
+        [p] => assoluta(p),
+        // naked: la cartella corrente, in forma assoluta — la fascia dice
+        // dove sei, e "." non lo dice. E' quello che tutti si aspettano
+        // (du, ncdu, dua), senza il puntino addosso
+        [] => std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
         _ => {
             eprintln!("{}", cat.t("tui.err_path"));
             std::process::exit(2);

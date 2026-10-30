@@ -732,6 +732,21 @@ pub(crate) fn test_cat() -> Catalog {
         .expect("it.json del crate: c'e' e si legge")
 }
 
+/// Un path della riga di comando in forma assoluta e pulita: i relativi si
+/// risolvono, i . e .. si sciolgono — chi li ha digitati sa dov'e', chi
+/// legge la fascia merita il percorso intero. canonicalize su Windows
+/// mette il prefisso verbatim \\?\ : si toglie, il percorso resta leggibile
+fn assoluta(p: &str) -> PathBuf {
+    let path = PathBuf::from(p);
+    let pulita = std::fs::canonicalize(&path).unwrap_or(path);
+    if let Some(s) = pulita.to_str() {
+        if let Some(stripped) = s.strip_prefix(r"\\?\") {
+            return PathBuf::from(stripped);
+        }
+    }
+    pulita
+}
+
 fn main() {
     // le forme del flag lingua (-lang it, -lang=it, -lang:it e le doppie --)
     // si normalizzano a una sola: -lang + valore, il parsing ne vede una
@@ -914,14 +929,19 @@ fn main() {
     // aspetta. L'aiuto resta una scelta esplicita (-h).
     let root = match path {
         Some(p) => {
-            let ppath = PathBuf::from(p);
+            // il path si fa assoluto e pulito: i relativi si risolvono, i .
+            // e .. si sciolgono — la fascia della griglia dice dove si e',
+            // c:\lll\kkkk\kkk come lo scriverebbe chiunque
+            let ppath = assoluta(p);
             if !ppath.is_dir() {
                 eprintln!("{}", cat.tf("cli.err_path", &[p]));
                 std::process::exit(2);
             }
             ppath
         }
-        None => PathBuf::from("."),
+        // naked: la cartella corrente in forma assoluta — du e ncdu
+        // partono da qui, ma la fascia merita il percorso intero
+        None => std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
     };
 
     // Formato di output: MFD_BENCH=1 (impostato dagli script di benchmark) produce le
