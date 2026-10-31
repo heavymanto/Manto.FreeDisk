@@ -210,6 +210,12 @@ fn event_loop(
                 // il mouse intero va all'app: rotella e click si vestono
                 // da tasti (on_mouse); il drag no — resta al terminale
                 ratatui::crossterm::event::Event::Mouse(m) => app.on_mouse(m),
+                // il terminale e' stato ridimensionato: pulisci il frame
+                // vecchio — il prossimo draw (40 ms dopo) si adatta da
+                // solo alla nuova misura, la barra cresce o si stringe
+                ratatui::crossterm::event::Event::Resize(_cols, _rows) => {
+                    terminal.clear().ok();
+                }
                 _ => {}
             }
         }
