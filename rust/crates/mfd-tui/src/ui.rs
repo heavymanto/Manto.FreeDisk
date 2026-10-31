@@ -904,20 +904,6 @@ fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
 fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     let t = &app.theme;
     let Some(tree) = app.tree.clone() else { return };
-    let sel_name = app
-        .list
-        .get(app.sel)
-        .map(|r| {
-            // la riga radice si chiama punto, come nel disegno: il nome
-            // del nodo radice e' una stringa vuota e il titolo non puo'
-            // restare muto
-            if r.is_root {
-                ".".to_string()
-            } else {
-                tree.name(r.id).to_string_lossy().into_owned()
-            }
-        })
-        .unwrap_or_else(|| "-".to_string());
     // il bordo dice dov'e' il cursore: col cursore a destra si scorre il
     // dettaglio in lettura, l'albero resta il posto dove si naviga
     let focused = app.focus == Focus::Detail;
@@ -926,7 +912,7 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(border)
         .title(Span::styled(
-            format!(" {} ", app.cat.tf("dettaglio.titolo", &[&sel_name])),
+            format!(" {} ", app.cat.t("dettaglio.titolo_solo")),
             t.title,
         ))
         .style(t.screen);
@@ -1520,7 +1506,7 @@ mod tests {
         // i totali in cima al DETTAGLIO restano visibili: la riga della lente
         // (ord/fil) sta sulla riga sotto, non sopra di loro. Selezione di
         // default: la riga radice — il dettaglio racconta la cartella
-        assert!(screen.contains("DETTAGLIO: ."), "titolo: {screen:?}");
+        assert!(screen.contains("DETTAGLIO"), "titolo: {screen:?}");
         assert!(
             screen.contains("3,0 KB - 3 file - 3 cartelle"),
             "totali: {screen:?}"
