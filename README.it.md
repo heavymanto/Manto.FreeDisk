@@ -27,37 +27,42 @@
 ---
 
 L'idea nasce da un fastidio: il disco sempre pieno, e nessun tool che
-dicesse in un colpo d'occhio dove era finito lo spazio. Cosi' me lo
-sono scritto. Potevo farlo in C#, il mio linguaggio da vent'anni: ho
-scelto Rust, affiancato da GLM 5.3 (open weight, on-premise). Ha
-funzionato — i file enormi dimenticati sono saltati fuori subito
-(backup, macchine virtuali abbandonate) e un bel 30% di dati vecchi
-e' finito nel mirino.
+dicesse in un colpo d'occhio dove intervenire. Cosi' me lo sono
+scritto. Potevo farlo in C#, il mio linguaggio di lavoro da vent'anni:
+ho scelto Rust, affiancato da GLM 5.3 (open weight, on-premise). Ha
+funzionato — i file enormi dimenticati sono saltati fuori subito:
+backup, macchine virtuali abbandonate, vecchie installazioni, temp di
+sistema con centinaia di GB usati. In un attimo ho recuperato piu' del
+30% di spazio!
 
-**Manto.FreeDisk** risponde a una domanda sola: *dove sono finiti i
-miei gigabyte*. Uno scanner veloce — un thread per core, le
+**Manto.FreeDisk** e' uno scanner veloce — un thread per core, le
 dimensioni lette mentre enumera — e due modi di guardare la risposta:
-`mfd-cli` la stampa (la mappa delle cartelle e i file piu' grossi,
-insieme), `mfd-tui` la fa navigare a frecce. Sette lingue, e una
-fotografia JSON per confrontare due momenti con un diff.
+mfd-cli, comandi di testo pronti da integrare in altri sistemi di
+automazione, classici o AI; mfd-tui, sempre a terminale ma con
+un'interfaccia vera, come i miei primi tool, a cui sono ancora molto
+affezionato!
 
-Poi c'era una domanda da fare a me stesso: **quanto vale davvero
-Rust?** Dicono sia piu' veloce e beva meno memoria degli altri — ma
+---
+
+## Quanto vale davvero Rust? L'esperimento
+
+Dicono che Rust sia piu' veloce e beva meno memoria degli altri — ma
 quanto, esattamente? Per saperlo ho scritto lo stesso scanner tre
-volte, in Node, Rust e C#, e l'ho cronometrato sugli stessi file,
-con gli stessi totali:
+volte, in Node, Rust e C#, e l'ho cronometrato sugli stessi file, con
+gli stessi totali: tre bench, tre domande — quanto e' veloce la
+scansione, quanta RAM usa, quanto costa avviarla — round interleaved
+con ordine ruotato, mediane prima di stampare qualsiasi cosa. Le
+sessioni sono incollate per intero in [bench/results/](bench/results);
+il metodo in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 > La velocita' e' una sorpresa: Rust e C# sono appaiati — Node resta
 > ~6 volte dietro. La memoria e' il verdetto: Rust percorre l'albero
 > con 12,5 MB, C# con ~59, Node con ~251. Un quinto. Un ventesimo.
 >
-> Per questo Rust e' il motore. C# resta una proof of concept (il
-> suo sviluppo e' il prossimo capitolo del
-> [roadmap](docs/ROADMAP.md)), Node il prototipo con cui tutto e'
-> iniziato. Una macchina, una sessione, gli output grezzi in
-> [bench/results/](bench/results); il metodo in
-> [docs/BENCHMARKS.md](docs/BENCHMARKS.md). Nulla e' dato per ovvio:
-> si misura.
+> Per questo Rust e' il motore. C# resta una proof of concept (il suo
+> sviluppo e' il prossimo capitolo del [roadmap](docs/ROADMAP.md)),
+> Node il prototipo con cui tutto e' iniziato. Una macchina, una
+> sessione. Nulla e' dato per ovvio: si misura.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
@@ -71,216 +76,9 @@ con gli stessi totali:
 | **rust (find-data via std::fs, no stat)** | **1462** | **12,5 MB** |
 | node (readdir+stat per file, libuv) | 8531 | 251,3 MB |
 
-181.513 file, 102.998 cartelle, totali incrociati `[OK]` su ogni riga: la
-CPU e' un pareggio, la RAM no — e quello e' il verdetto dell'esperimento,
-i dettagli piu' sotto.
-
-## Scaricalo
-
-Niente da installare: estrai ed esegui — e basta. I due binari
-funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
-le altre sei lingue vengono trovate in `lang/` accanto ai binari.
-
-[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-win-x64.zip)
-[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-linux-x64.tar.gz)
-[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0-mantofreedisk-0.9.0-macos-aarch64.tar.gz)
-
-**Opzionale**: se vuoi i comandi disponibili ovunque (non solo dalla
-cartella estratta), lancia `install.ps1` (Windows) o `install.sh`
-(Linux). Un comando, due secondi, fatto: `mfd-cli` e `mfd-tui`
-funzionano da qualsiasi terminale, con tutte le lingue. Senza lanciarlo
-funziona comunque tutto — ti sposti solo nella cartella prima di
-usarli. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
-
-## Installazione
-
-Serve [Rust](https://rustup.rs) (`cargo --version`) e un clone di questo
-repository. Se Rust non c'e' ancora: `winget install Rustlang.Rustup`, poi
-aprite un terminale **nuovo** — quelli gia' aperti non vedono il PATH che
-rustup ha appena scritto. Tutto il resto sono due comandi:
-
-```powershell
-cd rust
-cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in target\release\
-.\target\release\mfd-cli.exe C:\Windows
-```
-
-Poi fate la domanda per cui questo tool esiste — dove e' finito lo
-spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le
-cartelle piu' pesanti, percentuali e barre), sotto la classifica dei
-file piu' grossi, full path e ordine fisso di taglia decrescente.
-Quello e' Windows visto da dentro: un pacchetto d'installazione da
-348,5 MB in cima, e `msedge.dll` quattro volte, perche' WinSxS conserva
-le versioni dei componenti. Aggiungete `-json` e la stessa fotografia
-arriva in JSON (`mfd-cli -json > quadro.json`).
-
-<div align="center">
-<br />
-<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows: la mappa del disco sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
-<sub>🔍 <b>Il quadro</b> — mfd-cli C:\Windows: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto, e il blocco WARNING che dichiara cosa la scansione non ha potuto leggere. (Foto scattata su Windows, console host.)</sub>
-</div>
-
-<details>
-<summary><b>Opzionale:</b> pubblicare i comandi (e le sette lingue)</summary>
-
-`.\install.ps1` in `rust\` copia gli exe in `%USERPROFILE%\.local\bin`
-(verificate che quella cartella sia nel vostro PATH) e i file delle lingue
-in `%APPDATA%\mfd\lang`, il registro che CLI e TUI scoprono a runtime —
-l'inglese e' incorporato nei binari, quindi funzionano anche senza quella
-cartella. `install.ps1` non tocca mai il `PATH`. Senza installazione,
-eseguite direttamente `rust\target\release\mfd-cli.exe`. I binari
-precompilati via GitHub Releases sono in programma.
-
-</details>
-
----
-
-## Due frontend, un motore
-
-| `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
-|:---:|:---:|
-| ![La griglia su un terminale vero: mfd-cli -grid -top 10](docs/img/cli-grid.png) | ![mfd-tui: i due pannelli e la classifica a fine scansione](docs/img/tui-start.png) |
-
-| | `mfd-cli` | `mfd-tui` |
-| --- | --- | --- |
-| **Cosa e'** | il quadro: griglia di ripartizione e classifica dei piu' grossi, un comando solo | un navigatore a due pannelli con la classifica in fondo, sulla stessa scansione |
-| **Si avvia** | `mfd-cli <cartella>` | `mfd-tui <cartella>` |
-| **La lente** | `-f` (glob o `REG(...)`), `-o`, `-top` | la stessa lente: `Shift+S` ordina, `Shift+F` filtra |
-| **Le mosse chiave** | `-report N` solo la classifica, `-grid` solo la griglia, `-json` fotografa | `Shift+X` apre l'albero, `TAB` gira albero/dettaglio/classifica, `F1` la tastiera |
-| **Il resto** | `-d a` albero intero, 7 lingue, contratto ASCII | 4 temi, stampa JSON con `Shift+P`, `F2` salva, il mouse si veste da tasto |
-| **Manuale** | [FAQ](docs/FAQ.md), voci 1-9 e 11-16 · `mfd-cli -h` | [FAQ](docs/FAQ.md#10-is-there-a-version-to-navigate-not-just-to-read), voce 10 · `F1` nell'app |
-
-### `mfd-cli` in azione
-
-La griglia colorata ha aperto questa pagina; ecco il resto della famiglia,
-sullo stesso terminale. (Gli output parlano la lingua della sessione; i
-messaggi del sistema nei blocchi WARNING, come "Accesso negato", arrivano
-tal quali dal Windows italiano su cui girano le scansioni.)
-
-![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
-
-![La griglia parla la lingua della sessione: -lang it](docs/img/cli-lang.png)
-
-![La lente del filtro, dichiarata nella fascia del titolo: -f REG(...)](docs/img/cli-filter.png)
-
-Riferimento completo: `mfd-cli -h`. Esempi reali spiegati riga per riga:
-[docs/FAQ.md](docs/FAQ.md) — la FAQ e' un pilastro del progetto: ogni voce e'
-una domanda vera, un comando vero e il suo output vero.
-
-### `mfd-tui` in azione
-
-Una scansione, poi si naviga a frecce. La classifica dei file piu' grossi
-del ramo selezionato sta sempre in fondo — `F9` la toglie quando serve
-tutto lo schermo — e `TAB` gira il cursore in lettura per albero,
-dettaglio e classifica. Ogni `Shift+X` apre un ramo in piu' — l'albero
-cresce un livello alla volta:
-
-![mfd-tui: rami aperti uno alla volta con Shift+X](docs/img/tui-expand.png)
-
-`Shift+A` apre tutto il sottoalbero, e TAB porta il cursore in lettura nel
-dettaglio:
-
-![mfd-tui: l'albero aperto e il cursore in lettura nel dettaglio](docs/img/tui-tree.png)
-
-Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
-file piu' grossi) e F1 documenta tutta la tastiera in una finestra
-sola:
-
-![mfd-tui: l'aiuto F1](docs/img/tui-help.png)
-
-`F2` salva le impostazioni (tema, lente, barra) nel profilo utente — il
-flash dice dove:
-
-![mfd-tui: F2 salva le impostazioni](docs/img/tui-save.png)
-
-`Shift+P` / F11 stampa la fotografia JSON di quello che stai guardando —
-il flash dice il file:
-
-![mfd-tui: la stampa dalla schermata principale](docs/img/tui-print-home.png)
-
-Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
-Console (il default), CLI:
-
-![Il menu dei temi della TUI (Shift+T / F3)](docs/img/tui-theme-menu.png)
-
-![Il tema Notturno](docs/img/tui-theme-night.png)
-
-![Il tema Debian](docs/img/tui-theme-debian.png)
-
-Il prompt del filtro (`Shift+F` / F7), il menu delle lingue (`Shift+L` /
-F12) e il loader della scansione:
-
-![Il prompt del filtro (Shift+F / F7)](docs/img/tui-filter.png)
-
-![Il menu delle lingue (Shift+L / F12)](docs/img/tui-lang.png)
-
-![Il loader della scansione](docs/img/tui-scan.png)
-
-## Il contratto JSON
-
-Ogni fotografia nasce dallo stesso serializzatore, promosso nel motore
-(mfd-core): ASCII puro, ordine deterministico, diffabile byte per byte.
-
-| Fotografia | Cosa fotografa | Come |
-| --- | --- | --- |
-| la griglia | le righe di livello 1 che stai guardando | `mfd-cli -json <cartella>` |
-| l'albero intero | ogni cartella, ogni file — quello che serve a un diff | `mfd-cli -d a -json <cartella>` |
-| il report | gli N file piu' grossi, classifica e full path | `mfd-cli -big N -json <cartella>` |
-| la vista | entrambi i pannelli della TUI, come li hai lasciati | `mfd-tui`, `Shift+P` |
-| la finestra report | il report aperto, top e file grossi | `Shift+R`, poi `Shift+P` |
-
-Una stampa vera — la cartella demo da sette file, rami chiusi, selezione
-su `alpha` (`mfd-stampa-demo-tui.json`):
-
-```json
-{
-  "mfd": "0.2.1",
-  "root": "C:\\Users\\Public\\mfd-captures\\demo-tui",
-  "filter": null,
-  "depth": 4294967295,
-  "totals": {"bytes": 3530, "files": 7, "dirs": 5, "warnings": 0, "elapsed_ms": 3.7},
-  "warnings": [],
-  "tree": {
-    "bytes": 3530,
-    "files": 7,
-    "dirs": 5,
-    "children": [
-      {"name": "alpha", "bytes": 3000, "files": 2, "dirs": 0, "children": null, "leaves": null},
-      {"name": "gamma", "bytes": 310, "files": 2, "dirs": 1, "children": null, "leaves": null},
-      {"name": "beta", "bytes": 120, "files": 2, "dirs": 1, "children": null, "leaves": null}
-    ],
-    "leaves": [
-      {"name": "readme.txt", "bytes": 100}
-    ]
-  },
-  "detail": {
-    "selected": "C:\\Users\\Public\\mfd-captures\\demo-tui\\alpha",
-    "bytes": 3000,
-    "files": 2,
-    "dirs": 0,
-    "rows": [
-      {"name": "data.dat", "kind": "file", "bytes": 2000},
-      {"name": "lib.dll", "kind": "file", "bytes": 1000}
-    ]
-  }
-}
-```
-
-I file nascono nella cartella da cui avete lanciato `mfd-tui` — `mfd-stampa-<nome>.json`
-per la vista, `mfd-report-<nome>.json` per il report, numerati in caso di
-collisione: niente sovrascritture silenziose, due fotografie valgono un
-diff. La ricetta prima/dopo e le stampe della TUI sono nel FAQ (voci 9 e 12).
-
-## L'esperimento: stesso walker, tre linguaggi
-
-Questo repository e' nato come esperimento di scelta dello stack: lo stesso
-walker parallelo — Node, C#, Rust — sulle stesse cartelle, riscaldamento
-di tutto, round interleaved con ordine ruotato, mediane e totali incrociati
-prima di stampare qualsiasi cosa. Tre bench, tre domande
-([docs/BENCHMARKS.md](docs/BENCHMARKS.md)): quanto e' veloce la scansione,
-quanta RAM usa, quanto costa avviarla. Le sessioni sono incollate per
-intero in [bench/results/](bench/results); la tabella in cima a questa
-pagina e' quella di oggi. Il verdetto, su tre assi:
+181.513 file, 102.998 cartelle, totali incrociati `[OK]` su ogni riga:
+la CPU e' un pareggio, la RAM no — e quello e' il verdetto. Il
+dettaglio, su tre assi:
 
 ### 1 — Prestazioni: CPU e RAM
 
@@ -390,6 +188,205 @@ su altre piattaforme. I contratti rendono verificabile ogni contributo:
 le righe RESULT del bench e l'output ASCII rediretto sono il giudice, e
 il FAQ e' il posto dove una domanda vera diventa una feature
 ([CONTRIBUTING.md](CONTRIBUTING.md)).
+## Scaricalo
+
+Niente da installare: estrai ed esegui — e basta. I due binari
+funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
+le altre sei lingue vengono trovate in `lang/` accanto ai binari.
+
+[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-win-x64.zip)
+[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0/mantofreedisk-0.9.0-linux-x64.tar.gz)
+[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.0-mantofreedisk-0.9.0-macos-aarch64.tar.gz)
+
+**Opzionale**: se vuoi i comandi disponibili ovunque (non solo dalla
+cartella estratta), lancia `install.ps1` (Windows) o `install.sh`
+(Linux). Un comando, due secondi, fatto: `mfd-cli` e `mfd-tui`
+funzionano da qualsiasi terminale, con tutte le lingue. Senza lanciarlo
+funziona comunque tutto — ti sposti solo nella cartella prima di
+usarli. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
+
+---
+
+## Due frontend, un motore
+
+| `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
+|:---:|:---:|
+| ![La griglia su un terminale vero: mfd-cli -grid -top 10](docs/img/cli-grid.png) | ![mfd-tui: i due pannelli e la classifica a fine scansione](docs/img/tui-start.png) |
+
+| | `mfd-cli` | `mfd-tui` |
+| --- | --- | --- |
+| **Cosa e'** | il quadro: griglia di ripartizione e classifica dei piu' grossi, un comando solo | un navigatore a due pannelli con la classifica in fondo, sulla stessa scansione |
+| **Si avvia** | `mfd-cli <cartella>` | `mfd-tui <cartella>` |
+| **La lente** | `-f` (glob o `REG(...)`), `-o`, `-top` | la stessa lente: `Shift+S` ordina, `Shift+F` filtra |
+| **Le mosse chiave** | `-report N` solo la classifica, `-grid` solo la griglia, `-json` fotografa | `Shift+X` apre l'albero, `TAB` gira albero/dettaglio/classifica, `F1` la tastiera |
+| **Il resto** | `-d a` albero intero, 7 lingue, contratto ASCII | 4 temi, stampa JSON con `Shift+P`, `F2` salva, il mouse si veste da tasto |
+| **Manuale** | [FAQ](docs/FAQ.md), voci 1-9 e 11-16 · `mfd-cli -h` | [FAQ](docs/FAQ.md#10-is-there-a-version-to-navigate-not-just-to-read), voce 10 · `F1` nell'app |
+
+## In azione
+
+### `mfd-cli` in azione
+
+La griglia colorata ha aperto questa pagina; ecco il resto della famiglia,
+sullo stesso terminale. (Gli output parlano la lingua della sessione; i
+messaggi del sistema nei blocchi WARNING, come "Accesso negato", arrivano
+tal quali dal Windows italiano su cui girano le scansioni.)
+
+![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
+
+![La griglia parla la lingua della sessione: -lang it](docs/img/cli-lang.png)
+
+![La lente del filtro, dichiarata nella fascia del titolo: -f REG(...)](docs/img/cli-filter.png)
+
+Riferimento completo: `mfd-cli -h`. Esempi reali spiegati riga per riga:
+[docs/FAQ.md](docs/FAQ.md) — la FAQ e' un pilastro del progetto: ogni voce e'
+una domanda vera, un comando vero e il suo output vero.
+
+### `mfd-tui` in azione
+
+Una scansione, poi si naviga a frecce. La classifica dei file piu' grossi
+del ramo selezionato sta sempre in fondo — `F9` la toglie quando serve
+tutto lo schermo — e `TAB` gira il cursore in lettura per albero,
+dettaglio e classifica. Ogni `Shift+X` apre un ramo in piu' — l'albero
+cresce un livello alla volta:
+
+![mfd-tui: rami aperti uno alla volta con Shift+X](docs/img/tui-expand.png)
+
+`Shift+A` apre tutto il sottoalbero, e TAB porta il cursore in lettura nel
+dettaglio:
+
+![mfd-tui: l'albero aperto e il cursore in lettura nel dettaglio](docs/img/tui-tree.png)
+
+Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
+file piu' grossi) e F1 documenta tutta la tastiera in una finestra
+sola:
+
+![mfd-tui: l'aiuto F1](docs/img/tui-help.png)
+
+`F2` salva le impostazioni (tema, lente, barra) nel profilo utente — il
+flash dice dove:
+
+![mfd-tui: F2 salva le impostazioni](docs/img/tui-save.png)
+
+`Shift+P` / F11 stampa la fotografia JSON di quello che stai guardando —
+il flash dice il file:
+
+![mfd-tui: la stampa dalla schermata principale](docs/img/tui-print-home.png)
+
+Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
+Console (il default), CLI:
+
+![Il menu dei temi della TUI (Shift+T / F3)](docs/img/tui-theme-menu.png)
+
+![Il tema Notturno](docs/img/tui-theme-night.png)
+
+![Il tema Debian](docs/img/tui-theme-debian.png)
+
+Il prompt del filtro (`Shift+F` / F7), il menu delle lingue (`Shift+L` /
+F12) e il loader della scansione:
+
+![Il prompt del filtro (Shift+F / F7)](docs/img/tui-filter.png)
+
+![Il menu delle lingue (Shift+L / F12)](docs/img/tui-lang.png)
+
+![Il loader della scansione](docs/img/tui-scan.png)
+
+---
+
+## Il contratto JSON
+
+Ogni fotografia nasce dallo stesso serializzatore, promosso nel motore
+(mfd-core): ASCII puro, ordine deterministico, diffabile byte per byte.
+
+| Fotografia | Cosa fotografa | Come |
+| --- | --- | --- |
+| la griglia | le righe di livello 1 che stai guardando | `mfd-cli -json <cartella>` |
+| l'albero intero | ogni cartella, ogni file — quello che serve a un diff | `mfd-cli -d a -json <cartella>` |
+| il report | gli N file piu' grossi, classifica e full path | `mfd-cli -big N -json <cartella>` |
+| la vista | entrambi i pannelli della TUI, come li hai lasciati | `mfd-tui`, `Shift+P` |
+
+Una stampa vera — la cartella demo da sette file, rami chiusi, selezione
+su `alpha` (`mfd-stampa-demo-tui.json`):
+
+```json
+{
+  "mfd": "0.2.1",
+  "root": "C:\\Users\\Public\\mfd-captures\\demo-tui",
+  "filter": null,
+  "depth": 4294967295,
+  "totals": {"bytes": 3530, "files": 7, "dirs": 5, "warnings": 0, "elapsed_ms": 3.7},
+  "warnings": [],
+  "tree": {
+    "bytes": 3530,
+    "files": 7,
+    "dirs": 5,
+    "children": [
+      {"name": "alpha", "bytes": 3000, "files": 2, "dirs": 0, "children": null, "leaves": null},
+      {"name": "gamma", "bytes": 310, "files": 2, "dirs": 1, "children": null, "leaves": null},
+      {"name": "beta", "bytes": 120, "files": 2, "dirs": 1, "children": null, "leaves": null}
+    ],
+    "leaves": [
+      {"name": "readme.txt", "bytes": 100}
+    ]
+  },
+  "detail": {
+    "selected": "C:\\Users\\Public\\mfd-captures\\demo-tui\\alpha",
+    "bytes": 3000,
+    "files": 2,
+    "dirs": 0,
+    "rows": [
+      {"name": "data.dat", "kind": "file", "bytes": 2000},
+      {"name": "lib.dll", "kind": "file", "bytes": 1000}
+    ]
+  }
+}
+```
+
+I file nascono nella cartella da cui avete lanciato `mfd-tui` — `mfd-stampa-<nome>.json`
+per la vista, `mfd-report-<nome>.json` per il report, numerati in caso di
+collisione: niente sovrascritture silenziose, due fotografie valgono un
+diff. La ricetta prima/dopo e le stampe della TUI sono nel FAQ (voci 9 e 12).
+---
+
+## Installazione
+
+Serve [Rust](https://rustup.rs) (`cargo --version`) e un clone di questo
+repository. Se Rust non c'e' ancora: `winget install Rustlang.Rustup`, poi
+aprite un terminale **nuovo** — quelli gia' aperti non vedono il PATH che
+rustup ha appena scritto. Tutto il resto sono due comandi:
+
+```powershell
+cd rust
+cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in target\release\
+.\target\release\mfd-cli.exe C:\Windows
+```
+
+Poi fate la domanda per cui questo tool esiste — dove e' finito lo
+spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le
+cartelle piu' pesanti, percentuali e barre), sotto la classifica dei
+file piu' grossi, full path e ordine fisso di taglia decrescente.
+Quello e' Windows visto da dentro: un pacchetto d'installazione da
+348,5 MB in cima, e `msedge.dll` quattro volte, perche' WinSxS conserva
+le versioni dei componenti. Aggiungete `-json` e la stessa fotografia
+arriva in JSON (`mfd-cli -json > quadro.json`).
+
+<div align="center">
+<br />
+<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows: la mappa del disco sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
+<sub>🔍 <b>Il quadro</b> — mfd-cli C:\Windows: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto, e il blocco WARNING che dichiara cosa la scansione non ha potuto leggere. (Foto scattata su Windows, console host.)</sub>
+</div>
+
+<details>
+<summary><b>Opzionale:</b> pubblicare i comandi (e le sette lingue)</summary>
+
+`.\install.ps1` in `rust\` copia gli exe in `%USERPROFILE%\.local\bin`
+(verificate che quella cartella sia nel vostro PATH) e i file delle lingue
+in `%APPDATA%\mfd\lang`, il registro che CLI e TUI scoprono a runtime —
+l'inglese e' incorporato nei binari, quindi funzionano anche senza quella
+cartella. `install.ps1` non tocca mai il `PATH`. Senza installazione,
+eseguite direttamente `rust\target\release\mfd-cli.exe`. I binari
+precompilati via GitHub Releases sono in programma.
+
+</details>
 
 ## Limiti noti
 
