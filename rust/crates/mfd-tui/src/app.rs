@@ -292,6 +292,10 @@ pub struct App {
     /// e' quella dell'albero (il cursore resta visibile), pronta a
     /// qualunque lunghezza il top dovesse prendere
     pub pane_top: usize,
+    /// lo scroll orizzontale della classifica: da quale carattere del path
+    /// si inizia a leggere. Le frecce SX/DX (col cursore TAB) lo muovono:
+    /// un nome lungo troncato coi puntini si legge tutto, scorrrendolo
+    pub pane_hscroll: usize,
     /// il top della classifica: parte da dieci e le cifre lo riscrivono al
     /// volo, in qualunque momento della navigazione. E' della sessione,
     /// come dove sei: F2 non lo salva
@@ -358,6 +362,7 @@ impl App {
             pane: Vec::new(),
             pane_sel: 0,
             pane_top: 0,
+            pane_hscroll: 0,
             report_n: REPORT_DEFAULT,
             report_typing: false,
             menu_sel: 0,
@@ -743,9 +748,11 @@ impl App {
             self.pane.clear();
         }
         // il ramo e' un'altra fotografia: il cursore della classifica
-        // riparte dalla riga piu' grande, la finestra dall'alto
+        // riparte dalla riga piu' grande, la finestra dall'alto — e anche
+        // lo scroll orizzontale torna a zero (un path nuovo si legge da capo)
         self.pane_sel = 0;
         self.pane_top = 0;
+        self.pane_hscroll = 0;
     }
 
     /// Un livello dell'albero della lista: i figli-cartella di `node` in
@@ -1162,19 +1169,32 @@ impl App {
                     self.pane_top = scroll_top(self.pane_sel, PANE_ROWS);
                 }
             },
-            // INVIO o ->: drill-down dall'ALBERO. Col cursore nel dettaglio
-            // non fanno nulla: il dettaglio si scorre in lettura, non si
-            // naviga (due strade per entrare non si capirebbero)
-            KeyCode::Enter | KeyCode::Right => {
+            // INVIO: drill-down dall'ALBERO. Col cursore nel dettaglio o
+            // nella classifica non fa nulla: si legge, non si naviga
+            // (due strade per entrare non si capirebbero)
+            KeyCode::Enter => {
                 if self.focus == Focus::List {
                     self.enter();
                 }
             }
-            // <- o Backspace: risalgono dall'albero; dal dettaglio non si
-            // naviga — si torna all'albero con TAB
+            // <- o Backspace: risalgono dall'albero; dal dettaglio e dalla
+            // classifica non si naviga — si LEGGE, e le frecce orizzontali
+            // fanno lo scroll del testo: un nome lungo troncato coi
+            // puntini si legge tutto, scorrendolo (la classifica; nel
+            // dettaglio restano mute per ora)
             KeyCode::Left | KeyCode::Backspace => {
-                if self.focus == Focus::List {
-                    self.go_parent();
+                match self.focus {
+                    Focus::List => self.go_parent(),
+                    Focus::Report => self.pane_hscroll = self.pane_hscroll.saturating_sub(5),
+                    Focus::Detail => {}
+                }
+            }
+            // ->: entra dall'albero; dalla classifica scrolla il path a destra
+            KeyCode::Right => {
+                match self.focus {
+                    Focus::List => self.enter(),
+                    Focus::Report => self.pane_hscroll += 5,
+                    Focus::Detail => {}
                 }
             }
             // Shift+X / F4: apre o chiude il ramo sotto il cursore dell'albero

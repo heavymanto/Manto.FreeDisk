@@ -794,18 +794,33 @@ fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
         border,
     )));
     // --- le righe: size centrata, il path accorciato in testa (il nome
-    // sta in coda); la riga del cursore si inverte quando TAB e' qui
+    // sta in coda); la riga del cursore si inverte quando TAB e' qui.
+    // Lo scroll orizzontale (frecce SX/DX col cursore TAB) sposta la
+    // finestra di lettura lungo il path: i puntini davanti dicono che
+    // c'e' altro a sinistra
+    let h = app.pane_hscroll;
     let last = (top + vis).min(app.pane.len());
     for i in top..last {
         let (s, p) = &app.pane[i];
         let sel = focused && i == app.pane_sel;
+        let full = p.display().to_string();
+        let path_cell = if h == 0 {
+            trunc(&fit_path(p, path_w), path_w)
+        } else {
+            // la finestra scorre: salta i primi h caratteri e mostra
+            // i successivi path_w, coi puntini che dicono "prima c'era"
+            let chars: Vec<char> = full.chars().collect();
+            if h >= chars.len() {
+                " ".repeat(path_w)
+            } else {
+                let shown: String = chars[h..].iter().take(path_w.saturating_sub(3)).collect();
+                format!("...{}{}", shown, " ".repeat(path_w.saturating_sub(3).saturating_sub(shown.chars().count())))
+            }
+        };
         let parts: Vec<(String, Style)> = vec![
             (fmt_c(&fmt_bytes(*s), size_w), t.fg),
             ("│".into(), border),
-            // il path riempie la colonna fino in fondo: il muro di chiusura
-            // sta a fine TABELLA, non a fine testo (trunc imbottisce a destra
-            // quello che fit_path ha accorciato in testa)
-            (trunc(&fit_path(p, path_w), path_w), t.dir),
+            (path_cell, t.dir),
         ];
         let mut spans: Vec<Span> = vec![Span::styled("│", border)];
         spans.extend(parts.into_iter().map(|(s, st)| Span::styled(s, st)));
