@@ -210,12 +210,14 @@ fn event_loop(
                 // il mouse intero va all'app: rotella e click si vestono
                 // da tasti (on_mouse); il drag no — resta al terminale
                 ratatui::crossterm::event::Event::Mouse(m) => app.on_mouse(m),
-                // il terminale e' stato ridimensionato: pulisci lo SCHERMO
-                // FISICO (non solo il buffer di ratatui) — i residui del
-                // frame vecchio restano sullo schermo e si leggono come
-                // mezzi tubi spezzati. Il clear fisico li cancella,
-                // il prossimo draw (40 ms) dipinge tutto nuovo
-                ratatui::crossterm::event::Event::Resize(_cols, _rows) => {
+                // il terminale e' stato ridimensionato: forza ratatui a
+                // RIALLOCARE il buffer alla nuova dimensione — il clear
+                // non basta perche' conhost tiene i residui del frame
+                // vecchio nelle colonne che si sono aggiunte. Un resize
+                // esplicito allo stessa dimensione nuova invalida tutto
+                // e il prossimo draw ridipinge ogni cella
+                ratatui::crossterm::event::Event::Resize(cols, rows) => {
+                    let _ = terminal.resize(ratatui::layout::Rect::new(0, 0, cols, rows));
                     ratatui::crossterm::execute!(
                         std::io::stdout(),
                         ratatui::crossterm::terminal::Clear(
@@ -223,7 +225,6 @@ fn event_loop(
                         )
                     )
                     .ok();
-                    terminal.clear().ok();
                 }
                 _ => {}
             }
