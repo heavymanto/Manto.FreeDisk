@@ -911,10 +911,6 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .border_style(border)
-        .title(Span::styled(
-            format!(" {} ", app.cat.t("dettaglio.titolo_solo")),
-            t.title,
-        ))
         .style(t.screen);
     let inner = block.inner(area);
     // il pannello del dettaglio e' cliccabile ovunque, bordi compresi:
@@ -1506,11 +1502,7 @@ mod tests {
         // i totali in cima al DETTAGLIO restano visibili: la riga della lente
         // (ord/fil) sta sulla riga sotto, non sopra di loro. Selezione di
         // default: la riga radice — il dettaglio racconta la cartella
-        assert!(screen.contains("DETTAGLIO"), "titolo: {screen:?}");
-        assert!(
-            screen.contains("3,0 KB - 3 file - 3 cartelle"),
-            "totali: {screen:?}"
-        );
+        assert!(screen.contains("3,0 KB - 3 file - 3 cartelle"), "totali: {screen:?}");
         // il dettaglio elenca TUTTE le sue righe: il bug ne mostrava una sola
         // (la tabella finiva nell'area da 1 riga riservata al separatore)
         assert!(screen.contains("alpha\\"), "prima riga: {screen:?}");
