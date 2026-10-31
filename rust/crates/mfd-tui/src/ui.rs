@@ -249,10 +249,13 @@ fn shorten(path: &str, budget: usize) -> String {
     format!("...{}", tail)
 }
 
-/// Barra proporzionale della griglia: 24 caratteri, IDENTICA all'algoritmo
-/// della CLI (mfd-cli): la barra e' un marchio di prodotto (decisione 2).
+/// Barra proporzionale della griglia: 10 caratteri, IDENTICA
+/// all'algoritmo della CLI (mfd-cli): la barra e' un marchio di
+/// prodotto (decisione 2). Con 10 colonne ogni # vale esattamente
+/// il 10% — si legge a colpo d'occhio e lascia ai nomi lo spazio
+/// che i 24 caratteri di una volta si mangiavano
 fn bar24(bytes: i64, total: i64) -> String {
-    const W: usize = 24;
+    const W: usize = 10;
     let filled = if total > 0 && bytes > 0 {
         (((bytes as f64 / total as f64) * W as f64).round() as usize).min(W)
     } else {
@@ -498,8 +501,8 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     // si mette via da sola: il nome vale piu' della barra (la % resta a
     // dire la proporzione)
     let inner_w = (area.width as usize).saturating_sub(2);
-    let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + 24 + 1 + 8;
-    let name_w = inner_w.saturating_sub(if show_bar { 41 } else { 16 });
+    let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + 10 + 1 + 8;
+    let name_w = inner_w.saturating_sub(if show_bar { 27 } else { 16 });
     // la finestra delle righe: muro, intestazione, gradino, righe, muro
     let vis = (area.height as usize).saturating_sub(4);
     let top = scroll_top(app.sel, vis);
@@ -522,7 +525,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
             "─".repeat(10),
             "─".repeat(4),
             if show_bar {
-                format!("┬{}", "─".repeat(24))
+                format!("┬{}", "─".repeat(10))
             } else {
                 String::new()
             }
@@ -552,7 +555,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
         // la barra non ha etichetta: e' la sua stessa etichetta — la
         // grammatica della famiglia (la CLI non la etichetta, la cella
         // resta muta tra i suoi muri, come ogni colonna grafica che sia)
-        hdr.push((" ".repeat(24), t.header));
+        hdr.push((" ".repeat(10), t.header));
         hdr.push(("│".into(), border));
     }
     hdr.push((
@@ -570,7 +573,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
             "─".repeat(10),
             "─".repeat(4),
             if show_bar {
-                format!("┼{}", "─".repeat(24))
+                format!("┼{}", "─".repeat(10))
             } else {
                 String::new()
             },
@@ -619,7 +622,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
                 (
                     t.title,
                     " ".repeat(4),
-                    " ".repeat(24),
+                    " ".repeat(10),
                     // il punto sta dove partono i nomi (mark + toggle): la
                     // colonna ha un bordo sinistro pulito, il punto non
                     // galleggia due colonne piu' in la'
@@ -678,7 +681,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
             "─".repeat(10),
             "─".repeat(4),
             if show_bar {
-                format!("┴{}", "─".repeat(24))
+                format!("┴{}", "─".repeat(10))
             } else {
                 String::new()
             }
