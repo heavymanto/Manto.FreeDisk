@@ -210,10 +210,19 @@ fn event_loop(
                 // il mouse intero va all'app: rotella e click si vestono
                 // da tasti (on_mouse); il drag no — resta al terminale
                 ratatui::crossterm::event::Event::Mouse(m) => app.on_mouse(m),
-                // il terminale e' stato ridimensionato: pulisci il frame
-                // vecchio — il prossimo draw (40 ms dopo) si adatta da
-                // solo alla nuova misura, la barra cresce o si stringe
+                // il terminale e' stato ridimensionato: pulisci lo SCHERMO
+                // FISICO (non solo il buffer di ratatui) — i residui del
+                // frame vecchio restano sullo schermo e si leggono come
+                // mezzi tubi spezzati. Il clear fisico li cancella,
+                // il prossimo draw (40 ms) dipinge tutto nuovo
                 ratatui::crossterm::event::Event::Resize(_cols, _rows) => {
+                    ratatui::crossterm::execute!(
+                        std::io::stdout(),
+                        ratatui::crossterm::terminal::Clear(
+                            ratatui::crossterm::terminal::ClearType::All
+                        )
+                    )
+                    .ok();
                     terminal.clear().ok();
                 }
                 _ => {}
