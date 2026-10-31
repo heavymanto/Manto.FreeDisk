@@ -198,6 +198,11 @@ fn event_loop(
     app: &mut App,
 ) -> std::io::Result<()> {
     loop {
+        // il clear di ratatui resetta il buffer interno: il draw successivo
+        // ridipinge OGNI cella invece di fare il diff — le colonne che si
+        // spostano (la barra dinamica cambia larghezza col terminale)
+        // non lasciano fantasmi nelle posizioni vecchie
+        terminal.clear().ok();
         terminal.draw(|f| ui::draw(f, app))?;
         if ratatui::crossterm::event::poll(Duration::from_millis(40))? {
             match ratatui::crossterm::event::read()? {
