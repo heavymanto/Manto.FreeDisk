@@ -296,6 +296,9 @@ pub struct App {
     /// si inizia a leggere. Le frecce SX/DX (col cursore TAB) lo muovono:
     /// un nome lungo troncato coi puntini si legge tutto, scorrrendolo
     pub pane_hscroll: usize,
+    /// lo scroll orizzontale del dettaglio: le frecce SX/DX (col cursore
+    /// TAB) scorrono i nomi lunghi anche nel pannello di destra
+    pub detail_hscroll: usize,
     /// il top della classifica: parte da dieci e le cifre lo riscrivono al
     /// volo, in qualunque momento della navigazione. E' della sessione,
     /// come dove sei: F2 non lo salva
@@ -363,6 +366,7 @@ impl App {
             pane_sel: 0,
             pane_top: 0,
             pane_hscroll: 0,
+            detail_hscroll: 0,
             report_n: REPORT_DEFAULT,
             report_typing: false,
             menu_sel: 0,
@@ -753,6 +757,7 @@ impl App {
         self.pane_sel = 0;
         self.pane_top = 0;
         self.pane_hscroll = 0;
+        self.detail_hscroll = 0;
     }
 
     /// Un livello dell'albero della lista: i figli-cartella di `node` in
@@ -1186,15 +1191,15 @@ impl App {
                 match self.focus {
                     Focus::List => self.go_parent(),
                     Focus::Report => self.pane_hscroll = self.pane_hscroll.saturating_sub(5),
-                    Focus::Detail => {}
+                    Focus::Detail => self.detail_hscroll = self.detail_hscroll.saturating_sub(5),
                 }
             }
-            // ->: entra dall'albero; dalla classifica scrolla il path a destra
+            // ->: entra dall'albero; dalla classifica e dal dettaglio scrolla
             KeyCode::Right => {
                 match self.focus {
                     Focus::List => self.enter(),
                     Focus::Report => self.pane_hscroll += 5,
-                    Focus::Detail => {}
+                    Focus::Detail => self.detail_hscroll += 5,
                 }
             }
             // Shift+X / F4: apre o chiude il ramo sotto il cursore dell'albero

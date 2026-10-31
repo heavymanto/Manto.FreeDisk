@@ -987,24 +987,43 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         .map(|(i, p)| {
             // il cursore del dettaglio: la freccia `>` come nella lista,
             // a video inverso quando il focus e' qui (l'indice e' assoluto:
-            // la fetta parte da top)
+            // la fetta parte da top). Lo scroll orizzontale (frecce SX/DX
+            // col focus qui) scorre i nomi lunghi: la finestra di lettura
+            // parte da detail_hscroll caratteri dentro il nome
             let abs = top + i;
             let mark = if focused && abs == app.dsel { ">" } else { " " };
+            let hs = app.detail_hscroll;
             let (cells, kind) = match &p.row {
-                CoreRow::Dir(j) => (
-                    vec![
-                        Cell::from(format!("{}{}\\", mark, tree.name(*j).to_string_lossy())),
-                        Cell::from(fmt_r(&fmt_bytes(p.size), 10)),
-                    ],
-                    t.dir,
-                ),
-                CoreRow::Leaf(_, n) => (
-                    vec![
-                        Cell::from(format!("{}{}", mark, n.to_string_lossy())),
-                        Cell::from(fmt_r(&fmt_bytes(p.size), 10)),
-                    ],
-                    t.file,
-                ),
+                CoreRow::Dir(j) => {
+                    let name = tree.name(*j).to_string_lossy().into_owned();
+                    let shown = if hs == 0 {
+                        format!("{}{}\\", mark, name)
+                    } else {
+                        let ch: Vec<char> = name.chars().collect();
+                        if hs >= ch.len() {
+                            format!("{}.", mark)
+                        } else {
+                            let s: String = ch[hs..].iter().collect();
+                            format!("{}...{}", mark, s)
+                        }
+                    };
+                    (vec![Cell::from(shown), Cell::from(fmt_r(&fmt_bytes(p.size), 10))], t.dir)
+                }
+                CoreRow::Leaf(_, n) => {
+                    let name = n.to_string_lossy().into_owned();
+                    let shown = if hs == 0 {
+                        format!("{}{}", mark, name)
+                    } else {
+                        let ch: Vec<char> = name.chars().collect();
+                        if hs >= ch.len() {
+                            format!("{}.", mark)
+                        } else {
+                            let s: String = ch[hs..].iter().collect();
+                            format!("{}...{}", mark, s)
+                        }
+                    };
+                    (vec![Cell::from(shown), Cell::from(fmt_r(&fmt_bytes(p.size), 10))], t.file)
+                }
             };
             if focused && abs == app.dsel {
                 TRow::new(cells).style(t.selected)
