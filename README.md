@@ -82,39 +82,18 @@ detail, on three axes:
 
 ### 1 — Performance: CPU and memory
 
-The walk is a tie: C# 1378 ms, Rust 1462, Node 8531. If you expected Rust to be the clear winner, it isn't — on this workload there is no difference. (On a small folder C# looks 4× slower, but that is just JIT warmup: FAQ, entry 8.)
+On CPU, C# and Rust end in a tie, Node last as expected. If you expected Rust to be the clear winner, it isn't.
 
-Memory divides them instead: Rust 12,5 MB, C# ~59, Node ~251. The reason is simple — Rust has no garbage collector dragging heap and runtime structures along. The walker allocates almost nothing, so Rust's 12,5 MB are nearly all read buffers. Startup says the same: the Rust exe starts in ~10 ms, loading the CLR or V8 costs ~60.
+On RAM, Rust is the champion, C# second, Node last as expected. The reason is simple — Rust has no garbage collector dragging heap and runtime structures along. Rust wins both startup time and average RAM consumption overall.
 
 ### 2 — Robustness, maturity, development
 
-Here the comparison flips. C#/.NET is a twenty-year-old platform: an
-immense class library, best-in-class tooling and debugger, a talent pool
-everywhere — developing in it is fast and forgiving. Rust is younger
-(1.0 in 2015) and steeper: the borrow checker fights you for weeks
-before it starts fighting for you — and what it buys is robustness by
-construction: data races, use-after-free and null dereferences are
-compile errors here, not runtime crashes. Both walkers are rock solid
-(the bench cross-checks their totals on every run); the difference is
-when you pay for that safety: Rust upfront, in the compiler; C# later,
-in tests.
+Here C# wins: a twenty-year-old platform, a huge class library, top-notch tooling, developers everywhere. Rust is younger (1.0 in 2015) and steeper — the borrow checker fights you for weeks before working for you. But it buys robustness by construction: data races, use-after-free and null dereferences are compile errors, not runtime crashes. The difference is when you pay for that safety: Rust upfront, in the compiler; C# later, in testing.
 
 ### 3 — Portability
 
-Two different games. .NET has a capability Rust does not: cross-publish
-from one machine — from Windows, `dotnet publish -r linux-x64
---self-contained true` produces the Linux executable, any host to any
-target, one command (the SDK pulls the runtime pack of the target). Rust
-cross-compiles in theory, but like C++ it wants the target's toolchain:
-the GNU targets need a cross-linker that Windows does not carry, so in
-practice you build on two systems — or on two CI runners, or through
-workarounds like musl and zigbuild — and pay the compatibility frictions
-each time. What Rust gives back is the artifact: `mfd-cli.exe` is a
-single 2 MB file, native, with no runtime to ship or install — .NET's
-self-contained binaries carry the runtime with them, tens of MB, and the
-R2R publish wants it installed. The process is .NET's game; the artifact
-is Rust's. Node wants its runtime too, and carries the heaviest startup
-of the three.
+Two different games. .NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust cross-compiles in theory, but like C++ it wants the target toolchain — in practice you compile on two systems. What Rust gives back is the artifact: `mfd-cli.exe` is a single 2 MB file, native, with no runtime to ship or install. The process is .NET's game, the artifact is Rust's.
+is Rust's.
 
 ### The final standings
 
