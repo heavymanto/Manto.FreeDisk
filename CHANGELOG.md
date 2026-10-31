@@ -2,6 +2,32 @@
 
 Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
+## [0.9.1] - 2026-10-30
+
+### Added
+- **The fascia follows the selection**: the title bar shows the full
+  path of the pointed item — scroll the tree and it updates at every
+  move, no need to enter or look at the detail.
+- **Horizontal scroll in the ranking and the detail**: with the reading
+  cursor (TAB), LEFT/RIGHT scroll the long paths and names by 5
+  characters — the `...` prefix says there is more to the left.
+- **The bar is dynamic**: one eighth of the panel width, clamped
+  between 10 and 24 — narrow on small terminals, wide on large ones.
+  Each `#` at the minimum width is exactly 10%.
+- **The ranking's parent is relative to the scan root**: no more
+  truncated absolute paths in the header — just the sub-path, which
+  always fits.
+
+### Fixed
+- **No more flashing on redraw**: the per-frame clear (which caused
+  flickering) is gone; ratatui's built-in autoresize handles terminal
+  resizing on its own.
+- **Detail list fills the whole panel**: the warnings row is taken
+  only when there is a warning to say.
+- **The detail pane no longer rebuilds every row at every frame**:
+  only the visible window is built (45% → 1,5% idle CPU on WinSxS).
+- **ja.json syntax error** (a stray comma left by the key cleanup).
+
 ## [0.9.0] - 2026-10-30
 
 ### Added
