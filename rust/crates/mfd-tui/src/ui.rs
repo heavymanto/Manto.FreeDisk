@@ -756,9 +756,21 @@ fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
     spans.push(Span::styled("┐", border));
     lines.push(spans.into());
     // --- l'intestazione: la colonna dichiarata, il titolo centrato, il
-    // parente del ramo a destra — la classifica segue la selezione
+    // parente del ramo a destra — la classifica segue la selezione.
+    // Il parente e' RELATIVO alla radice dello scan: la fascia in cima
+    // dice gia' dove sei, qui serve solo dire "di chi sono questi file"
+    // — e un path relativo ci sta sempre, senza puntini in testa
     let base = app.selected_id().unwrap_or(app.current);
-    let parente = tree.path_of(base).display().to_string();
+    let full = tree.path_of(base).display().to_string();
+    let root = tree.path_of(0).display().to_string();
+    let parente = if full == root {
+        ".".to_string()
+    } else {
+        full.strip_prefix(&root)
+            .map(|s| s.trim_start_matches(['\\', '/']))
+            .unwrap_or(&full)
+            .to_string()
+    };
     // il titolo dice il taglio CHIESTO: le cifre della navigazione lo
     // riscrivono al volo (25 file, 100...) e il singolare ha la sua parola
     let n_str = app.report_n.to_string();
