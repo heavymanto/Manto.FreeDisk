@@ -264,7 +264,9 @@ fn bar(bytes: i64, total: i64, w: usize) -> String {
     } else {
         0
     };
-    format!("{}{}", "#".repeat(filled), ".".repeat(w - filled))
+    // la parte vuota e' silenziosa: niente puntini, solo spazio —
+    // la barra dice quanto e' piena, il resto non dice niente
+    format!("{}{}", "#".repeat(filled), " ".repeat(w - filled))
 }
 
 /// Formattazione leggibile della dimensione: la stessa della CLI.
