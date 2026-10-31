@@ -422,7 +422,12 @@ fn draw_fascia(f: &mut Frame, app: &App, area: Rect) {
         Some(fl) => tree.subtree_match(app.current, fl).0,
         None => tree.metrics(app.current).bytes,
     };
-    let mut path = tree.path_of(app.current).display().to_string();
+    // il percorso della SELEZIONE, non solo della cartella corrente: scorri
+    // l'albero e la fascia ti dice subito il full path di dove stai
+    // puntando — senza entrare, senza guardare il dettaglio. Selezionata
+    // la radice (.), mostra la cartella corrente (che e' la radice stessa)
+    let selected = app.selected_id().unwrap_or(app.current);
+    let mut path = tree.path_of(selected).display().to_string();
     if let Some(fl) = &app.view.filter {
         path.push(' ');
         path.push_str(&app.cat.tf("cli.filtro", &[&fl.display()]));
