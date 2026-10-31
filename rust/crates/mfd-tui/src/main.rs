@@ -198,11 +198,6 @@ fn event_loop(
     app: &mut App,
 ) -> std::io::Result<()> {
     loop {
-        // il clear di ratatui resetta il buffer interno: il draw successivo
-        // ridipinge OGNI cella invece di fare il diff — le colonne che si
-        // spostano (la barra dinamica cambia larghezza col terminale)
-        // non lasciano fantasmi nelle posizioni vecchie
-        terminal.clear().ok();
         terminal.draw(|f| ui::draw(f, app))?;
         if ratatui::crossterm::event::poll(Duration::from_millis(40))? {
             match ratatui::crossterm::event::read()? {
@@ -215,14 +210,11 @@ fn event_loop(
                 // il mouse intero va all'app: rotella e click si vestono
                 // da tasti (on_mouse); il drag no — resta al terminale
                 ratatui::crossterm::event::Event::Mouse(m) => app.on_mouse(m),
-                // il terminale e' stato ridimensionato: forza ratatui a
-                // RIALLOCARE il buffer alla nuova dimensione — il clear
-                // non basta perche' conhost tiene i residui del frame
-                // vecchio nelle colonne che si sono aggiunte. Un resize
-                // esplicito allo stessa dimensione nuova invalida tutto
-                // e il prossimo draw ridipinge ogni cella
-                ratatui::crossterm::event::Event::Resize(cols, rows) => {
-                    let _ = terminal.resize(ratatui::layout::Rect::new(0, 0, cols, rows));
+                // il terminale e' stato ridimensionato: pulisci lo schermo
+                // fisico per togliere i residui del frame vecchio — il
+                // prossimo draw (40 ms) ridisegna tutto alla nuova misura
+                // con l'autoresize interno di ratatui
+                ratatui::crossterm::event::Event::Resize(_cols, _rows) => {
                     ratatui::crossterm::execute!(
                         std::io::stdout(),
                         ratatui::crossterm::terminal::Clear(
