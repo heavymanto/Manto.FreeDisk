@@ -210,19 +210,11 @@ fn event_loop(
                 // il mouse intero va all'app: rotella e click si vestono
                 // da tasti (on_mouse); il drag no — resta al terminale
                 ratatui::crossterm::event::Event::Mouse(m) => app.on_mouse(m),
-                // il terminale e' stato ridimensionato: pulisci lo schermo
-                // fisico per togliere i residui del frame vecchio — il
-                // prossimo draw (40 ms) ridisegna tutto alla nuova misura
-                // con l'autoresize interno di ratatui
-                ratatui::crossterm::event::Event::Resize(_cols, _rows) => {
-                    ratatui::crossterm::execute!(
-                        std::io::stdout(),
-                        ratatui::crossterm::terminal::Clear(
-                            ratatui::crossterm::terminal::ClearType::All
-                        )
-                    )
-                    .ok();
-                }
+                // il Resize NON si tocca: l'autoresize di ratatui rileva
+                // il cambio di dimensione a ogni draw e rialloca il buffer
+                // da solo. Il mio clear fisico interferiva: cancellava lo
+                // schermo ma ratatui non lo sapeva, e il suo diff saltava
+                // le celle che credeva gia' a posto
                 _ => {}
             }
         }
