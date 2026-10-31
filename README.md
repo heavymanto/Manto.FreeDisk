@@ -82,21 +82,9 @@ detail, on three axes:
 
 ### 1 — Performance: CPU and memory
 
-The walk is a tie: C# JIT 1378 ms of median, C# R2R 1464, Rust 1462 —
-this session even has the C# a hair ahead, well inside the noise. On a
-small folder the C# JIT pays its warmup and looks 4× slower — an
-artifact, not a verdict (FAQ, entry 8).
+The walk is a tie: C# 1378 ms, Rust 1462, Node 8531. If you expected Rust to be the clear winner, it isn't — on this workload there is no difference. (On a small folder C# looks 4× slower, but that is just JIT warmup: FAQ, entry 8.)
 
-Memory is where they part ways: Rust peaks at 12,5 MB of working set,
-the C# walker at ~59, Node at ~251 — one fifth, one twentieth. The
-reason is the runtime, not the code: the walker allocates almost nothing
-(sizes come straight from the enumeration), but C# carries the .NET
-runtime and its garbage collector — a managed heap, JIT structures, GC
-generations that trade RAM for allocation speed. Rust has no GC:
-ownership frees memory at scope exit, deterministically, and the 12,5 MB
-are nearly all buffers. The startup bench tells the same story from
-another angle: a native exe starts in ~10 ms, loading the CLR or V8
-costs ~60. **The language matters less than the runtime around it.**
+Memory divides them instead: Rust 12,5 MB, C# ~59, Node ~251. The reason is simple — Rust has no garbage collector dragging heap and runtime structures along. The walker allocates almost nothing, so Rust's 12,5 MB are nearly all read buffers. Startup says the same: the Rust exe starts in ~10 ms, loading the CLR or V8 costs ~60.
 
 ### 2 — Robustness, maturity, development
 
@@ -339,10 +327,9 @@ on `alpha` (`mfd-stampa-demo-tui.json`):
 }
 ```
 
-The files land in the folder `mfd-tui` was launched from — `mfd-stampa-<name>.json`
-for the view, `mfd-report-<name>.json` for the report, numbered on collision:
-no silent overwrites, two pictures are worth a diff. The before/after recipe
-and the TUI prints are in the FAQ (entries 9 and 12).
+The files land in the folder `mfd-tui` was launched from — `mfd-stampa-<name>.json`,
+numbered on collision: no silent overwrites, two pictures are worth a diff.
+The before/after recipe and the TUI prints are in the FAQ (entries 9 and 12).
 
 ---
 

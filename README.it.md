@@ -82,22 +82,9 @@ dettaglio, su tre assi:
 
 ### 1 — Prestazioni: CPU e RAM
 
-La CPU e' un pareggio: C# JIT 1378 ms di mediana, C# R2R 1464, Rust 1462
-— questa sessione ha persino il C# un capello davanti, ben dentro il
-rumore. Su una cartella piccola il C# JIT paga il riscaldamento e sembra
-4 volte piu' lento — un artefatto, non un verdetto (FAQ, voce 8).
+La CPU e' un pareggio: C# 1378 ms, Rust 1462, Node 8531. Chi si aspettava Rust netto vincitore resta deluso — su questo carico non c'e' differenza. (Su una cartella piccola il C# sembra 4 volte piu' lento, ma e' solo il riscaldamento del JIT: FAQ, voce 8.)
 
-La RAM e' dove si separano: Rust tocca un picco di 12,5 MB di working
-set, il walker C# ~59, Node ~251 — un quinto, un ventesimo. Il motivo e'
-il runtime, non il codice: il walker non alloca quasi niente (le
-dimensioni arrivano dritte dall'enumerazione), ma il C# si porta dietro
-il runtime .NET e il suo garbage collector — heap gestito, strutture del
-JIT, generazioni della GC che scambiano RAM con la velocita' di
-allocazione. Rust non ha GC: l'ownership libera la memoria a fine ambito,
-in modo deterministico, e i 12,5 MB sono quasi solo buffer. Il bench di
-avvio racconta la stessa storia da un altro angolo: un exe nativo parte
-in ~10 ms, caricare il CLR o V8 ne costa ~60. **Il linguaggio conta meno
-del runtime che ci sta attorno.**
+La RAM invece divide: Rust 12,5 MB, C# ~59, Node ~251. Il motivo e' semplice — Rust non ha un garbage collector che si porta dietro heap e strutture di runtime. Il walker non alloca quasi niente, quindi i 12,5 MB di Rust sono quasi solo buffer di lettura. Anche l'avvio dice lo stesso: l'exe Rust parte in ~10 ms, caricare il CLR o V8 ne costa ~60.
 
 ### 2 — Robustezza, maturita', sviluppo
 
@@ -341,10 +328,10 @@ su `alpha` (`mfd-stampa-demo-tui.json`):
 }
 ```
 
-I file nascono nella cartella da cui avete lanciato `mfd-tui` — `mfd-stampa-<nome>.json`
-per la vista, `mfd-report-<nome>.json` per il report, numerati in caso di
-collisione: niente sovrascritture silenziose, due fotografie valgono un
-diff. La ricetta prima/dopo e le stampe della TUI sono nel FAQ (voci 9 e 12).
+I file nascono nella cartella da cui avete lanciato `mfd-tui` — `mfd-stampa-<nome>.json`,
+numerati in caso di collisione: niente sovrascritture silenziose, due
+fotografie valgono un diff. La ricetta prima/dopo e le stampe della TUI
+sono nel FAQ (voci 9 e 12).
 ---
 
 ## Installazione
