@@ -249,19 +249,22 @@ fn shorten(path: &str, budget: usize) -> String {
     format!("...{}", tail)
 }
 
-/// Barra proporzionale della griglia: 10 caratteri, IDENTICA
-/// all'algoritmo della CLI (mfd-cli): la barra e' un marchio di
-/// prodotto (decisione 2). Con 10 colonne ogni # vale esattamente
-/// il 10% — si legge a colpo d'occhio e lascia ai nomi lo spazio
-/// che i 24 caratteri di una volta si mangiavano
-fn bar24(bytes: i64, total: i64) -> String {
-    const W: usize = 10;
+/// Barra proporzionale della griglia: DINAMICA — un ottavo della
+/// larghezza del pannello, clampata fra 10 (minimo: ogni # = 10%) e
+/// 24 (massimo: la larghezza storica). Su uno schermo piccolo la barra
+/// si stringe e lascia i nomi respirare; su uno grande si allarga e
+/// guadagna precisione. Il % accanto dice il numero esatto in ogni caso
+fn bar_w_for(inner_w: usize) -> usize {
+    (inner_w / 8).clamp(10, 24)
+}
+
+fn bar(bytes: i64, total: i64, w: usize) -> String {
     let filled = if total > 0 && bytes > 0 {
-        (((bytes as f64 / total as f64) * W as f64).round() as usize).min(W)
+        (((bytes as f64 / total as f64) * w as f64).round() as usize).min(w)
     } else {
         0
     };
-    format!("{}{}", "#".repeat(filled), ".".repeat(W - filled))
+    format!("{}{}", "#".repeat(filled), ".".repeat(w - filled))
 }
 
 /// Formattazione leggibile della dimensione: la stessa della CLI.
@@ -495,14 +498,15 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     } else {
         t.border_idle
     };
-    // la geometria: le colonne numeriche (SIZE 10, % 4, BARRA 24) coi
-    // loro muri; i nomi vivono nello spazio aperto oltre l'ultimo muro,
-    // fino al bordo pieno del pannello. Su un terminale stretto la barra
-    // si mette via da sola: il nome vale piu' della barra (la % resta a
-    // dire la proporzione)
+    // la geometria: le colonne numeriche (SIZE 10, % 4) coi loro muri;
+    // la BARRA e' dinamica — un ottavo del pannello, da 10 a 24 — e i
+    // nomi vivono nello spazio aperto oltre l'ultimo muro. Su un
+    // terminale stretto la barra si mette via da sola: il nome vale
+    // piu' della barra (la % resta a dire la proporzione)
     let inner_w = (area.width as usize).saturating_sub(2);
-    let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + 10 + 1 + 8;
-    let name_w = inner_w.saturating_sub(if show_bar { 27 } else { 16 });
+    let bar_w = bar_w_for(inner_w);
+    let show_bar = app.view.show_bar && inner_w >= 10 + 1 + 4 + 1 + bar_w + 1 + 8;
+    let name_w = inner_w.saturating_sub(if show_bar { 10 + 1 + 4 + 1 + bar_w + 1 } else { 16 });
     // la finestra delle righe: muro, intestazione, gradino, righe, muro
     let vis = (area.height as usize).saturating_sub(4);
     let top = scroll_top(app.sel, vis);
@@ -522,10 +526,10 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     let mut spans: Vec<Span> = vec![Span::styled(
         format!(
             "┌{}┬{}{}┬",
-            "─".repeat(10),
+            "─".repeat(bar_w),
             "─".repeat(4),
             if show_bar {
-                format!("┬{}", "─".repeat(10))
+                format!("┬{}", "─".repeat(bar_w))
             } else {
                 String::new()
             }
@@ -555,7 +559,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
         // la barra non ha etichetta: e' la sua stessa etichetta — la
         // grammatica della famiglia (la CLI non la etichetta, la cella
         // resta muta tra i suoi muri, come ogni colonna grafica che sia)
-        hdr.push((" ".repeat(10), t.header));
+        hdr.push((" ".repeat(bar_w), t.header));
         hdr.push(("│".into(), border));
     }
     hdr.push((
@@ -570,10 +574,10 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     lines.push(Line::from(Span::styled(
         format!(
             "├{}┼{}{}┼{}┤",
-            "─".repeat(10),
+            "─".repeat(bar_w),
             "─".repeat(4),
             if show_bar {
-                format!("┼{}", "─".repeat(10))
+                format!("┼{}", "─".repeat(bar_w))
             } else {
                 String::new()
             },
@@ -622,7 +626,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
                 (
                     t.title,
                     " ".repeat(4),
-                    " ".repeat(10),
+                    " ".repeat(bar_w),
                     // il punto sta dove partono i nomi (mark + toggle): la
                     // colonna ha un bordo sinistro pulito, il punto non
                     // galleggia due colonne piu' in la'
@@ -632,7 +636,7 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
                 (
                     t.fg,
                     fmt_r(&format!("{}%", pct), 4),
-                    bar24(r.size, disp_total),
+                    bar(r.size, disp_total, bar_w),
                     format!("{}{}{}{}\\", mark, indent, toggle, name),
                 )
             };
@@ -678,10 +682,10 @@ fn draw_list(f: &mut Frame, app: &mut App, area: Rect) {
     let mut spans: Vec<Span> = vec![Span::styled(
         format!(
             "└{}┴{}{}┴",
-            "─".repeat(10),
+            "─".repeat(bar_w),
             "─".repeat(4),
             if show_bar {
-                format!("┴{}", "─".repeat(10))
+                format!("┴{}", "─".repeat(bar_w))
             } else {
                 String::new()
             }
