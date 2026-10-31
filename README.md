@@ -55,14 +55,14 @@ anything. The sessions are pasted whole in
 [bench/results/](bench/results); the method in
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-> Speed is the surprise: Rust and C# are tied — Node sits ~6x
-> behind. Memory is the verdict: Rust walks the tree on 12,5 MB,
-> C# on ~59, Node on ~251. One fifth. One twentieth.
->
-> That is why Rust is the engine. C# stays a proof of concept
-> (its development is the roadmap's next chapter), Node the
-> prototype it all started with. One machine, one session. Nothing
-> is taken for granted: it gets measured.
+**Speed is the surprise: Rust and C# are tied — Node sits ~6x behind.
+Memory is the verdict: Rust walks the tree on 12,5 MB, C# on ~59, Node
+on ~251. One fifth. One twentieth.**
+
+That is why Rust is the engine. C# stays a proof of concept (its
+development is the roadmap's next chapter), Node the prototype it all
+started with. One machine, one session. Nothing is taken for granted:
+it gets measured.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5

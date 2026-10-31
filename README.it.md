@@ -55,14 +55,14 @@ con ordine ruotato, mediane prima di stampare qualsiasi cosa. Le
 sessioni sono incollate per intero in [bench/results/](bench/results);
 il metodo in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-> La velocita' e' una sorpresa: Rust e C# sono appaiati — Node resta
-> ~6 volte dietro. La memoria e' il verdetto: Rust percorre l'albero
-> con 12,5 MB, C# con ~59, Node con ~251. Un quinto. Un ventesimo.
->
-> Per questo Rust e' il motore. C# resta una proof of concept (il suo
-> sviluppo e' il prossimo capitolo del [roadmap](docs/ROADMAP.md)),
-> Node il prototipo con cui tutto e' iniziato. Una macchina, una
-> sessione. Nulla e' dato per ovvio: si misura.
+**La velocita' e' una sorpresa: Rust e C# sono appaiati — Node resta ~6
+volte dietro. La memoria e' il verdetto: Rust percorre l'albero con
+12,5 MB, C# con ~59, Node con ~251. Un quinto. Un ventesimo.**
+
+Per questo Rust e' il motore. C# resta una proof of concept (il suo
+sviluppo e' il prossimo capitolo del [roadmap](docs/ROADMAP.md)), Node
+il prototipo con cui tutto e' iniziato. Una macchina, una sessione.
+Nulla e' dato per ovvio: si misura.
 
 ```text
 > powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target C:\Windows -Runs 5
