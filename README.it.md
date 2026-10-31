@@ -364,15 +364,15 @@ Poi fate la domanda per cui questo tool esiste — dove e' finito lo
 spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le
 cartelle piu' pesanti, percentuali e barre), sotto la classifica dei
 file piu' grossi, full path e ordine fisso di taglia decrescente.
-Quello e' Windows visto da dentro: un pacchetto d'installazione da
-348,5 MB in cima, e `msedge.dll` quattro volte, perche' WinSxS conserva
-le versioni dei componenti. Aggiungete `-json` e la stessa fotografia
-arriva in JSON (`mfd-cli -json > quadro.json`).
+Quello e' Windows visto da dentro: 658 file di font per 461 MB, con i
+CJK (cinese, giapponese) che pesano quanto tutto il resto. Aggiungete
+`-json` e la stessa fotografia arriva in JSON
+(`mfd-cli -json > quadro.json`).
 
 <div align="center">
 <br />
-<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows: la mappa del disco sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
-<sub>🔍 <b>Il quadro</b> — mfd-cli C:\Windows: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto, e il blocco WARNING che dichiara cosa la scansione non ha potuto leggere. (Foto scattata su Windows, console host.)</sub>
+<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows\Fonts: la mappa dei font sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
+<sub>🔍 <b>Il quadro</b> — mfd-cli -top 12 C:\Windows\Fonts: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto. (Foto scattata su Windows, console host.)</sub>
 </div>
 
 <details>

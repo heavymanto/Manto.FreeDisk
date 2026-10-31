@@ -363,14 +363,14 @@ Then ask the question this tool exists for — where did the space go? —
 and read the answer in one shot: the map on top (the heaviest folders,
 percentages and bars), the ranking of the biggest files below, full
 paths, fixed size-descending order. That is Windows seen from the
-inside: one installer package at 348,5 MB on top, and `msedge.dll` four
-times, because WinSxS keeps every component version. Add `-json` and
-the same picture comes as JSON (`mfd-cli -json > picture.json`).
+inside: 658 font files for 461 MB, with the CJK ones (Chinese,
+Japanese) weighing as much as everything else. Add `-json` and the
+same picture comes as JSON (`mfd-cli -json > picture.json`).
 
 <div align="center">
 <br />
-<img src="docs/img/cli-big.png" alt="The picture of C:\Windows: the disk map on top, the ranking of the biggest files below, as they dress on a real terminal" width="100%" />
-<sub>🔍 <b>The picture</b> — mfd-cli C:\Windows: the breakdown grid on top, the biggest-files ranking below, and the WARNING block reporting what the scan could not read. (Screenshot taken on Windows, console host.)</sub>
+<img src="docs/img/cli-big.png" alt="The picture of C:\Windows\Fonts: the font map on top, the ranking of the biggest files below, as they dress on a real terminal" width="100%" />
+<sub>🔍 <b>The picture</b> — mfd-cli -top 12 C:\Windows\Fonts: the breakdown grid on top, the biggest-files ranking below. (Screenshot taken on Windows, console host.)</sub>
 </div>
 
 <details>
