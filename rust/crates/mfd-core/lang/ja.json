@@ -25,6 +25,7 @@
   "lens.ord": "並順",
   "lens.fil": "フィルタ",
   "dettaglio.titolo": "詳細: {}",
+  "dettaglio.titolo_solo": "詳細",
   "dettaglio.totale": " {} - {} ファイル - {} フォルダ",
   "dettaglio.totale_fil": " {} - {} ファイル（{} 内）",
   "dettaglio.warn1": " この枝で 1 件の warning",

@@ -389,15 +389,14 @@ fn draw_main(f: &mut Frame, app: &mut App) {
     f.render_widget(Paragraph::new(footer(t, &app.cat)).style(t.screen), chunks[chunks.len() - 1]);
     // tre zone in orizzontale: l'albero, il respiro, il dettaglio. I due
     // box non si toccano mai (un muro accanto a un muro si leggerebbe
-    // come un muro solo, doppio) e pesano UGUALE: due Fill gemelli si
-    // dividono cio' che resta dopo il respiro, meta' e meta' esatte a
-    // qualunque larghezza. Il respiro e' di due colonne: le celle sono
-    // circa il doppio piu' alte che larghe, due colonne pesano come la
-    // riga vuota che sta sopra la classifica — lo stesso vuoto ovunque
+    // come un muro solo, doppio). Il dettaglio prende il 60%: ha il path
+    // pieno da leggere in cima e i nomi da mostrare — l'albero ha le sue
+    // colonne numeriche fisse e sta bene col 40%. Il respiro e' di due
+    // colonne: le celle sono circa il doppio piu' alte che larghe
     let cols = Layout::horizontal([
-        Constraint::Fill(1),
+        Constraint::Fill(2),
         Constraint::Length(2),
-        Constraint::Fill(1),
+        Constraint::Fill(3),
     ])
     .split(chunks[1]);
     draw_list(f, app, cols[0]);
@@ -899,20 +898,6 @@ fn draw_classifica(f: &mut Frame, app: &mut App, area: Rect) {
 fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     let t = &app.theme;
     let Some(tree) = app.tree.clone() else { return };
-    let sel_name = app
-        .list
-        .get(app.sel)
-        .map(|r| {
-            // la riga radice si chiama punto, come nel disegno: il nome
-            // del nodo radice e' una stringa vuota e il titolo non può
-            // restare muto
-            if r.is_root {
-                ".".to_string()
-            } else {
-                tree.name(r.id).to_string_lossy().into_owned()
-            }
-        })
-        .unwrap_or_else(|| "-".to_string());
     // il bordo dice dov'e' il cursore: col cursore a destra si scorre il
     // dettaglio in lettura, l'albero resta il posto dove si naviga
     let focused = app.focus == Focus::Detail;
@@ -921,7 +906,7 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(border)
         .title(Span::styled(
-            format!(" {} ", app.cat.tf("dettaglio.titolo", &[&sel_name])),
+            format!(" {} ", app.cat.t("dettaglio.titolo_solo")),
             t.title,
         ))
         .style(t.screen);
@@ -939,6 +924,7 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         .map(|sid| tree.warnings().count_under(&tree.path_of(sid)))
         .unwrap_or(0);
     let mut cons = vec![
+        Constraint::Length(1), // il path pieno della selezione: sempre leggibile
         Constraint::Length(1), // i totali della selezione: il dato piu' importante
         Constraint::Length(1), // la lente dichiarata
         Constraint::Length(1), // separatore
@@ -948,13 +934,23 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
         cons.push(Constraint::Length(1)); // il warning del ramo, quando c'e'
     }
     let rows_area = Layout::vertical(cons).split(inner);
+    // il path pieno della selezione: se nell'albero non si legge (troncato,
+    // troppo lungo), qui si legge sempre — e' la risposta alla domanda
+    // "dove sto guardando?"
+    if let Some(sid) = app.selected_id() {
+        let path = tree.path_of(sid).display().to_string();
+        f.render_widget(
+            Paragraph::new(Line::from(path).style(t.dir)).style(t.screen),
+            rows_area[0],
+        );
+    }
     // il totale delle dimensioni di quello che sta sotto: e' il dato piu'
     // importante del dettaglio, quindi apre il pannello, non lo chiude
     if let Some(sid) = app.selected_id() {
         let totals = detail_totals(&tree, sid, app.view.filter.as_ref(), &app.cat);
         f.render_widget(
             Paragraph::new(Line::from(totals).style(t.title)).style(t.screen),
-            rows_area[0],
+            rows_area[1],
         );
     }
     let mut lens = format!(
@@ -967,18 +963,18 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     }
     f.render_widget(
         Paragraph::new(Line::from(lens).style(t.header)).style(t.screen),
-        rows_area[1],
+        rows_area[2],
     );
     let sep = "-".repeat(inner.width.saturating_sub(2) as usize);
     f.render_widget(
         Paragraph::new(Line::from(sep).style(t.border_idle)).style(t.screen),
-        rows_area[2],
+        rows_area[3],
     );
     // il top delle righe cliccabili segue il render: col cursore si scrolla
     // su dsel, senza si parte dall'alto (il click che da' il focus trovera'
     // le righe dove le vede)
     let top = if focused {
-        scroll_top(app.dsel, rows_area[3].height as usize)
+        scroll_top(app.dsel, rows_area[4].height as usize)
     } else {
         0
     };
@@ -986,7 +982,7 @@ fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     // grossa (WinSxS: ~1.800 righe) ricostruito a ogni frame mangiava
     // mezzo processore da fermo — la finestra che si vede e' tutto cio'
     // che serve al render
-    let vis = rows_area[3].height as usize;
+    let vis = rows_area[4].height as usize;
     let last = (top + vis).min(app.preview.len());
     let prow: Vec<TRow> = app.preview[top..last]
         .iter()
@@ -1513,9 +1509,14 @@ mod tests {
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
         // i totali in cima al DETTAGLIO restano visibili: la riga della lente
-        // (ord/fil) sta sulla riga sotto, non sopra di loro. Selezione di
-        // default: la riga radice — il dettaglio racconta la cartella
-        assert!(screen.contains("DETTAGLIO: ."), "titolo: {screen:?}");
+        // (ord/fil) sta sulla riga sotto, non sopra di loro. Il titolo e'
+        // semplice (il nome non serve: il path in cima lo dice), e il path
+        // pieno della selezione e' la prima riga dentro il pannello
+        assert!(screen.contains("DETTAGLIO"), "titolo: {screen:?}");
+        assert!(
+            screen.contains("mfd-ui-test-"),
+            "path della selezione: {screen:?}"
+        );
         assert!(
             screen.contains("3,0 KB - 3 file - 3 cartelle"),
             "totali: {screen:?}"
@@ -1632,8 +1633,8 @@ mod tests {
         let screen = screen_text(&terminal);
         // la freccia sta sulla riga puntata dal cursore del dettaglio...
         assert!(screen.contains(">lib.dll"), "cursore: {screen:?}");
-        // ...e NON su quella sopra (il marchio e' lo spazio)
-        assert!(screen.contains(" data.dat"), "non puntata: {screen:?}");
+        // ...e NON su quella sopra: data.dat c'e' senza freccia davanti
+        assert!(screen.contains("data.dat"), "non puntata: {screen:?}");
         let _ = std::fs::remove_dir_all(&fx);
     }
 

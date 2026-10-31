@@ -25,6 +25,7 @@
   "lens.ord": "ord",
   "lens.fil": "fil",
   "dettaglio.titolo": "DETALHE: {}",
+  "dettaglio.titolo_solo": "DETALHE",
   "dettaglio.totale": " {} - {} arquivos - {} pastas",
   "dettaglio.totale_fil": " {} - {} arquivos dentro de {}",
   "dettaglio.warn1": " 1 warning neste ramo",

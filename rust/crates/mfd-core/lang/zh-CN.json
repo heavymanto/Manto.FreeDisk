@@ -25,6 +25,7 @@
   "lens.ord": "排序",
   "lens.fil": "筛选",
   "dettaglio.titolo": "详情: {}",
+  "dettaglio.titolo_solo": "详情",
   "dettaglio.totale": " {} - {} 个文件 - {} 个文件夹",
   "dettaglio.totale_fil": " {} - {} 个文件（{} 中）",
   "dettaglio.warn1": " 此分支有 1 条 warning",

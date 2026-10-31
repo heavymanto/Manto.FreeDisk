@@ -24,6 +24,7 @@
   "lens.ord": "sort",
   "lens.fil": "filter",
   "dettaglio.titolo": "DETAIL: {}",
+  "dettaglio.titolo_solo": "DETAIL",
   "dettaglio.totale": " {} - {} files - {} folders",
   "dettaglio.totale_fil": " {} - {} files inside {}",
   "dettaglio.warn1": " 1 warning in this branch",
