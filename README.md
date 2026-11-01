@@ -92,7 +92,7 @@ Here C# wins: a twenty-year-old platform, a huge class library, top-notch toolin
 
 ### 3 — Portability
 
-Two different games. .NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust, like C++, must be recompiled on every system you release for. GitHub CI compensates considerably, using release Workflows: compilation is automatic, even if you don't have Linux and/or Mac installed. Node instead is absolutely cross-platform: once written it runs anywhere, you just install the interpreter (often already present), but by its nature nothing needs recompiling.
+.NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust, like C++, must be recompiled on every system you release for. GitHub CI compensates considerably, using release Workflows: compilation is automatic, even if you don't have Linux and/or Mac installed. Node instead is absolutely cross-platform: once written it runs anywhere, you just install the interpreter (often already present), but by its nature nothing needs recompiling.
 is Rust's.
 
 ### The final standings
