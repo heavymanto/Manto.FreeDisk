@@ -107,49 +107,19 @@ is Rust's.
 | **Total** | **16/25** | **22/25** | **16/25** |
 | **The winner, if…** | you are a performance maniac | you want the weighed way | you use it now and then, from one command line |
 
-Nobody wins in absolute terms — every axis has its champion: **Rust
-takes the performance crown** (CPU tie, one fifth of the RAM, a single
-2 MB binary that starts in ~10 ms), **Node the portability crown** (one
-codebase that runs wherever its runtime is — everywhere), and **C# the
-best sum: the right compromise** — parity on CPU, a quarter of Node's
-memory, a twenty-year-old platform, cross-publishing every target from
-one machine. The sum crowns the compromise, not a dominator: the two
-purists — the performance one and the portability one — even tie at
-16/25.
+Nobody wins in absolute terms: **Rust is the performance champion** (CPU tie, one fifth of the RAM, a single 2 MB binary that starts in ~10 ms), **Node the portability one** (one codebase that runs anywhere), and **C# the best sum — the right compromise**. The two purists tie at 16/25: the sum crowns the compromise.
 
-The first two rows are measured (the sessions in
-[bench/results/](bench/results)); the last three are engineering
-judgment, declared as such.
+The first two rows of the standings are measured (the sessions in [bench/results/](bench/results)); the last three are my judgment, declared as such.
 
-The product chose its champion by its own brief: a disk analyzer that
-must feel instant and ship as one small binary — so **Rust is the engine
-and the product** (mfd-core, mfd-cli, mfd-tui). **The C# twin is a proof
-of concept** — the walker, complete and benchmarked, without the CLI and
-the TUI around it: its promotion is the roadmap's next chapter
-([docs/ROADMAP.md](docs/ROADMAP.md)), and the compromise it embodies is
-exactly what a second opinion is for. Node stays frozen as the phase-0
-prototype: its portability could not save its 251 MB.
+The product chose Rust as the engine (mfd-core, mfd-cli, mfd-tui): a disk analyzer that must feel instant and ship as one small binary. C# stays a proof of concept — the walker, without the CLI and TUI around it. Its promotion is the [roadmap](docs/ROADMAP.md)'s next chapter, and it's exactly the compromise I keep a second opinion for. Node stays frozen as the phase-0 prototype: its portability couldn't save its 251 MB.
 
 ### The road from here
 
-The experiment decided the family's road, and it is explicit:
+- **Rust ships first**: the product gets published and stable — that's the step that unfreezes everything else.
+- **The C# twin grows through the CLI** (roadmap phase 3), when the Rust contract is frozen — its acceptance test is already written: the same redirected ASCII, byte for byte. **The C# TUI is deliberately out of the path**: the twin's endgame is the GUI of phase 4, where .NET is at home.
+- **Node stays the frozen patriarch**: walker for the bench, prototype for the history. Nothing more.
 
-- **Rust ships first**: the product gets published and stable — that is
-  the step that unfreezes everything else.
-- **The C# twin grows through the CLI** (roadmap phase 3), when the Rust
-  contract is frozen — its acceptance test is already written: the same
-  redirected ASCII, byte for byte. **The C# TUI is deliberately out of
-  the path**: the twin's endgame is the GUI of phase 4, where .NET is
-  at home — the CLI grows the engine, the GUI harvests it.
-- **Node stays the frozen patriarch**: walker for the bench, prototype
-  for the history. Nothing more is planned for it.
-
-These are the maintainer's choices, not closed doors: **the community is
-welcome to walk the roads not taken** — a Node CLI, a C# TUI, ports to
-other platforms. The contracts make every contribution verifiable: the
-bench's RESULT lines and the redirected ASCII output are the judge, and
-the FAQ is the place where a real question becomes a feature
-([CONTRIBUTING.md](CONTRIBUTING.md)).
+These are my choices, not closed doors: the community is welcome to walk the roads not taken — a Node CLI, a C# TUI, ports to other platforms. The contracts make every contribution verifiable: the bench's RESULT lines and the redirected ASCII output are the judge, and the FAQ is the place where a real question becomes a feature ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Get it
 

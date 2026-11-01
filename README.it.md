@@ -106,52 +106,19 @@ Qui vince C#: piattaforma ventennale, libreria di classi immensa, tooling al ver
 | **Totale** | **16/25** | **22/25** | **16/25** |
 | **Il vincitore, se…** | sei maniaco delle performance | vuoi la via ponderata | lo usi ogni tanto, da una riga di comando |
 
-Nessuno vince in senso assoluto — ogni asse ha il suo campione: **Rust
-prende la corona delle prestazioni** (CPU pari, un quinto della RAM, un
-binario solo da 2 MB che parte in ~10 ms), **Node quella della
-portabilita'** (una base di codice sola, che gira ovunque ci sia il suo
-runtime — ovunque), e **C# la somma migliore: il compromesso giusto** —
-parita' in CPU, un quarto della memoria di Node, piattaforma ventennale,
-cross-publish di ogni bersaglio da una macchina sola. La somma incorona
-il compromesso, non un dominatore: i due puristi — quello delle
-prestazioni e quello della portabilita' — pareggiano pure, a 16/25.
+Nessuno vince in senso assoluto: **Rust e' il campione delle prestazioni** (CPU pari, un quinto della RAM, un binario da 2 MB che parte in ~10 ms), **Node quello della portabilita'** (una base di codice sola che gira ovunque), e **C# la somma migliore — il compromesso giusto**. I due puristi pareggiano a 16/25: la somma incorona il compromesso.
 
-Le prime due righe sono misurate (le sessioni in
-[bench/results/](bench/results)); le ultime tre sono giudizio
-d'ingegneria, dichiarato per tale.
+Le prime due righe della classifica sono misurate (le sessioni in [bench/results/](bench/results)); le ultime tre sono il mio giudizio, dichiarato per tale.
 
-Il prodotto ha scelto il suo campione secondo il proprio mandato: un
-analizzatore di disco che deve sembrare istantaneo e spedirsi come un
-binario solo — quindi **Rust e' il motore e il prodotto** (mfd-core,
-mfd-cli, mfd-tui). **Il gemello C# e' una proof of concept** — il
-walker, completo e misurato, senza la CLI e la TUI attorno: la sua
-promozione e' il prossimo capitolo del roadmap
-([docs/ROADMAP.md](docs/ROADMAP.md)), e il compromesso che incarna e'
-esattamente quello per cui si tiene un secondo parere. Node resta
-congelato come prototipo della fase 0: la sua portabilita' non ha potuto
-salvare i suoi 251 MB.
+Il prodotto ha scelto Rust come motore (mfd-core, mfd-cli, mfd-tui): un analizzatore di disco che deve sembrare istantaneo e spedirsi come un binario solo. Il C# resta proof of concept — il walker, senza CLI e TUI attorno. La sua promozione e' il prossimo capitolo del [roadmap](docs/ROADMAP.md), ed e' esattamente il compromesso per cui tengo un secondo parere. Node resta congelato come prototipo della fase 0: la sua portabilita' non ha salvato i suoi 251 MB.
 
 ### La strada da qui
 
-L'esperimento ha deciso la strada della famiglia, ed e' esplicita:
+- **Rust parte per primo**: il prodotto viene pubblicato e stabilizzato — e' il passo che sblocca tutto il resto.
+- **Il gemello C# cresce attraverso la CLI** (fase 3 del roadmap), quando il contratto Rust sara' congelato — il suo test di accettazione e' gia' scritto: lo stesso ASCII rediretto, byte per byte. **La TUI in C# e' volutamente fuori percorso**: l'endgame del gemello e' la GUI della fase 4, dove .NET e' a casa.
+- **Node resta il patriarca congelato**: walker per il bench, prototipo per la storia. Nient'altro.
 
-- **Rust parte per primo**: il prodotto viene pubblicato e stabilizzato
-  — e' il passo che sblocca tutto il resto.
-- **Il gemello C# cresce attraverso la CLI** (fase 3 del roadmap),
-  quando il contratto Rust sara' congelato — il suo test di accettazione
-  e' gia' scritto: lo stesso ASCII rediretto, byte per byte. **La TUI in
-  C# e' deliberatamente fuori percorso**: l'endgame del gemello e' la
-  GUI della fase 4, dove .NET e' a casa — la CLI fa crescere l'engine,
-  la GUI lo raccoglie.
-- **Node resta il patriarca congelato**: walker per il bench, prototipo
-  per la storia. Nient'altro e' previsto per lui.
-
-Queste sono le scelte del manutentore, non porte chiuse: **la comunita'
-e' benvenuta sulle strade non prese** — una CLI Node, una TUI C#, port
-su altre piattaforme. I contratti rendono verificabile ogni contributo:
-le righe RESULT del bench e l'output ASCII rediretto sono il giudice, e
-il FAQ e' il posto dove una domanda vera diventa una feature
-([CONTRIBUTING.md](CONTRIBUTING.md)).
+Queste sono le mie scelte, non porte chiuse: la comunita' e' benvenuta sulle strade non prese — una CLI Node, una TUI C#, port su altre piattaforme. I contratti rendono verificabile ogni contributo: le righe RESULT del bench e l'output ASCII rediretto sono il giudice, e il FAQ e' il posto dove una domanda vera diventa una feature ([CONTRIBUTING.md](CONTRIBUTING.md)).
 ## Scaricalo
 
 Niente da installare: estrai ed esegui — e basta. I due binari
