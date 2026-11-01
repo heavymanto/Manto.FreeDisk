@@ -88,11 +88,11 @@ On RAM, Rust is the champion, C# second, Node last as expected. The reason is si
 
 ### 2 — Robustness, maturity, development
 
-Here C# wins: a twenty-year-old platform, a huge class library, top-notch tooling, developers everywhere. Rust is younger (1.0 in 2015) and steeper — the borrow checker fights you for weeks before working for you. But it buys robustness by construction: data races, use-after-free and null dereferences are compile errors, not runtime crashes. The difference is when you pay for that safety: Rust upfront, in the compiler; C# later, in testing.
+Here C# wins: a twenty-year-old platform, a huge class library, top-notch tooling. You develop everywhere — Windows, Linux, Mac — with a framework that has 25 years of evolution on Windows and a good decade (Core) on Linux/Mac too. Rust is younger (1.0 in 2015) and steeper — the borrow checker is tough, hard to master at first, but once understood, it's a masterpiece of technology, it's incredible how it manages memory optimally. I expected a significant reduction but certainly not 500%. Masterpiece.
 
 ### 3 — Portability
 
-Two different games. .NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust cross-compiles in theory, but like C++ it wants the target toolchain — in practice you compile on two systems. What Rust gives back is the artifact: `mfd-cli.exe` is a single 2 MB file, native, with no runtime to ship or install. The process is .NET's game, the artifact is Rust's.
+Two different games. .NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust, like C++, must be recompiled on every system you release for. GitHub CI compensates considerably, using release Workflows: compilation is automatic, even if you don't have Linux and/or Mac installed. Node instead is absolutely cross-platform: once written it runs anywhere, you just install the interpreter (often already present), but by its nature nothing needs recompiling.
 is Rust's.
 
 ### The final standings

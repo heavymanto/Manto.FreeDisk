@@ -88,11 +88,11 @@ Nell'uso della RAM Rust e' il campione, C# secondo classificato, Node ultimo, co
 
 ### 2 — Robustezza, maturita', sviluppo
 
-Qui vince C#: piattaforma ventennale, libreria di classi immensa, tooling al vertice, sviluppatori ovunque. Rust e' piu' giovane (1.0 nel 2015) e piu' ripido — il borrow checker ti combatte per settimane prima di lavorare per te. Ma compra robustezza per costruzione: data race, use-after-free e dereferenziazioni nulle sono errori di compilazione, non crash a runtime. La differenza e' quando paghi quella sicurezza: Rust subito, nel compilatore; C# dopo, nei test.
+Qui vince C#: piattaforma ventennale, libreria di classi immensa, tooling al vertice. Sviluppi ovunque sia Windows, Linux, Mac, con un framework che ha 25 anni di evoluzione su Windows e una buona decade (Core), anche sui Linux/Mac. Rust e' piu' giovane (1.0 nel 2015) e piu' ripido — il borrow checker e' ostico, difficile da padroneggiare all'inizio, ma una volta compreso, e' un capolavoro di tecnologia, e' incredibile come gestisca in modo ottimale la memoria. Mi aspettavo una riduzione significativa ma non certamente del 500%. Capolavoro.
 
 ### 3 — Portabilita'
 
-Due giochi diversi. .NET ha una capacita' che Rust non ha: la cross-publish da una macchina sola — da Windows, `dotnet publish -r linux-x64 --self-contained true` produce l'eseguibile per Linux, con un comando. Rust cross-compila in teoria, ma come il C++ vuole il toolchain del bersaglio — in pratica si compila su due sistemi. Quello che Rust restituisce e' l'artefatto: `mfd-cli.exe` e' un file solo da 2 MB, nativo, senza runtime da spedire ne' installare. Il processo e' il gioco di .NET, l'artefatto quello di Rust.
+Due giochi diversi. .NET ha una capacita' che Rust non ha: la cross-publish da una macchina sola — da Windows, `dotnet publish -r linux-x64 --self-contained true` produce l'eseguibile per Linux, con un comando. Rust, come C++, va ricompilato su ogni sistema su cui rilasciare. Compensa notevolmente la CI di GitHub, usando i Workflow di release: la compilazione e' automatica, anche se non hai Linux e/o Mac installati. Node invece e' trasversale in senso assoluto, una volta scritto gira ovunque, basta installare l'interprete (spesso gia' presente), ma per sua natura nulla va ricompilato.
 
 ### La classifica finale
 
