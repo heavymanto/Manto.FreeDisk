@@ -76,10 +76,6 @@ it gets measured.
 | **rust (find-data via std::fs, no stat)** | **1462** | **12,5 MB** |
 | node (readdir+stat per file, libuv) | 8531 | 251,3 MB |
 
-181.513 files, 102.998 folders, cross-checked `[OK]` totals on every
-line: CPU is a tie, RAM is not — and that is the verdict. The
-detail, on three axes:
-
 ### 1 — Performance: CPU and memory
 
 On CPU, C# and Rust end in a tie, Node last as expected. If you expected Rust to be the clear winner, it isn't.
@@ -113,15 +109,7 @@ The first two rows of the standings are measured (the sessions in [bench/results
 
 The product chose Rust as the engine (mfd-core, mfd-cli, mfd-tui): a disk analyzer that must feel instant and ship as one small binary. C# stays a proof of concept — the walker, without the CLI and TUI around it. Its promotion is the [roadmap](docs/ROADMAP.md)'s next chapter, and it's exactly the compromise I keep a second opinion for. Node stays frozen as the phase-0 prototype: its portability couldn't save its 251 MB.
 
-### The road from here
-
-- **Rust ships first**: the product gets published and stable — that's the step that unfreezes everything else.
-- **The C# twin grows through the CLI** (roadmap phase 3), when the Rust contract is frozen — its acceptance test is already written: the same redirected ASCII, byte for byte. **The C# TUI is deliberately out of the path**: the twin's endgame is the GUI of phase 4, where .NET is at home.
-- **Node stays the frozen patriarch**: walker for the bench, prototype for the history. Nothing more.
-
-These are my choices, not closed doors: the community is welcome to walk the roads not taken — a Node CLI, a C# TUI, ports to other platforms. The contracts make every contribution verifiable: the bench's RESULT lines and the redirected ASCII output are the judge, and the FAQ is the place where a real question becomes a feature ([CONTRIBUTING.md](CONTRIBUTING.md)).
-
-## Get it
+## Download
 
 Nothing to install: extract and run — that's it. Both binaries work
 right away, in portable mode: English is embedded, and the other six
@@ -131,17 +119,11 @@ languages are found in `lang/` next to the binaries.
 [![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.1/mantofreedisk-0.9.1-linux-x64.tar.gz)
 [![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.1/mantofreedisk-0.9.1-macos-aarch64.tar.gz)
 
-**Optional**: if you want the commands available everywhere (not just
-from the extracted folder), run `install.ps1` (Windows) or `install.sh`
-(Linux). One command, two seconds, done: `mfd-cli` and `mfd-tui` work
-from any terminal, with all the languages. Without running it,
-everything still works — you just `cd` to the folder first. The SHA256
-rides next to each file.
-
-
 ---
 
 ## Two frontends, one engine
+
+One engine only (mfd-core): scan, lens, languages, JSON contract. The two frontends look into it in two ways: **`mfd-cli`** prints the answer and fits scripts, **`mfd-tui`** lets you navigate it with arrows. Same engine, same lens, same seven languages — only how you look changes.
 
 | `mfd-cli` — the answer, read | `mfd-tui` — the answer, navigated |
 |:---:|:---:|

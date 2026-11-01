@@ -76,10 +76,6 @@ Nulla e' dato per ovvio: si misura.
 | **rust (find-data via std::fs, no stat)** | **1462** | **12,5 MB** |
 | node (readdir+stat per file, libuv) | 8531 | 251,3 MB |
 
-181.513 file, 102.998 cartelle, totali incrociati `[OK]` su ogni riga:
-la CPU e' un pareggio, la RAM no — e quello e' il verdetto. Il
-dettaglio, su tre assi:
-
 ### 1 — Prestazioni: CPU e RAM
 
 Nell'uso della CPU tra C# e Rust finisce in pareggio, Node invece ultimo, come ci si aspettava. Chi si aspettava Rust netto vincitore resta deluso.
@@ -112,14 +108,7 @@ Le prime due righe della classifica sono misurate (le sessioni in [bench/results
 
 Il prodotto ha scelto Rust come motore (mfd-core, mfd-cli, mfd-tui): un analizzatore di disco che deve sembrare istantaneo e spedirsi come un binario solo. Il C# resta proof of concept — il walker, senza CLI e TUI attorno. La sua promozione e' il prossimo capitolo del [roadmap](docs/ROADMAP.md), ed e' esattamente il compromesso per cui tengo un secondo parere. Node resta congelato come prototipo della fase 0: la sua portabilita' non ha salvato i suoi 251 MB.
 
-### La strada da qui
-
-- **Rust parte per primo**: il prodotto viene pubblicato e stabilizzato — e' il passo che sblocca tutto il resto.
-- **Il gemello C# cresce attraverso la CLI** (fase 3 del roadmap), quando il contratto Rust sara' congelato — il suo test di accettazione e' gia' scritto: lo stesso ASCII rediretto, byte per byte. **La TUI in C# e' volutamente fuori percorso**: l'endgame del gemello e' la GUI della fase 4, dove .NET e' a casa.
-- **Node resta il patriarca congelato**: walker per il bench, prototipo per la storia. Nient'altro.
-
-Queste sono le mie scelte, non porte chiuse: la comunita' e' benvenuta sulle strade non prese — una CLI Node, una TUI C#, port su altre piattaforme. I contratti rendono verificabile ogni contributo: le righe RESULT del bench e l'output ASCII rediretto sono il giudice, e il FAQ e' il posto dove una domanda vera diventa una feature ([CONTRIBUTING.md](CONTRIBUTING.md)).
-## Scaricalo
+## Download
 
 Niente da installare: estrai ed esegui — e basta. I due binari
 funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
@@ -129,16 +118,11 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 [![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.1/mantofreedisk-0.9.1-linux-x64.tar.gz)
 [![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.1-mantofreedisk-0.9.1-macos-aarch64.tar.gz)
 
-**Opzionale**: se vuoi i comandi disponibili ovunque (non solo dalla
-cartella estratta), lancia `install.ps1` (Windows) o `install.sh`
-(Linux). Un comando, due secondi, fatto: `mfd-cli` e `mfd-tui`
-funzionano da qualsiasi terminale, con tutte le lingue. Senza lanciarlo
-funziona comunque tutto — ti sposti solo nella cartella prima di
-usarli. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
-
 ---
 
 ## Due frontend, un motore
+
+Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I due frontend ci guardano dentro in due modi: **`mfd-cli`** stampa la risposta e sta bene negli script, **`mfd-tui`** te la fa navigare a frecce. Stesso motore, stessa lente, stesse sette lingue — cambia solo come guardi.
 
 | `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
 |:---:|:---:|
@@ -157,10 +141,7 @@ usarli. Lo SHA256 sta accanto a ogni file. macOS arriva dopo.
 
 ### `mfd-cli` in azione
 
-La griglia colorata ha aperto questa pagina; ecco il resto della famiglia,
-sullo stesso terminale. (Gli output parlano la lingua della sessione; i
-messaggi del sistema nei blocchi WARNING, come "Accesso negato", arrivano
-tal quali dal Windows italiano su cui girano le scansioni.)
+Il quadro in azione su un terminale vero.
 
 ![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
 
