@@ -155,18 +155,17 @@ una domanda vera, un comando vero e il suo output vero.
 
 ### `mfd-tui` in azione
 
-Una scansione, poi si naviga a frecce. La classifica dei file piu' grossi
-del ramo selezionato sta sempre in fondo — `F9` la toglie quando serve
-tutto lo schermo — e `TAB` gira il cursore in lettura per albero,
-dettaglio e classifica. Ogni `Shift+X` apre un ramo in piu' — l'albero
-cresce un livello alla volta:
+Una scansione, poi si naviga a frecce. Il giro completo, in movimento:
+l'albero scorre, la classifica dei file piu' grossi del ramo selezionato
+la segue in fondo, `TAB` gira il cursore in lettura per albero, dettaglio
+e classifica, e `←` risale fino alla radice — da dove il giro ricomincia:
+
+![mfd-tui in movimento: la navigazione, la classifica che segue la selezione, TAB, la risalita alla radice](docs/img/tui-demo.gif)
+
+Ogni `Shift+X` apre un ramo in piu' — l'albero cresce un livello alla volta
+(`Shift+A` apre tutto il sottoalbero):
 
 ![mfd-tui: rami aperti uno alla volta con Shift+X](docs/img/tui-expand.png)
-
-`Shift+A` apre tutto il sottoalbero, e TAB porta il cursore in lettura nel
-dettaglio:
-
-![mfd-tui: l'albero aperto e il cursore in lettura nel dettaglio](docs/img/tui-tree.png)
 
 Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
 file piu' grossi) e F1 documenta tutta la tastiera in una finestra
@@ -185,13 +184,9 @@ il flash dice il file:
 ![mfd-tui: la stampa dalla schermata principale](docs/img/tui-print-home.png)
 
 Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
-Console (il default), CLI:
+Console (il default), CLI. In movimento:
 
-![Il menu dei temi della TUI (Shift+T / F3)](docs/img/tui-theme-menu.png)
-
-![Il tema Notturno](docs/img/tui-theme-night.png)
-
-![Il tema Debian](docs/img/tui-theme-debian.png)
+![mfd-tui in movimento: il menu dei temi e i temi che cambiano](docs/img/tui-theme.gif)
 
 Il prompt del filtro (`Shift+F` / F7), il menu delle lingue (`Shift+L` /
 F12) e il loader della scansione:

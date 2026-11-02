@@ -160,18 +160,17 @@ is a real question, a real command, and its real output.
 
 ### `mfd-tui` in action
 
-One scan, then the arrows. The ranking of the biggest files of the
-selected branch stays docked at the bottom — `F9` removes it when you
-need the whole screen — and `TAB` cycles the reading cursor through
-tree, detail and ranking. Each `Shift+X` opens one more branch — the tree
-grows a level at a time:
+One scan, then the arrows. The whole round trip, in motion: the tree
+scrolls, the ranking of the biggest files of the selected branch follows
+at the bottom, `TAB` cycles the reading cursor through tree, detail and
+ranking, and `←` climbs back to the root — where the tour begins again:
+
+![mfd-tui in motion: navigation, the ranking following the selection, TAB, the climb back to the root](docs/img/tui-demo.gif)
+
+Each `Shift+X` opens one more branch — the tree grows a level at a time
+(`Shift+A` opens the whole subtree):
 
 ![mfd-tui: branches opened one by one with Shift+X](docs/img/tui-expand.png)
-
-`Shift+A` opens the whole subtree, and `TAB` puts a reading cursor in the
-detail:
-
-![mfd-tui: the tree open and the reading cursor in the detail](docs/img/tui-tree.png)
 
 Digits rewrite the ranking's cut on the fly (`25` = the 25 biggest
 files), and `F1` documents the whole keyboard in one window:
@@ -189,13 +188,9 @@ the flash says the file:
 ![mfd-tui: the print from the main screen](docs/img/tui-print-home.png)
 
 Four themes, chosen with `Shift+T` / F3 — night blue, Debian installer,
-console (the default), CLI:
+console (the default), CLI. In motion:
 
-![The theme menu of the TUI (Shift+T / F3)](docs/img/tui-theme-menu.png)
-
-![The Night theme](docs/img/tui-theme-night.png)
-
-![The Debian theme](docs/img/tui-theme-debian.png)
+![mfd-tui in motion: the theme menu, and the themes changing](docs/img/tui-theme.gif)
 
 The filter prompt (`Shift+F` / F7), the language menu (`Shift+L` / F12), and
 the scan loader:

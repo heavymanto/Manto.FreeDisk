@@ -2,6 +2,16 @@
 
 Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
+## [Unreleased]
+
+### Added
+- **The READMEs show the TUI in motion**: two animated GIFs replace the
+  static screenshots of the tour — navigation (the tree scrolls, the
+  ranking follows the selection, TAB cycles the reading cursor, the
+  climb back to the root) and the theme change (Shift+T, night, Debian,
+  console). Captured from the real terminal with the same pipeline of
+  the screenshot campaign: one frame per key, 2 fps, ~580 KB each.
+
 ## [0.9.1] - 2026-10-30
 
 ### Added
