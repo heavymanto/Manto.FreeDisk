@@ -12,7 +12,8 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   horizontal scroll that reads the whole truncated name, and the theme
   change (Shift+T, night, Debian, console). Captured from the real
   terminal with the same pipeline of the screenshot campaign: one frame
-  per key, 2 fps, ~580 KB each.
+  per key, 2 fps, on a 140-column terminal (950 px wide, the biggest
+  GitHub renders at full width).
 
 ## [0.9.1] - 2026-10-30
 
