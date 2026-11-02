@@ -162,10 +162,13 @@ e classifica, e `←` risale fino alla radice — da dove il giro ricomincia:
 
 ![mfd-tui in movimento: la navigazione, la classifica che segue la selezione, TAB, la risalita alla radice](docs/img/tui-demo.gif)
 
-Ogni `Shift+X` apre un ramo in piu' — l'albero cresce un livello alla volta
-(`Shift+A` apre tutto il sottoalbero):
+Ogni `Shift+X` / `F4` apre un ramo in piu' — l'albero cresce un livello alla
+volta, restando al suo posto (`Shift+A` apre tutto il sottoalbero). E quando
+un nome e' troppo lungo per il pannello, col cursore in lettura `→` lo
+scorre: i puntini lasciano il posto al percorso intero, cinque caratteri
+alla volta:
 
-![mfd-tui: rami aperti uno alla volta con Shift+X](docs/img/tui-expand.png)
+![mfd-tui in movimento: i rami che si aprono con F4, e lo scorrimento che legge il nome intero](docs/img/tui-expand.gif)
 
 Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
 file piu' grossi) e F1 documenta tutta la tastiera in una finestra

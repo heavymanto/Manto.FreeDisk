@@ -167,10 +167,12 @@ ranking, and `←` climbs back to the root — where the tour begins again:
 
 ![mfd-tui in motion: navigation, the ranking following the selection, TAB, the climb back to the root](docs/img/tui-demo.gif)
 
-Each `Shift+X` opens one more branch — the tree grows a level at a time
-(`Shift+A` opens the whole subtree):
+Each `Shift+X` / `F4` opens one more branch — the tree grows a level at a
+time, in place (`Shift+A` opens the whole subtree). And when a name is too
+long for the panel, with the reading cursor `→` scrolls it: the `...` gives
+way to the whole path, five characters at a time:
 
-![mfd-tui: branches opened one by one with Shift+X](docs/img/tui-expand.png)
+![mfd-tui in motion: the branches opening with F4, and the scroll that reads the whole name](docs/img/tui-expand.gif)
 
 Digits rewrite the ranking's cut on the fly (`25` = the 25 biggest
 files), and `F1` documents the whole keyboard in one window:
