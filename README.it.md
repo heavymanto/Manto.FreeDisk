@@ -141,6 +141,11 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I du
 
 ### `mfd-cli` in azione
 
+Il giro completo in movimento — il comando digitato su un prompt pulito, il
+loader che gira durante la scansione, e il quadro che arriva:
+
+![mfd-cli in movimento: il comando, il loader, la griglia con i file piu' grandi](docs/img/cli-demo.gif)
+
 Il quadro in azione su un terminale vero.
 
 ![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)

@@ -143,6 +143,11 @@ One engine only (mfd-core): scan, lens, languages, JSON contract. The two fronte
 
 ### `mfd-cli` in action
 
+The whole round trip in motion — the command typed on a clean prompt, the
+loader spinning while the scan runs, and the picture landing:
+
+![mfd-cli in motion: the command, the loader, the grid with the biggest files](docs/img/cli-demo.gif)
+
 The colored grid opened this page; here is the rest of the family, as it
 looks on the same terminal. (The outputs speak the session's language; the
 OS messages inside the WARNING blocks, like "Accesso negato", are passed

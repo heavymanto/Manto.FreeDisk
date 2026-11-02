@@ -5,8 +5,9 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Added
-- **The READMEs show the TUI in motion**: three animated GIFs replace the
-  static screenshots of the tour — navigation (the tree scrolls, the
+- **The READMEs show the tools in motion**: four animated GIFs replace
+  the static screenshots of the tour — the CLI round trip (command
+  typed, loader, picture), the TUI navigation (the tree scrolls, the
   ranking follows the selection, TAB cycles the reading cursor, the
   climb back to the root), the branch opening with `F4` with the
   horizontal scroll that reads the whole truncated name, and the theme
