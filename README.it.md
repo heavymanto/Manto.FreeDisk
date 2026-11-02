@@ -260,6 +260,7 @@ I file nascono nella cartella da cui avete lanciato `mfd-tui` — `mfd-stampa-<n
 numerati in caso di collisione: niente sovrascritture silenziose, due
 fotografie valgono un diff. La ricetta prima/dopo e le stampe della TUI
 sono nel FAQ (voci 9 e 12).
+
 ---
 
 ## Installazione
