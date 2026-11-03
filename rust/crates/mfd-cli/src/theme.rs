@@ -453,7 +453,7 @@ fn grid_open(
     // continuazione, il titolo si accorcia in testa, i warning si piegano
     // nel fuso: il dato resta intero, cambia il vestito. Nel redirect
     // nessun tetto: il contratto storico, il box largo quanto serve
-    let cap = win::console_width_stdout();
+    let cap = stdout_cap();
     if let Some(w) = cap {
         // il 19: bordo(1) + per ogni colonna spazio+cella+spazio+separatore(3)
         // — la larghezza VERA della riga di dati, non quella della fascia
@@ -600,6 +600,18 @@ fn warn_rows(warnings: &[String], w_size: usize, w_fused: usize, color: bool, ca
     out
 }
 
+/// La larghezza della console di stdout: il tetto della griglia vestita.
+/// Su Windows si legge dalla finestra vera; altrove non c'e' modo (e in
+/// redirect non c'e' console): nessun tetto, il contratto storico.
+#[cfg(windows)]
+fn stdout_cap() -> Option<usize> {
+    win::console_width_stdout()
+}
+#[cfg(not(windows))]
+fn stdout_cap() -> Option<usize> {
+    None
+}
+
 /// La griglia vestita da duf, tutta sua: il corpo di grid_open chiuso dal
 /// fondo — incroci sulle colonne, o sulla sezione fusa dei warning.
 pub fn render_table(
@@ -736,7 +748,7 @@ pub fn render_big_table(
     // il tetto del terminale, come nella griglia: su una console vera il
     // box non sfora — i path si spezzano alla barra, il titolo si accorcia
     // in testa. Nel redirect nessun tetto: il contratto storico
-    if let Some(w) = win::console_width_stdout() {
+    if let Some(w) = stdout_cap() {
         let max_path = w.saturating_sub(w_size + 7).max(4);
         w_path = w_path.min(max_path);
     }
