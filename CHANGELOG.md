@@ -5,6 +5,11 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Changed
+- **The console widens itself for the picture**: when the grid does not
+  fit, mfd-cli first asks the window to grow — conhost accepts (the
+  same `mode con cols=` the user would type by hand), modern terminals
+  keep their window and the `\` wrapping takes over. A favor asked,
+  never forced: whatever the answer, the box never overflows.
 - **The bar is a tenth**: `BAR_W` goes from 24 to 10 — every `#` is
   exactly 10%, the decision the TUI made first. The contract changes
   with it: the redirected ASCII carries the shorter bar (the grid-row

@@ -116,6 +116,13 @@ mod win {
             console_handle: *mut c_void,
             info: *mut ScreenBufferInfo,
         ) -> i32;
+        fn GetLargestConsoleWindowSize(console_handle: *mut c_void) -> Coord;
+        fn SetConsoleScreenBufferSize(console_handle: *mut c_void, size: Coord) -> i32;
+        fn SetConsoleWindowInfo(
+            console_handle: *mut c_void,
+            absolute: i32,
+            rect: *mut SmallRect,
+        ) -> i32;
     }
 
     #[repr(C)]
@@ -186,6 +193,64 @@ mod win {
                 return false;
             }
             SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0
+        }
+    }
+
+    /// Allarga la finestra di console per farci stare il quadro: e' cio' che
+    /// `mode con cols=` fa a mano, chiesto dal programma. Conhost accetta;
+    /// i terminali moderni la finestra la tengono loro e la richiesta cade
+    /// — chi non puo' non deve: il tetto col wrap resta la risposta. Ritorna
+    /// true solo se dopo il tentativo la finestra e' davvero piu' larga.
+    pub fn try_widen(cols: usize) -> bool {
+        let h = stdout_handle();
+        if h.is_null() {
+            return false;
+        }
+        unsafe {
+            let mut info = ScreenBufferInfo {
+                size: Coord { x: 0, y: 0 },
+                cursor: Coord { x: 0, y: 0 },
+                attributes: 0,
+                window: SmallRect { left: 0, top: 0, right: 0, bottom: 0 },
+                maximum: Coord { x: 0, y: 0 },
+            };
+            if GetConsoleScreenBufferInfo(h, &mut info) == 0 {
+                return false;
+            }
+            let ww = (info.window.right - info.window.left + 1).max(0) as usize;
+            if ww >= cols {
+                return false; // gia' larga: nessun favore da fare
+            }
+            let largest = GetLargestConsoleWindowSize(h);
+            let target = (cols as i16).min(largest.x).max(0) as usize;
+            if target <= ww {
+                return false; // lo schermo non concede di piu'
+            }
+            // il buffer prima: la finestra non puo' superarlo
+            if (info.size.x as usize) < target {
+                let newsize = Coord { x: target as i16, y: info.size.y };
+                SetConsoleScreenBufferSize(h, newsize);
+            }
+            let mut rect = SmallRect {
+                left: info.window.left,
+                top: info.window.top,
+                right: info.window.left + target as i16 - 1,
+                bottom: info.window.bottom,
+            };
+            SetConsoleWindowInfo(h, 1, &mut rect);
+            // la parola finale e' della finestra: lo ha fatto davvero?
+            let mut after = ScreenBufferInfo {
+                size: Coord { x: 0, y: 0 },
+                cursor: Coord { x: 0, y: 0 },
+                attributes: 0,
+                window: SmallRect { left: 0, top: 0, right: 0, bottom: 0 },
+                maximum: Coord { x: 0, y: 0 },
+            };
+            if GetConsoleScreenBufferInfo(h, &mut after) == 0 {
+                return false;
+            }
+            let nw = (after.window.right - after.window.left + 1).max(0) as usize;
+            nw > ww
         }
     }
 
@@ -446,6 +511,18 @@ fn grid_open(
             .unwrap_or(0);
         if need > base {
             w_name += need - base;
+        }
+    }
+    // il quadro vorrebbe `wanted` colonne: se la console e' piu' stretta,
+    // prima le si chiede di allargarsi — conhost accetta (lo stesso
+    // `mode con cols=` che l'utente digiterebbe a mano), i terminali
+    // moderni no: la finestra e' loro. Chi dice no trova il tetto col
+    // wrap pronto
+    #[cfg(windows)]
+    if let Some(w) = stdout_cap() {
+        let wanted = w_size + w_pct + w_bar + w_files + w_dirs + w_name + 19;
+        if w < wanted {
+            win::try_widen(wanted);
         }
     }
     // il tetto del terminale: su una console vera il box non sfora mai il
@@ -744,6 +821,15 @@ pub fn render_big_table(
     let w_title = w_size + w_path + 3;
     if title.chars().count() > w_title {
         w_path += title.chars().count() - w_title;
+    }
+    // anche qui, prima del tetto: chiedere alla finestra di allargarsi —
+    // conhost accetta, i terminali moderni tengono la finestra loro
+    #[cfg(windows)]
+    if let Some(w) = stdout_cap() {
+        let wanted = w_size + w_path + 7;
+        if w < wanted {
+            win::try_widen(wanted);
+        }
     }
     // il tetto del terminale, come nella griglia: su una console vera il
     // box non sfora — i path si spezzano alla barra, il titolo si accorcia
