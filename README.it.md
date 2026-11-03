@@ -16,7 +16,11 @@
         <img src="https://img.shields.io/badge/lingue-7-blue" alt="sette lingue" />
         <img src="https://img.shields.io/badge/licenza-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
-      <p><sub>📖 <a href="docs/FAQ.md"><b>Il manuale</b></a> · 🔧 <a href="#installazione"><b>Installazione</b></a> · 🇬🇧 <a href="README.md"><b>Read it in English</b></a></sub></p>
+      <p>
+        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-IL%20MANUALE-e3b341?style=for-the-badge" alt="Il manuale" /></a>
+        <a href="#installazione"><img src="https://img.shields.io/badge/%F0%9F%94%A7-INSTALLAZIONE-e3b341?style=for-the-badge" alt="Installazione" /></a>
+        <a href="README.md"><img src="https://img.shields.io/badge/%F0%9F%87%AC%F0%9F%87%A7-READ%20IN%20ENGLISH-e3b341?style=for-the-badge" alt="Read it in English" /></a>
+      </p>
     </td>
     <td width="25%" valign="middle" align="center">
       <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" />
@@ -30,6 +34,7 @@
 
 **F.F.F — Fun For Free.** Trova i big file e scopri chi drena il disco in pochi secondi, senza fare nulla.
 
+<p align="justify">
 L'idea nasce da un fastidio: il disco sempre pieno, e nessun tool che
 dicesse in un colpo d'occhio dove intervenire. Cosi' me lo sono
 scritto. Potevo farlo in C#, il mio linguaggio di lavoro da vent'anni:
@@ -38,6 +43,7 @@ funzionato — i file enormi dimenticati sono saltati fuori subito:
 backup, macchine virtuali abbandonate, vecchie installazioni, temp di
 sistema con centinaia di GB usati. In un attimo ho recuperato piu' del
 30% di spazio!
+</p>
 
 **Manto.FreeDisk** e' uno scanner veloce — un thread per core, le
 dimensioni lette mentre enumera — e due modi di guardare la risposta:
@@ -150,13 +156,10 @@ loader che gira durante la scansione, e il quadro che arriva:
 
 ![mfd-cli in movimento: il comando, il loader, la griglia con i file piu' grandi](docs/img/cli-demo.gif)
 
-Il quadro in azione su un terminale vero.
-
-![L'albero completo: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
-
-![La griglia parla la lingua della sessione: -lang it](docs/img/cli-lang.png)
-
-![La lente del filtro, dichiarata nella fascia del titolo: -f REG(...)](docs/img/cli-filter.png)
+Le varianti si dichiarano da sole, comando per comando: `-grid -d a
+-top 12` apre l'albero intero, `-lang it` parla la lingua della
+sessione, `-f REG(...)` accende la lente — dichiarata nella fascia del
+titolo, perché cambia il senso di tutti i numeri.
 
 Riferimento completo: `mfd-cli -h`. Esempi reali spiegati riga per riga:
 [docs/FAQ.md](docs/FAQ.md) — la FAQ e' un pilastro del progetto: ogni voce e'
@@ -179,35 +182,23 @@ alla volta:
 
 ![mfd-tui in movimento: i rami che si aprono con F4, e lo scorrimento che legge il nome intero](docs/img/tui-expand.gif)
 
-Le cifre riscrivono al volo il taglio della classifica (`25` = i 25
-file piu' grossi) e F1 documenta tutta la tastiera in una finestra
-sola:
+Le finestre e la lente: `F1` documenta la tastiera in una finestra
+sola, `F12` le lingue, e `Shift+F` apre il prompt del filtro — la lente
+si digita, INVIO la applica, e la griglia si restringe a quello che
+conta (la fascia dichiara il filtro attivo, perché cambia il senso di
+tutti i numeri):
 
-![mfd-tui: l'aiuto F1](docs/img/tui-help.png)
+![mfd-tui in movimento: l'aiuto F1, le lingue F12, e il filtro digitato che restringe la griglia](docs/img/tui-lens.gif)
 
-`F2` salva le impostazioni (tema, lente, barra) nel profilo utente — il
-flash dice dove:
-
-![mfd-tui: F2 salva le impostazioni](docs/img/tui-save.png)
-
-`Shift+P` / F11 stampa la fotografia JSON di quello che stai guardando —
-il flash dice il file:
-
-![mfd-tui: la stampa dalla schermata principale](docs/img/tui-print-home.png)
+E il resto della tastiera, a colpo di flash: `F2` salva le impostazioni
+nel profilo (tema, lente, barra), `Shift+P` / F11 stampa la fotografia
+JSON di quello che stai guardando, e le cifre riscrivono al volo il
+taglio della classifica (`25` = i 25 file piu' grossi).
 
 Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
 Console (il default), CLI. In movimento:
 
 ![mfd-tui in movimento: il menu dei temi e i temi che cambiano](docs/img/tui-theme.gif)
-
-Il prompt del filtro (`Shift+F` / F7), il menu delle lingue (`Shift+L` /
-F12) e il loader della scansione:
-
-![Il prompt del filtro (Shift+F / F7)](docs/img/tui-filter.png)
-
-![Il menu delle lingue (Shift+L / F12)](docs/img/tui-lang.png)
-
-![Il loader della scansione](docs/img/tui-scan.png)
 
 ---
 
@@ -293,12 +284,6 @@ Quello e' Windows visto da dentro: 658 file di font per 461 MB, con i
 CJK (cinese, giapponese) che pesano quanto tutto il resto. Aggiungete
 `-json` e la stessa fotografia arriva in JSON
 (`mfd-cli -json > quadro.json`).
-
-<div align="center">
-<br />
-<img src="docs/img/cli-big.png" alt="Il quadro di C:\Windows\Fonts: la mappa dei font sopra, la classifica dei file piu' grossi sotto, come si veste su un terminale vero" width="100%" />
-<sub>🔍 <b>Il quadro</b> — mfd-cli -top 12 C:\Windows\Fonts: la griglia di ripartizione sopra, la classifica dei piu' grossi sotto. (Foto scattata su Windows, console host.)</sub>
-</div>
 
 <details>
 <summary><b>Opzionale:</b> pubblicare i comandi (e le sette lingue)</summary>

@@ -5,6 +5,14 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Changed
+- **Fewer pictures, all animated, grouped by function**: the READMEs
+  drop the static screenshots (they live on in the manual, which uses
+  them) and keep one animated GIF per function — the CLI round trip,
+  the TUI navigation, the branch opening, **the windows and the lens**
+  (new: F1 help, F12 languages, and the filter typed character by
+  character as the grid shrinks), the themes. Seven images per page,
+  down from twenty. The header links become badges, as visible as the
+  rest, and the opening paragraph is justified.
 - **The console widens itself for the picture**: when the grid does not
   fit, mfd-cli first asks the window to grow — conhost accepts (the
   same `mode con cols=` the user would type by hand), modern terminals

@@ -16,7 +16,11 @@
         <img src="https://img.shields.io/badge/languages-7-blue" alt="seven languages" />
         <img src="https://img.shields.io/badge/license-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
-      <p><sub>📖 <a href="docs/FAQ.md"><b>The manual</b></a> · 🔧 <a href="#quickstart"><b>Quickstart</b></a> · 🇮🇹 <a href="README.it.md"><b>Leggilo in italiano</b></a></sub></p>
+      <p>
+        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-MANUAL-e3b341?style=for-the-badge" alt="Manual" /></a>
+        <a href="#quickstart"><img src="https://img.shields.io/badge/%F0%9F%94%A7-QUICKSTART-e3b341?style=for-the-badge" alt="Quickstart" /></a>
+        <a href="README.it.md"><img src="https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B9-LEGGILO%20IN%20ITALIANO-e3b341?style=for-the-badge" alt="Leggilo in italiano" /></a>
+      </p>
     </td>
     <td width="25%" valign="middle" align="center">
       <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" />
@@ -30,6 +34,7 @@
 
 **F.F.F — Fun For Free.** Find the big files and what drains your disk, in seconds, doing nothing.
 
+<p align="justify">
 The idea comes from an annoyance: the disk always full, and no tool
 that said at a glance where to step in. So I wrote my own. I could
 have done it in C#, my work language for twenty years: I chose Rust,
@@ -37,6 +42,7 @@ helped by GLM 5.3 (open weight, on-premise). It worked — huge
 forgotten files surfaced at once: backups, abandoned virtual
 machines, old installations, system temps with hundreds of GB in
 use. In no time I recovered more than 30% of space!
+</p>
 
 **Manto.FreeDisk** is a fast scanner — one thread per core, sizes
 read while it enumerates — and two ways to read the answer:
@@ -152,16 +158,13 @@ loader spinning while the scan runs, and the picture landing:
 
 ![mfd-cli in motion: the command, the loader, the grid with the biggest files](docs/img/cli-demo.gif)
 
-The colored grid opened this page; here is the rest of the family, as it
-looks on the same terminal. (The outputs speak the session's language; the
-OS messages inside the WARNING blocks, like "Accesso negato", are passed
-through verbatim by the Italian Windows that ran the scans.)
-
-![The whole tree: mfd-cli -grid -d a -top 12](docs/img/cli-tree.png)
-
-![The grid speaks the session's language: -lang it](docs/img/cli-lang.png)
-
-![The filter lens, declared in the title band: -f REG(...)](docs/img/cli-filter.png)
+The variants declare themselves, command by command: `-grid -d a -top
+12` opens the whole tree, `-lang it` speaks the session's language,
+`-f REG(...)` lights the lens — declared in the title band, because it
+changes the meaning of every number. (The outputs speak the session's
+language; the OS messages inside the WARNING blocks, like "Accesso
+negato", are passed through verbatim by the Italian Windows that ran
+the scans.)
 
 Full reference: `mfd-cli -h`. Real-world examples explained line by line:
 [docs/FAQ.md](docs/FAQ.md) — the FAQ is a pillar of this project: every entry
@@ -183,35 +186,23 @@ way to the whole path, five characters at a time:
 
 ![mfd-tui in motion: the branches opening with F4, and the scroll that reads the whole name](docs/img/tui-expand.gif)
 
-Digits rewrite the ranking's cut on the fly (`25` = the 25 biggest
-files), and `F1` documents the whole keyboard in one window:
+The windows and the lens: `F1` documents the whole keyboard in one
+window, `F12` the languages, and `Shift+F` opens the filter prompt —
+the lens gets typed, ENTER applies it, and the grid shrinks to what
+matters (the title band declares the active filter, because it changes
+the meaning of every number):
 
-![mfd-tui: the F1 help](docs/img/tui-help.png)
+![mfd-tui in motion: the F1 help, the F12 languages, and the typed filter that shrinks the grid](docs/img/tui-lens.gif)
 
-`F2` saves the settings (theme, lens, bar) to the user profile — the flash
-says where:
-
-![mfd-tui: F2 saves the settings](docs/img/tui-save.png)
-
-`Shift+P` / F11 prints the JSON picture of what you are looking at —
-the flash says the file:
-
-![mfd-tui: the print from the main screen](docs/img/tui-print-home.png)
+And the rest of the keyboard, one flash at a time: `F2` saves the
+settings to the profile (theme, lens, bar), `Shift+P` / F11 prints the
+JSON picture of what you are looking at, and digits rewrite the
+ranking's cut on the fly (`25` = the 25 biggest files).
 
 Four themes, chosen with `Shift+T` / F3 — night blue, Debian installer,
 console (the default), CLI. In motion:
 
 ![mfd-tui in motion: the theme menu, and the themes changing](docs/img/tui-theme.gif)
-
-The filter prompt (`Shift+F` / F7), the language menu (`Shift+L` / F12), and
-the scan loader:
-
-![The filter prompt (Shift+F / F7)](docs/img/tui-filter.png)
-
-![The language menu (Shift+L / F12)](docs/img/tui-lang.png)
-
-![The scan loader](docs/img/tui-scan.png)
-
 
 ---
 
@@ -294,12 +285,6 @@ paths, fixed size-descending order. That is Windows seen from the
 inside: 658 font files for 461 MB, with the CJK ones (Chinese,
 Japanese) weighing as much as everything else. Add `-json` and the
 same picture comes as JSON (`mfd-cli -json > picture.json`).
-
-<div align="center">
-<br />
-<img src="docs/img/cli-big.png" alt="The picture of C:\Windows\Fonts: the font map on top, the ranking of the biggest files below, as they dress on a real terminal" width="100%" />
-<sub>🔍 <b>The picture</b> — mfd-cli -top 12 C:\Windows\Fonts: the breakdown grid on top, the biggest-files ranking below. (Screenshot taken on Windows, console host.)</sub>
-</div>
 
 <details>
 <summary><b>Optional:</b> publish the commands (and the seven languages)</summary>
