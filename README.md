@@ -5,9 +5,9 @@
       <h3>Where did my disk space go?</h3>
       <p><strong><em>One engine, two command-line frontends — and an open experiment: the same parallel walker in Rust and C#, measured against each other.</em></strong></p>
       <p>
-        <img src="https://img.shields.io/badge/0-STAT%20CALLS-e3b341?style=for-the-badge" alt="0 stat calls" />
-        <img src="https://img.shields.io/badge/WORKERS-ONE%20PER%20CORE-e3b341?style=for-the-badge" alt="one worker per core" />
-        <img src="https://img.shields.io/badge/OUTPUT-DUF%20%2B%20ASCII-e3b341?style=for-the-badge" alt="duf look plus the ASCII contract" />
+        <img src="https://img.shields.io/badge/0-STAT%20CALLS-007ec6?style=flat-square" alt="0 stat calls" />
+        <img src="https://img.shields.io/badge/WORKERS-ONE%20PER%20CORE-007ec6?style=flat-square" alt="one worker per core" />
+        <img src="https://img.shields.io/badge/OUTPUT-DUF%20%2B%20ASCII-007ec6?style=flat-square" alt="duf look plus the ASCII contract" />
       </p>
       <p>
         <a href="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml"><img src="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
@@ -17,9 +17,9 @@
         <img src="https://img.shields.io/badge/license-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
       <p>
-        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-MANUAL-e3b341?style=for-the-badge" alt="Manual" /></a>
-        <a href="#quickstart"><img src="https://img.shields.io/badge/%F0%9F%94%A7-QUICKSTART-e3b341?style=for-the-badge" alt="Quickstart" /></a>
-        <a href="README.it.md"><img src="https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B9-LEGGILO%20IN%20ITALIANO-e3b341?style=for-the-badge" alt="Leggilo in italiano" /></a>
+        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-MANUAL-007ec6?style=flat-square" alt="Manual" /></a>
+        <a href="#quickstart"><img src="https://img.shields.io/badge/%F0%9F%94%A7-QUICKSTART-007ec6?style=flat-square" alt="Quickstart" /></a>
+        <a href="README.it.md"><img src="https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B9-LEGGILO%20IN%20ITALIANO-007ec6?style=flat-square" alt="Leggilo in italiano" /></a>
       </p>
     </td>
     <td width="25%" valign="middle" align="center">

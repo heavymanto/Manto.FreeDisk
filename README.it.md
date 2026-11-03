@@ -5,9 +5,9 @@
       <h3>Dove e' finito lo spazio sul disco?</h3>
       <p><strong><em>Un motore, due frontend da riga di comando — e un esperimento aperto: lo stesso walker parallelo in Rust e C#, misurato uno contro l'altro.</em></strong></p>
       <p>
-        <img src="https://img.shields.io/badge/0-STAT%20CALLS-e3b341?style=for-the-badge" alt="0 stat" />
-        <img src="https://img.shields.io/badge/WORKERS-ONE%20PER%20CORE-e3b341?style=for-the-badge" alt="un worker per core" />
-        <img src="https://img.shields.io/badge/OUTPUT-DUF%20%2B%20ASCII-e3b341?style=for-the-badge" alt="look duf piu' contratto ASCII" />
+        <img src="https://img.shields.io/badge/0-STAT%20CALLS-007ec6?style=flat-square" alt="0 stat" />
+        <img src="https://img.shields.io/badge/WORKERS-ONE%20PER%20CORE-007ec6?style=flat-square" alt="un worker per core" />
+        <img src="https://img.shields.io/badge/OUTPUT-DUF%20%2B%20ASCII-007ec6?style=flat-square" alt="look duf piu' contratto ASCII" />
       </p>
       <p>
         <a href="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml"><img src="https://github.com/heavymanto/Manto.FreeDisk/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
@@ -17,9 +17,9 @@
         <img src="https://img.shields.io/badge/licenza-AGPL--3.0-brightgreen" alt="AGPL-3.0" />
       </p>
       <p>
-        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-IL%20MANUALE-e3b341?style=for-the-badge" alt="Il manuale" /></a>
-        <a href="#installazione"><img src="https://img.shields.io/badge/%F0%9F%94%A7-INSTALLAZIONE-e3b341?style=for-the-badge" alt="Installazione" /></a>
-        <a href="README.md"><img src="https://img.shields.io/badge/%F0%9F%87%AC%F0%9F%87%A7-READ%20IN%20ENGLISH-e3b341?style=for-the-badge" alt="Read it in English" /></a>
+        <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-IL%20MANUALE-007ec6?style=flat-square" alt="Il manuale" /></a>
+        <a href="#installazione"><img src="https://img.shields.io/badge/%F0%9F%94%A7-INSTALLAZIONE-007ec6?style=flat-square" alt="Installazione" /></a>
+        <a href="README.md"><img src="https://img.shields.io/badge/%F0%9F%87%AC%F0%9F%87%A7-READ%20IN%20ENGLISH-007ec6?style=flat-square" alt="Read it in English" /></a>
       </p>
     </td>
     <td width="25%" valign="middle" align="center">
