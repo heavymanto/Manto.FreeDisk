@@ -26,6 +26,10 @@
 
 ---
 
+## Abstract
+
+**F.F.F — Fun For Free.** Find the big files and what drains your disk, in seconds, doing nothing.
+
 The idea comes from an annoyance: the disk always full, and no tool
 that said at a glance where to step in. So I wrote my own. I could
 have done it in C#, my work language for twenty years: I chose Rust,

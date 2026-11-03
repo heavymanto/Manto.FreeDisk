@@ -26,6 +26,10 @@
 
 ---
 
+## Abstract
+
+**F.F.F — Fun For Free.** Trova i big file e scopri chi drena il disco in pochi secondi, senza fare nulla.
+
 L'idea nasce da un fastidio: il disco sempre pieno, e nessun tool che
 dicesse in un colpo d'occhio dove intervenire. Cosi' me lo sono
 scritto. Potevo farlo in C#, il mio linguaggio di lavoro da vent'anni:
