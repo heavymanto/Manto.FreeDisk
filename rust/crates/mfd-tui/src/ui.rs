@@ -14,7 +14,7 @@ use ratatui::layout::{Constraint, Layout, Position, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{
-    Block, Borders, Cell, Clear, Paragraph, Row as TRow, Table, TableState, Wrap,
+    Block, BorderType, Borders, Cell, Clear, Paragraph, Row as TRow, Table, TableState, Wrap,
 };
 use ratatui::Frame;
 use std::time::Duration;
@@ -351,7 +351,7 @@ fn draw_main(f: &mut Frame, app: &mut App) {
     let t = &app.theme;
     paint_bg(f, area, t);
     let mut cons: Vec<Constraint> = vec![
-        Constraint::Length(1), // la fascia del percorso
+        Constraint::Length(3), // la fascia del percorso: il box del titolo, come la CLI
         Constraint::Min(3),    // albero | dettaglio
     ];
     // il pannello della classifica vuole il suo spazio: su un terminale
@@ -433,7 +433,15 @@ fn draw_fascia(f: &mut Frame, app: &App, area: Rect) {
         path.push_str(&app.cat.tf("cli.filtro", &[&fl.display()]));
     }
     let tot = app.cat.tf("tui.fascia_tot", &[&fmt_bytes(disp_total)]);
-    let w = area.width as usize;
+    // il box della fascia: gli stessi angoli della CLI (╭ ╮ ╰ ╯) — il posto
+    // d'onore del quadro, il percorso dichiarato come intestazione, non una
+    // riga nuda: omogeneo alla griglia della CLI, il titolo del film
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(t.border_active);
+    let inner = block.inner(area);
+    let w = inner.width as usize;
     let budget = w.saturating_sub(tot.chars().count() + 4);
     let shown = shorten(&path, budget);
     // il TOT a destra: il percorso a sinistra, il totale chiuso in fondo
@@ -445,7 +453,8 @@ fn draw_fascia(f: &mut Frame, app: &App, area: Rect) {
         Span::raw(" ".repeat(pad)),
         Span::styled(tot, t.title),
     ]);
-    f.render_widget(Paragraph::new(line).style(t.screen), area);
+    f.render_widget(block, area);
+    f.render_widget(Paragraph::new(line).style(t.screen), inner);
 }
 
 /// La barra dei tasti funzione, alla Total Commander. Le scritte si
@@ -1662,19 +1671,19 @@ mod tests {
         let mut app = App::with_tree(dir.clone(), tree);
         app.sel = 15; // l'ultima riga (f01): la radice ha preso la prima
         app.refresh();
-        let mut terminal = Terminal::new(TestBackend::new(120, 12)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(120, 14)).unwrap();
         terminal.draw(|f| draw(f, &mut app)).unwrap();
         let screen = screen_text(&terminal);
         // la lista e' scrollata e il render lo dichiara: la prima riga
-        // visibile e' f06 (la fascia del percorso si e' presa una riga:
-        // una in meno da scorrere), la selezione f01 sta in fondo con la
-        // freccia
+        // visibile e' f06 (la fascia del percorso si e' presa tre righe:
+        // il box del titolo, come la CLI — due in meno da scorrere), la
+        // selezione f01 sta in fondo con la freccia
         let z = app.hits.list.expect("la zona della lista c'e'");
         assert!(z.top > 0, "la lista scrolla: top={}", z.top);
-        // sotto la fascia, il bordo del pannello, l'intestazione e il suo
-        // separatore (il vestito della griglia ha una riga in piu'):
-        // le righe dati partono a y=4
-        assert_eq!(z.rect.y, 4);
+        // sotto il box della fascia (3 righe), il bordo del pannello,
+        // l'intestazione e il suo separatore (il vestito della griglia
+        // ha una riga in piu'): le righe dati partono a y=6
+        assert_eq!(z.rect.y, 6);
         assert!(screen.contains("f05"), "prima riga visibile: {screen:?}");
         assert!(screen.contains(">  f01"), "selezione visibile in fondo: {screen:?}");
         // il click sulla prima riga visibile seleziona la riga che si vede

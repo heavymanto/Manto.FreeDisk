@@ -4,6 +4,15 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
 ## [Unreleased]
 
+### Changed
+- **The TUI title band wears the CLI's box**: the path in the header is
+  framed with the same rounded corners (╭ ╮ ╰ ╯) of the CLI's grid —
+  the declared title of the picture, three rows tall, the blue path and
+  the TOT inside. The two frontends now speak the same grammar from the
+  very first line. All the screenshots and the three TUI GIFs are
+  recaptured with the new band; the scan loader is caught live on
+  WinSxS.
+
 ### Added
 - **The READMEs show the tools in motion**: four animated GIFs replace
   the static screenshots of the tour — the CLI round trip (command
