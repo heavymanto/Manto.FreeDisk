@@ -225,7 +225,7 @@ Four, chosen with **Shift+T / F3** (menu; ENTER applies, ESC cancels):
   cursor of the real consoles
 - **CLI** (black): no imposed color (the terminal's — black, if black
 
-  is the terminal), reverse-video selection — the "almost naked" TUI,
+  is the terminal), reverse-video selection — the "almost bare" TUI,
   like the CLI grid.
 
 16 ANSI colors, no truecolor. Every theme also carries the colors of

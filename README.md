@@ -136,7 +136,7 @@ One engine only (mfd-core): scan, lens, languages, JSON contract. The two fronte
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
 | **What it is** | the picture: breakdown grid and biggest-files ranking, one command | a two-panel navigator with the ranking docked below, over the same scan |
-| **Start it** | `mfd-cli` naked — the folder you are in; `<folder>` to choose another | `mfd-tui` naked — the same |
+| **Start it** | `mfd-cli` with no arguments — the folder you are in; `<folder>` to choose another | `mfd-tui` with no arguments — the same |
 | **The lens** | `-f` (glob or `REG(...)`), `-o`, `-top` | the same lens: `Shift+S` sort, `Shift+F` filter |
 | **The key moves** | `-report N` ranking only, `-grid` grid only, `-json` photographs | `Shift+X` opens the tree, `TAB` cycles tree/detail/ranking, `F1` the keyboard |
 | **The rest** | `-d a` full tree, 7 languages, the ASCII contract | 4 themes, `Shift+P` JSON print, `F2` saves, the mouse wears keys |
@@ -284,7 +284,7 @@ cargo build --release     # about a minute → mfd-cli.exe and mfd-tui.exe in ta
 ```
 
 No parameters: like `du` and `ncdu`, the scan starts from the folder you
-are in — and `mfd-tui.exe`, naked the same way, lets you navigate it. A
+are in — and `mfd-tui.exe`, with no arguments the same way, lets you navigate it. A
 path as the argument (`mfd-cli C:\Windows`) chooses where to look.
 
 Then ask the question this tool exists for — where did the space go? —
@@ -365,7 +365,7 @@ gui\ app\ reserved for the future GUI and app distribution
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: the bench contract
-is sacred, naked means the current directory, output is pure ASCII, and every
+is sacred, no arguments means the current directory, output is pure ASCII, and every
 example in the docs is real. Development is FAQ-driven: if an example feels
 awkward, that is a feature request. Issues are open — three templates (bug,
 question, feature) carry the context, and the good questions become FAQ

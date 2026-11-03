@@ -20,7 +20,7 @@
 // catena: --lang batte MFD_LANG che batte la riga lingua= di F2.
 // Il motore e' mfd-core: la scansione gira sui thread del walker e l'event
 // loop resta reattivo (contatori via canale, ESC annulla senza risultati
-// parziali). Uso: mfd-tui <path> - senza argomenti: cartella corrente (naked = .).
+// parziali). Uso: mfd-tui <path> - senza argomenti: cartella corrente.
 
 mod app;
 mod settings;
@@ -129,7 +129,7 @@ fn main() {
     }
     let root = match pos.as_slice() {
         [p] => assoluta(p),
-        // naked: la cartella corrente, in forma assoluta — la fascia dice
+        // senza argomenti: la cartella corrente, in forma assoluta — la fascia dice
         // dove sei, e "." non lo dice. E' quello che tutti si aspettano
         // (du, ncdu, dua), senza il puntino addosso
         [] => std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),

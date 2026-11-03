@@ -5,7 +5,7 @@
 // stampa Shift+P del TUI). Il walker parallelo, l'aggregazione per profondita', i filtri e i
 // warning stanno in mfd-core, condivisi con mfd-tui (fase 2).
 // Uso: mfd-cli [opzioni] [<path> [loops]] - senza argomenti scansiona la
-// cartella corrente (naked = ., come du); -h aiuto, -V versione.
+// cartella corrente, come du; -h aiuto, -V versione.
 // Output: con env MFD_BENCH=1 righe machine-readable RESULT/ITER (contratto degli
 // script di bench, che la impostano); senza, formato leggibile per uso interattivo
 // ("mfd-cli"): tabella di ripartizione chiusa dalla riga TOTALE incolonnata e,
@@ -925,7 +925,7 @@ fn main() {
         i += 1;
     }
 
-    // Senza path si parte dalla cartella corrente (naked = .): e' quello che
+    // Senza path si parte dalla cartella corrente: e' quello che
     // fanno du, ncdu e dua, e quello che chi digita "mfd-cli" e INVIO si
     // aspetta. L'aiuto resta una scelta esplicita (-h).
     let root = match path {
@@ -940,7 +940,7 @@ fn main() {
             }
             ppath
         }
-        // naked: la cartella corrente in forma assoluta — du e ncdu
+        // senza path: la cartella corrente in forma assoluta — du e ncdu
         // partono da qui, ma la fascia merita il percorso intero
         None => std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
     };

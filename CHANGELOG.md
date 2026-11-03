@@ -21,10 +21,10 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   TUI's fascia, the warnings fold into their bay. Redirection keeps the
   historical contract: no terminal, no cap, the box as wide as the
   content needs, byte for byte.
-- **Naked is the starting example**: the quickstart and the frontends
+- **No arguments is the starting example**: the quickstart and the frontends
   table used to require a folder — like `du` and `ncdu`, both tools
   start with no arguments from the folder you are in; the path is the
-  option. The CLI demo GIF is recaptured with the naked command, and
+  option. The CLI demo GIF is recaptured with the no-argument command, and
   every CLI screenshot wears the new tenth bar.
 
 ### Added

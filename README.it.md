@@ -135,7 +135,7 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I du
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
 | **Cosa e'** | il quadro: griglia di ripartizione e classifica dei piu' grossi, un comando solo | un navigatore a due pannelli con la classifica in fondo, sulla stessa scansione |
-| **Si avvia** | `mfd-cli` nudo — la cartella dove sei; `<cartella>` per sceglierne un'altra | `mfd-tui` nudo — lo stesso |
+| **Si avvia** | `mfd-cli` (senza parametri) — la cartella dove sei; `<cartella>` per sceglierne un'altra | `mfd-tui` (senza parametri) — lo stesso |
 | **La lente** | `-f` (glob o `REG(...)`), `-o`, `-top` | la stessa lente: `Shift+S` ordina, `Shift+F` filtra |
 | **Le mosse chiave** | `-report N` solo la classifica, `-grid` solo la griglia, `-json` fotografa | `Shift+X` apre l'albero, `TAB` gira albero/dettaglio/classifica, `F1` la tastiera |
 | **Il resto** | `-d a` albero intero, 7 lingue, contratto ASCII | 4 temi, stampa JSON con `Shift+P`, `F2` salva, il mouse si veste da tasto |
@@ -281,7 +281,7 @@ cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in tar
 ```
 
 Niente parametri: come `du` e `ncdu`, la scansione parte dalla cartella
-in cui vi trovate — e `mfd-tui.exe`, nudo allo stesso modo, ve la fa
+in cui vi trovate — e `mfd-tui.exe`, senza parametri allo stesso modo, ve la fa
 navigare. Un percorso come argomento (`mfd-cli C:\Windows`) sceglie dove
 guardare.
 
@@ -363,7 +363,7 @@ gui\ app\ riservate alla futura GUI e alla distribuzione app
 ## Contribuire
 
 Vedi [CONTRIBUTING.md](CONTRIBUTING.md). In breve: il contratto di bench e'
-sacro, naked significa cartella corrente, l'output e' ASCII puro, e ogni
+sacro, senza parametri si parte dalla cartella corrente, l'output e' ASCII puro, e ogni
 esempio nella documentazione e' vero. Lo sviluppo e' FAQ-driven: se un esempio
 risulta scomodo, quella e' una richiesta di feature. Le issue sono aperte —
 tre template (bug, domanda, feature) portano il contesto, e le domande vere
