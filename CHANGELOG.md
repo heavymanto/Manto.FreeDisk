@@ -5,6 +5,24 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 ## [Unreleased]
 
 ### Changed
+- **The bar is a tenth**: `BAR_W` goes from 24 to 10 — every `#` is
+  exactly 10%, the decision the TUI made first. The contract changes
+  with it: the redirected ASCII carries the shorter bar (the grid-row
+  test updated to the new shape).
+- **The box never overflows the terminal**: on a real console the duf
+  grid measures the window and caps its width — long names split at the
+  `\` into continuation rows (the other columns empty, the piece aligned
+  at the start of the name), the title shortens head-first like the
+  TUI's fascia, the warnings fold into their bay. Redirection keeps the
+  historical contract: no terminal, no cap, the box as wide as the
+  content needs, byte for byte.
+- **Naked is the starting example**: the quickstart and the frontends
+  table used to require a folder — like `du` and `ncdu`, both tools
+  start with no arguments from the folder you are in; the path is the
+  option. The CLI demo GIF is recaptured with the naked command, and
+  every CLI screenshot wears the new tenth bar.
+
+### Added
 - **The TUI title band wears the CLI's box**: the path in the header is
   framed with the same rounded corners (╭ ╮ ╰ ╯) of the CLI's grid —
   the declared title of the picture, three rows tall, the blue path and

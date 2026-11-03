@@ -136,7 +136,7 @@ One engine only (mfd-core): scan, lens, languages, JSON contract. The two fronte
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
 | **What it is** | the picture: breakdown grid and biggest-files ranking, one command | a two-panel navigator with the ranking docked below, over the same scan |
-| **Start it** | `mfd-cli <folder>` | `mfd-tui <folder>` |
+| **Start it** | `mfd-cli` naked — the folder you are in; `<folder>` to choose another | `mfd-tui` naked — the same |
 | **The lens** | `-f` (glob or `REG(...)`), `-o`, `-top` | the same lens: `Shift+S` sort, `Shift+F` filter |
 | **The key moves** | `-report N` ranking only, `-grid` grid only, `-json` photographs | `Shift+X` opens the tree, `TAB` cycles tree/detail/ranking, `F1` the keyboard |
 | **The rest** | `-d a` full tree, 7 languages, the ASCII contract | 4 themes, `Shift+P` JSON print, `F2` saves, the mouse wears keys |
@@ -280,8 +280,12 @@ rustup just wrote. Everything else is two commands:
 ```powershell
 cd rust
 cargo build --release     # about a minute → mfd-cli.exe and mfd-tui.exe in target\release\
-.\target\release\mfd-cli.exe C:\Windows
+.\target\release\mfd-cli.exe
 ```
+
+No parameters: like `du` and `ncdu`, the scan starts from the folder you
+are in — and `mfd-tui.exe`, naked the same way, lets you navigate it. A
+path as the argument (`mfd-cli C:\Windows`) chooses where to look.
 
 Then ask the question this tool exists for — where did the space go? —
 and read the answer in one shot: the map on top (the heaviest folders,

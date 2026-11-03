@@ -212,6 +212,31 @@ mod win {
             Some((info.window.right - info.window.left + 1).max(1) as usize)
         }
     }
+
+    /// La larghezza della finestra di console di stdout: il tetto della
+    /// griglia vestita. Su un terminale vero il box non sfora mai il suo
+    /// margine destro — i nomi si spezzano alla barra, il titolo si accorcia
+    /// in testa. None se stdout non e' una console: ridiretta in file o pipe
+    /// il contratto storico comanda, il box largo quanto serve, byte per byte.
+    pub fn console_width_stdout() -> Option<usize> {
+        let h = stdout_handle();
+        if h.is_null() {
+            return None;
+        }
+        unsafe {
+            let mut info = ScreenBufferInfo {
+                size: Coord { x: 0, y: 0 },
+                cursor: Coord { x: 0, y: 0 },
+                attributes: 0,
+                window: SmallRect { left: 0, top: 0, right: 0, bottom: 0 },
+                maximum: Coord { x: 0, y: 0 },
+            };
+            if GetConsoleScreenBufferInfo(h, &mut info) == 0 {
+                return None;
+            }
+            Some((info.window.right - info.window.left + 1).max(1) as usize)
+        }
+    }
 }
 
 /// Avvolge `s` nel codice ANSI se i colori sono accesi; altrimenti e' se'.
@@ -293,6 +318,51 @@ fn center(s: &str, w: usize) -> String {
     let pad = w.saturating_sub(s.chars().count());
     let l = pad / 2;
     format!("{}{}{}", " ".repeat(l), s, " ".repeat(pad - l))
+}
+
+/// Accorcia in testa: i puntini davanti, la coda resta — la coda e' il nome
+/// del file, la parte che conta. La fascia della TUI fa lo stesso.
+fn shorten(s: &str, w: usize) -> String {
+    let n = s.chars().count();
+    if n <= w || w < 4 {
+        return s.to_string();
+    }
+    let tail: String = s.chars().skip(n - (w - 3)).collect();
+    format!("...{}", tail)
+}
+
+/// Spezza un nome alla barra quando non sta nella colonna: i pezzi vivono in
+/// righe di continuazione — le altre celle vuote, il pezzo allineato
+/// all'inizio del nome, cosi' il path si legge intero, spezzato ai suoi
+/// confini naturali. Se un segmento senza barre e' lui solo piu' lungo della
+/// colonna (i nomi di WinSxS non hanno pieta'), si spezza al filo: meglio
+/// una riga in piu' che un box sforato. Nel redirect non scatta mai: le
+/// larghezze sono gia' larghe quanto i contenuti.
+fn split_path(s: &str, w: usize) -> Vec<String> {
+    if w == 0 || s.chars().count() <= w {
+        return vec![s.to_string()];
+    }
+    let mut out: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    for seg in s.split_inclusive('\\') {
+        let mut rest: String = seg.to_string();
+        while rest.chars().count() > w {
+            if !cur.is_empty() {
+                out.push(std::mem::take(&mut cur));
+            }
+            let head: String = rest.chars().take(w).collect();
+            rest = rest.chars().skip(w).collect();
+            out.push(head);
+        }
+        if !cur.is_empty() && cur.chars().count() + rest.chars().count() > w {
+            out.push(std::mem::take(&mut cur));
+        }
+        cur.push_str(&rest);
+    }
+    if !cur.is_empty() {
+        out.push(cur);
+    }
+    out
 }
 
 /// La griglia vestita da duf: bordo arrotondato con gli incroci delle
@@ -378,20 +448,38 @@ fn grid_open(
             w_name += need - base;
         }
     }
+    // il tetto del terminale: su una console vera il box non sfora mai il
+    // suo margine destro — i nomi si spezzano alla barra in righe di
+    // continuazione, il titolo si accorcia in testa, i warning si piegano
+    // nel fuso: il dato resta intero, cambia il vestito. Nel redirect
+    // nessun tetto: il contratto storico, il box largo quanto serve
+    let cap = win::console_width_stdout();
+    if let Some(w) = cap {
+        // il 19: bordo(1) + per ogni colonna spazio+cella+spazio+separatore(3)
+        // — la larghezza VERA della riga di dati, non quella della fascia
+        let fisso = w_size + w_pct + w_bar + w_files + w_dirs + 19;
+        let max_name = w.saturating_sub(fisso).max(4);
+        w_name = w_name.min(max_name);
+    }
     // la cella fusa dei warning assorbe tutte le colonne dopo la prima
     // (spazi e incroci compresi); se una segnalazione e' piu' lunga, e' il
     // box ad allargarsi — l'extra va sulla colonna NOME, che di coda ne ha:
     // nemmeno le segnalazioni si tranciano, come i nomi. Calcolata dopo la
     // classifica perche' warning e divisore condividono il fuso: stessa
-    // larghezza, parete dritta anche qui
+    // larghezza, parete dritta anche qui. Col tetto del terminale i warning
+    // non allargano piu': si piegano nel fuso che c'e', spezzati alla barra
     let w_warn = if warnings.is_empty() {
         0
     } else {
         let base = w_pct + w_bar + w_files + w_dirs + w_name + 12;
         let longest = warnings.iter().map(|w| w.chars().count()).max().unwrap_or(0);
         if longest > base {
-            w_name += longest - base;
-            longest
+            if cap.is_some() {
+                base
+            } else {
+                w_name += longest - base;
+                longest
+            }
         } else {
             base
         }
@@ -406,7 +494,7 @@ fn grid_open(
     out.push(sep("╭", "─", "╮", &[fused], color));
     // la fascia del titolo: il percorso in blu, come i nomi — la riga che
     // era della radice, promossa a intestazione del box
-    out.push(row_line(&[wrap(color, BLUE, &left(title, fused))], color));
+    out.push(row_line(&[wrap(color, BLUE, &left(&shorten(title, fused), fused))], color));
     // da qui si aprono le colonne: la forma e' quella di sempre
     out.push(sep("├", "┬", "┤", &widths, color));
     // le intestazioni (go-pretty le mette in maiuscolo: le nostre gia' lo sono)
@@ -427,14 +515,28 @@ fn grid_open(
             (Some(f), Some(d)) => (group_digits(f), group_digits(d)),
             _ => ("-".to_string(), "-".to_string()),
         };
+        // il nome si spezza alla barra quando non sta: le righe di
+        // continuazione hanno le altre colonne vuote e il pezzo allineato
+        // all'inizio del nome — il path si legge intero, il box non sfora
+        let pieces = split_path(&r.name, w_name);
         out.push(row_line(&[
             right(&fmt_bytes(r.bytes), w_size),
             wrap(color, fg, &right(&format!("{}%", pct), w_pct)),
             bar_cell(r.bytes, total, color),
             wrap(color, GRAY, &right(&f, w_files)),
             wrap(color, GRAY, &right(&d, w_dirs)),
-            wrap(color, BLUE, &left(&r.name, w_name)),
+            wrap(color, BLUE, &left(&pieces[0], w_name)),
         ], color));
+        for piece in pieces.iter().skip(1) {
+            out.push(row_line(&[
+                left("", w_size),
+                left("", w_pct),
+                left("", w_bar),
+                left("", w_files),
+                left("", w_dirs),
+                wrap(color, BLUE, &left(piece, w_name)),
+            ], color));
+        }
     }
     // la TOTALE chiude i dati come l'ultima riga di una tabella vera: ogni
     // colonna col suo cumulativo — la dimensione sotto DIMENSIONE, i file
@@ -487,7 +589,13 @@ fn warn_rows(warnings: &[String], w_size: usize, w_fused: usize, color: bool, ca
         } else {
             left("", w_size)
         };
-        out.push(row_line(&[wrap(color, YELLOW, &etichetta), left(w, w_fused)], color));
+        // la segnalazione si piega nel fuso quando e' piu' lunga: spezzata
+        // alla barra come i nomi, l'etichetta vuota sulle righe di seguito
+        let pieces = split_path(w, w_fused);
+        out.push(row_line(&[wrap(color, YELLOW, &etichetta), left(&pieces[0], w_fused)], color));
+        for piece in pieces.iter().skip(1) {
+            out.push(row_line(&[left("", w_size), left(piece, w_fused)], color));
+        }
     }
     out
 }
@@ -550,15 +658,24 @@ pub fn render_report(
     ));
     out.push(sep("├", "┼", "┤", &[w_size, w_fused], color));
     // le righe della classifica: SIZE in colonna con la griglia, il path
-    // nel fuso — in blu, come tutti i path della famiglia
+    // nel fuso — in blu, come tutti i path della famiglia. Lungo, si
+    // spezza alla barra: le righe di continuazione hanno SIZE vuota e il
+    // pezzo allineato all'inizio — nemmeno qui il box sfora il terminale
     for (s, p) in entries {
+        let pieces = split_path(&p.display().to_string(), w_fused);
         out.push(row_line(
             &[
                 right(&fmt_bytes(*s), w_size),
-                wrap(color, BLUE, &left(&p.display().to_string(), w_fused)),
+                wrap(color, BLUE, &left(&pieces[0], w_fused)),
             ],
             color,
         ));
+        for piece in pieces.iter().skip(1) {
+            out.push(row_line(
+                &[left("", w_size), wrap(color, BLUE, &left(piece, w_fused))],
+                color,
+            ));
+        }
     }
     // le segnalazioni chiudono il quadro, dopo i dati: note contestuali a
     // entrambe le parti, secondarie a entrambe — prima la mappa e i
@@ -616,6 +733,13 @@ pub fn render_big_table(
     if title.chars().count() > w_title {
         w_path += title.chars().count() - w_title;
     }
+    // il tetto del terminale, come nella griglia: su una console vera il
+    // box non sfora — i path si spezzano alla barra, il titolo si accorcia
+    // in testa. Nel redirect nessun tetto: il contratto storico
+    if let Some(w) = win::console_width_stdout() {
+        let max_path = w.saturating_sub(w_size + 7).max(4);
+        w_path = w_path.min(max_path);
+    }
     let widths = [w_size, w_path];
     let fused = w_size + w_path + 3;
     let mut out = Vec::with_capacity(entries.len() + 6);
@@ -623,16 +747,25 @@ pub fn render_big_table(
     // la fascia: il titolo della sezione, centrato e giallo come le
     // intestazioni — la stessa riga che nel quadro divide griglia e
     // classifica, qui e' la testa del box
-    out.push(row_line(&[wrap(color, BORDER, &center(title, fused))], color));
+    out.push(row_line(&[wrap(color, BORDER, &center(&shorten(title, fused), fused))], color));
     out.push(sep("├", "┬", "┤", &widths, color));
     for (s, p) in entries {
+        // il path si spezza alla barra quando non sta: SIZE vuota sulle
+        // righe di continuazione, il pezzo allineato all'inizio
+        let pieces = split_path(&p.display().to_string(), w_path);
         out.push(row_line(
             &[
                 right(&fmt_bytes(*s), w_size),
-                wrap(color, BLUE, &left(&p.display().to_string(), w_path)),
+                wrap(color, BLUE, &left(&pieces[0], w_path)),
             ],
             color,
         ));
+        for piece in pieces.iter().skip(1) {
+            out.push(row_line(
+                &[left("", w_size), wrap(color, BLUE, &left(piece, w_path))],
+                color,
+            ));
+        }
     }
     // le segnalazioni chiudono il box come chiudono la griglia: prima cella
     // l'etichetta (gialla, il colore d'avviso della famiglia), resto della
@@ -1236,5 +1369,35 @@ mod tests {
         // da 28 e puo' solo scendere se la console e' stretta (pavimento 8)
         assert_eq!(loader::path_budget(false), 40);
         assert!((8..=28).contains(&loader::path_budget(true)));
+    }
+
+    #[test]
+    fn il_path_si_spezza_alla_barra_quando_non_sta() {
+        // sta: una riga sola, il nome non si tocca
+        assert_eq!(split_path("C:\\a\\b", 10), vec!["C:\\a\\b"]);
+        // non sta: i pezzi ai confini della barra, concatenati ridanno
+        // l'intero — il path non perde un carattere
+        let p = split_path("C:\\cartella\\sottocartella\\file.bin", 12);
+        assert!(p.len() >= 2, "pezzi: {p:?}");
+        assert_eq!(p.concat(), "C:\\cartella\\sottocartella\\file.bin");
+        for piece in &p {
+            assert!(piece.chars().count() <= 12, "pezzo lungo: {piece}");
+        }
+        // il segmento senza barre piu' lungo della colonna: spezzato al
+        // filo — meglio una riga in piu' che un box sforato
+        let q = split_path("amd64_microsoft-edge-webview_31bf3856ad364e35", 20);
+        assert!(q.len() >= 2);
+        assert_eq!(q.concat(), "amd64_microsoft-edge-webview_31bf3856ad364e35");
+        for piece in &q {
+            assert!(piece.chars().count() <= 20, "pezzo lungo: {piece}");
+        }
+    }
+
+    #[test]
+    fn l_accorciamento_lascia_la_coda() {
+        assert_eq!(shorten("C:\\uno\\due\\tre.bin", 11), "...\\tre.bin");
+        assert_eq!(shorten("corto", 10), "corto");
+        // esattamente al limite non si tocca
+        assert_eq!(shorten("1234567890", 10), "1234567890");
     }
 }

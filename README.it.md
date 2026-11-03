@@ -135,7 +135,7 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I du
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
 | **Cosa e'** | il quadro: griglia di ripartizione e classifica dei piu' grossi, un comando solo | un navigatore a due pannelli con la classifica in fondo, sulla stessa scansione |
-| **Si avvia** | `mfd-cli <cartella>` | `mfd-tui <cartella>` |
+| **Si avvia** | `mfd-cli` nudo — la cartella dove sei; `<cartella>` per sceglierne un'altra | `mfd-tui` nudo — lo stesso |
 | **La lente** | `-f` (glob o `REG(...)`), `-o`, `-top` | la stessa lente: `Shift+S` ordina, `Shift+F` filtra |
 | **Le mosse chiave** | `-report N` solo la classifica, `-grid` solo la griglia, `-json` fotografa | `Shift+X` apre l'albero, `TAB` gira albero/dettaglio/classifica, `F1` la tastiera |
 | **Il resto** | `-d a` albero intero, 7 lingue, contratto ASCII | 4 temi, stampa JSON con `Shift+P`, `F2` salva, il mouse si veste da tasto |
@@ -277,8 +277,13 @@ rustup ha appena scritto. Tutto il resto sono due comandi:
 ```powershell
 cd rust
 cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in target\release\
-.\target\release\mfd-cli.exe C:\Windows
+.\target\release\mfd-cli.exe
 ```
+
+Niente parametri: come `du` e `ncdu`, la scansione parte dalla cartella
+in cui vi trovate — e `mfd-tui.exe`, nudo allo stesso modo, ve la fa
+navigare. Un percorso come argomento (`mfd-cli C:\Windows`) sceglie dove
+guardare.
 
 Poi fate la domanda per cui questo tool esiste — dove e' finito lo
 spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le

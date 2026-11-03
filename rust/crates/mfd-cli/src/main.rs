@@ -80,7 +80,7 @@ fn group_digits(n: i64) -> String {
 /// conteggio file di ogni riga della ripartizione (--depth), allineata su tutti
 /// i livelli perche' l'indentazione viene dopo. Solo ASCII volutamente, come il
 /// resto dell'output (codepage non UTF-8 nei log).
-const BAR_W: usize = 24;
+const BAR_W: usize = 10;
 
 fn bar(bytes: i64, total: i64) -> String {
     let filled = if total > 0 && bytes > 0 {
@@ -212,13 +212,14 @@ fn voci(n: i64, cat: &Catalog) -> String {
 /// sono quelle di ascii_row, cella per cella: le colonne coincidono al byte.
 fn totals_row(t: &Totals, cat: &Catalog) -> String {
     format!(
-        " {:>10}  {:>4}  {:>24}  {:>11}  {:>9}  {}",
+        " {:>10}  {:>4}  {:>bw$}  {:>11}  {:>9}  {}",
         fmt_bytes(t.bytes),
         "",
         "",
         group_digits(t.files),
         group_digits(t.dirs),
-        cat.tf("cli.totale", &[&voci(t.voci, cat)])
+        cat.tf("cli.totale", &[&voci(t.voci, cat)]),
+        bw = BAR_W
     )
 }
 
@@ -1432,7 +1433,7 @@ mod tests {
         };
         assert_eq!(
             ascii_row(&dir, 10000),
-            "     2,9 KB   30%  #######.................            2          3  |-- sub\\"
+            "     2,9 KB   30%  ###.......            2          3  |-- sub\\"
         );
         // la foglia: trattini al posto dei conteggi, niente backslash finale
         let leaf = GridRow {
@@ -1443,7 +1444,7 @@ mod tests {
         };
         assert_eq!(
             ascii_row(&leaf, 10000),
-            "      500 B    5%  #.......................            -          -  `-- x.txt"
+            "      500 B    5%  #.........            -          -  `-- x.txt"
         );
     }
 
