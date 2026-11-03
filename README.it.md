@@ -23,7 +23,7 @@
       </p>
     </td>
     <td width="25%" valign="middle" align="center">
-      <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" />
+      <a href="#"><img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" /></a>
     </td>
   </tr>
 </table>
@@ -136,7 +136,7 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I du
 
 | `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
 |:---:|:---:|
-| ![La griglia su un terminale vero: mfd-cli -grid -top 10](docs/img/cli-grid.png) | ![mfd-tui: i due pannelli e la classifica a fine scansione](docs/img/tui-start.png) |
+| <a href="#due-frontend-un-motore"><img src="docs/img/cli-grid.png" alt="La griglia su un terminale vero: mfd-cli -grid -top 10" /></a> | <a href="#due-frontend-un-motore"><img src="docs/img/tui-start.png" alt="mfd-tui: i due pannelli e la classifica a fine scansione" /></a> |
 
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
@@ -154,7 +154,7 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I du
 Il giro completo in movimento — il comando digitato su un prompt pulito, il
 loader che gira durante la scansione, e il quadro che arriva:
 
-![mfd-cli in movimento: il comando, il loader, la griglia con i file piu' grandi](docs/img/cli-demo.gif)
+<a href="#mfd-cli-in-azione"><img src="docs/img/cli-demo.gif" alt="mfd-cli in movimento: il comando, il loader, la griglia con i file piu' grandi" /></a>
 
 Le varianti si dichiarano da sole, comando per comando: `-grid -d a
 -top 12` apre l'albero intero, `-lang it` parla la lingua della
@@ -172,7 +172,7 @@ l'albero scorre, la classifica dei file piu' grossi del ramo selezionato
 la segue in fondo, `TAB` gira il cursore in lettura per albero, dettaglio
 e classifica, e `←` risale fino alla radice — da dove il giro ricomincia:
 
-![mfd-tui in movimento: la navigazione, la classifica che segue la selezione, TAB, la risalita alla radice](docs/img/tui-demo.gif)
+<a href="#mfd-tui-in-azione"><img src="docs/img/tui-demo.gif" alt="mfd-tui in movimento: la navigazione, la classifica che segue la selezione, TAB, la risalita alla radice" /></a>
 
 Ogni `Shift+X` / `F4` apre un ramo in piu' — l'albero cresce un livello alla
 volta, restando al suo posto (`Shift+A` apre tutto il sottoalbero). E quando
@@ -180,7 +180,7 @@ un nome e' troppo lungo per il pannello, col cursore in lettura `→` lo
 scorre: i puntini lasciano il posto al percorso intero, cinque caratteri
 alla volta:
 
-![mfd-tui in movimento: i rami che si aprono con F4, e lo scorrimento che legge il nome intero](docs/img/tui-expand.gif)
+<a href="#mfd-tui-in-azione"><img src="docs/img/tui-expand.gif" alt="mfd-tui in movimento: i rami che si aprono con F4, e lo scorrimento che legge il nome intero" /></a>
 
 Le finestre e la lente: `F1` documenta la tastiera in una finestra
 sola, `F12` le lingue, e `Shift+F` apre il prompt del filtro — la lente
@@ -188,7 +188,7 @@ si digita, INVIO la applica, e la griglia si restringe a quello che
 conta (la fascia dichiara il filtro attivo, perché cambia il senso di
 tutti i numeri):
 
-![mfd-tui in movimento: l'aiuto F1, le lingue F12, e il filtro digitato che restringe la griglia](docs/img/tui-lens.gif)
+<a href="#mfd-tui-in-azione"><img src="docs/img/tui-lens.gif" alt="mfd-tui in movimento: l'aiuto F1, le lingue F12, e il filtro digitato che restringe la griglia" /></a>
 
 E il resto della tastiera, a colpo di flash: `F2` salva le impostazioni
 nel profilo (tema, lente, barra), `Shift+P` / F11 stampa la fotografia
@@ -198,7 +198,7 @@ taglio della classifica (`25` = i 25 file piu' grossi).
 Quattro temi, scelti con `Shift+T` / F3 — Notturno blu, Debian installer,
 Console (il default), CLI. In movimento:
 
-![mfd-tui in movimento: il menu dei temi e i temi che cambiano](docs/img/tui-theme.gif)
+<a href="#mfd-tui-in-azione"><img src="docs/img/tui-theme.gif" alt="mfd-tui in movimento: il menu dei temi e i temi che cambiano" /></a>
 
 ---
 

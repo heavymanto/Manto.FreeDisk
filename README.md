@@ -23,7 +23,7 @@
       </p>
     </td>
     <td width="25%" valign="middle" align="center">
-      <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" />
+      <a href="#"><img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="150" /></a>
     </td>
   </tr>
 </table>
@@ -137,7 +137,7 @@ One engine only (mfd-core): scan, lens, languages, JSON contract. The two fronte
 
 | `mfd-cli` — the answer, read | `mfd-tui` — the answer, navigated |
 |:---:|:---:|
-| ![The grid on a real terminal: mfd-cli -grid -top 10](docs/img/cli-grid.png) | ![mfd-tui: the two panels and the ranking after the scan](docs/img/tui-start.png) |
+| <a href="#two-frontends-one-engine"><img src="docs/img/cli-grid.png" alt="The grid on a real terminal: mfd-cli -grid -top 10" /></a> | <a href="#two-frontends-one-engine"><img src="docs/img/tui-start.png" alt="mfd-tui: the two panels and the ranking after the scan" /></a> |
 
 | | `mfd-cli` | `mfd-tui` |
 | --- | --- | --- |
@@ -156,7 +156,7 @@ One engine only (mfd-core): scan, lens, languages, JSON contract. The two fronte
 The whole round trip in motion — the command typed on a clean prompt, the
 loader spinning while the scan runs, and the picture landing:
 
-![mfd-cli in motion: the command, the loader, the grid with the biggest files](docs/img/cli-demo.gif)
+<a href="#mfd-cli-in-action"><img src="docs/img/cli-demo.gif" alt="mfd-cli in motion: the command, the loader, the grid with the biggest files" /></a>
 
 The variants declare themselves, command by command: `-grid -d a -top
 12` opens the whole tree, `-lang it` speaks the session's language,
@@ -177,14 +177,14 @@ scrolls, the ranking of the biggest files of the selected branch follows
 at the bottom, `TAB` cycles the reading cursor through tree, detail and
 ranking, and `←` climbs back to the root — where the tour begins again:
 
-![mfd-tui in motion: navigation, the ranking following the selection, TAB, the climb back to the root](docs/img/tui-demo.gif)
+<a href="#mfd-tui-in-action"><img src="docs/img/tui-demo.gif" alt="mfd-tui in motion: navigation, the ranking following the selection, TAB, the climb back to the root" /></a>
 
 Each `Shift+X` / `F4` opens one more branch — the tree grows a level at a
 time, in place (`Shift+A` opens the whole subtree). And when a name is too
 long for the panel, with the reading cursor `→` scrolls it: the `...` gives
 way to the whole path, five characters at a time:
 
-![mfd-tui in motion: the branches opening with F4, and the scroll that reads the whole name](docs/img/tui-expand.gif)
+<a href="#mfd-tui-in-action"><img src="docs/img/tui-expand.gif" alt="mfd-tui in motion: the branches opening with F4, and the scroll that reads the whole name" /></a>
 
 The windows and the lens: `F1` documents the whole keyboard in one
 window, `F12` the languages, and `Shift+F` opens the filter prompt —
@@ -192,7 +192,7 @@ the lens gets typed, ENTER applies it, and the grid shrinks to what
 matters (the title band declares the active filter, because it changes
 the meaning of every number):
 
-![mfd-tui in motion: the F1 help, the F12 languages, and the typed filter that shrinks the grid](docs/img/tui-lens.gif)
+<a href="#mfd-tui-in-action"><img src="docs/img/tui-lens.gif" alt="mfd-tui in motion: the F1 help, the F12 languages, and the typed filter that shrinks the grid" /></a>
 
 And the rest of the keyboard, one flash at a time: `F2` saves the
 settings to the profile (theme, lens, bar), `Shift+P` / F11 prints the
@@ -202,7 +202,7 @@ ranking's cut on the fly (`25` = the 25 biggest files).
 Four themes, chosen with `Shift+T` / F3 — night blue, Debian installer,
 console (the default), CLI. In motion:
 
-![mfd-tui in motion: the theme menu, and the themes changing](docs/img/tui-theme.gif)
+<a href="#mfd-tui-in-action"><img src="docs/img/tui-theme.gif" alt="mfd-tui in motion: the theme menu, and the themes changing" /></a>
 
 ---
 
