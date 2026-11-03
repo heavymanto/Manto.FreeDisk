@@ -43,25 +43,25 @@ The question mfd-cli exists for. Point it at a folder and read the grid:
 --- C:\Windows ----------------------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    18,1 GB   43%  ##########..............      122.666     92.331  |-- WinSxS\
-     7,1 GB   17%  ####....................       20.068      1.650  |-- System32\
-     6,8 GB   16%  ####....................        4.441      3.745  |-- assembly\
-     4,4 GB   10%  ###.....................          927        101  |-- Installer\
-     1,4 GB    3%  #.......................        7.704      1.943  |-- SystemApps\
-     1,2 GB    3%  #.......................        4.909        387  |-- SysWOW64\
-   691,5 MB    1%  ........................        2.800      1.929  |-- Microsoft.NET\
-   461,0 MB    1%  ........................          658          0  |-- Fonts\
+    18,1 GB   43%  ####......      122.666     92.331  |-- WinSxS\
+     7,2 GB   17%  ##........       20.051      1.651  |-- System32\
+     6,8 GB   16%  ##........        4.441      3.745  |-- assembly\
+     4,4 GB   10%  #.........          927        101  |-- Installer\
+     1,4 GB    3%  ..........        7.704      1.943  |-- SystemApps\
+     1,2 GB    3%  ..........        4.909        387  |-- SysWOW64\
+   691,6 MB    1%  ..........        2.800      1.929  |-- Microsoft.NET\
+   461,0 MB    1%  ..........          658          0  |-- Fonts\
 
 (107 rows in all; here the first ones)
 -------------------------------------------------------------------------------
-    41,4 GB                                      178.972    103.007  TOTAL: 107 entries
+    41,5 GB                        179.064    103.009  TOTAL: 107 entries
 --- THE 10 BIGGEST FILES ------------------------------------------------------
    350,5 MB  C:\Windows\Installer\46390ac1.msi
    348,5 MB  C:\Windows\Installer\3b7172f7.msi
    327,7 MB  C:\Windows\System32\Microsoft-Edge-WebView\msedge.dll
    ...
 -------------------------------------------------------------------------------
-    WARNING  - opening folder C:\Windows\CSC: Accesso negato.
+    WARNING  - opening folder C:\Windows\appcompat\Programs: Accesso negato.
              ...
              ... and 46 more reports
 ```
@@ -76,9 +76,9 @@ Row by row:
 - **The `|--` rows are the subfolders** (connectors like `tree`): WinSxS
   holds 18,1 GB, that is 43% of the total. The size is RECURSIVE: everything
   inside it, at any depth.
-- **The bar is proportional**: 24 characters, `#` full and `.` empty. WinSxS
-  at 43% has 10 full characters out of 24: it reads at a glance, without
-  looking at the numbers.
+- **The bar is a tenth**: 10 characters, `#` full and `.` empty — every
+  `#` is exactly 10%, the same unit the TUI uses. WinSxS at 43% has 4
+  full characters: it reads at a glance, without looking at the numbers.
 - **Below the TOTAL, the ten biggest files** of the whole tree, full
   paths, fixed size-descending order: the grid says where the space
   sits, the ranking says which files hold it — one command, both
@@ -91,20 +91,23 @@ Row by row:
 
   ![The grid on a real terminal: mfd-cli -grid -top 10](docs/img/cli-grid.png)
 
-  The names stay whole: the box is as wide as it takes, like the ASCII grid.
-  `NO_COLOR` turns the colors off but keeps the box, `MFD_ASCII=1` goes back
+  On a real terminal the box also measures the window and never overflows
+  it: a name too long splits at the `\` into continuation rows, the piece
+  aligned at the start of the name. Redirected, the box is as wide as it
+  takes and the names stay whole. `NO_COLOR` turns the colors off but
+  keeps the box, `MFD_ASCII=1` goes back
   to the flat grid, `MFD_DUF=1` forces the duf look even redirected (for
   `less -R`). Redirected to a file or a pipe, the output is always the flat
   ASCII grid above: the contract of logs, scripts and captures does not
   change — the language follows `-lang` and `MFD_LANG`, the format does not.
-- **FILES and FOLDERS are recursive**: System32 holds 20.437 files in 1.651
+- **FILES and FOLDERS are recursive**: System32 holds 20.051 files in 1.651
   folders beneath it. Direct files appear as leaves, with `-` in place of the
   counts (further down in the same table: `|-- setuperr.log`).
 - **The default order is size, descending** (`T.D`): the biggest on top,
   which is what you want when you are hunting for space.
 - **The TOTAL closes the grid, aligned**: behind a thread of separator,
-  every total under its own column — `41,4 GB` under SIZE, `178.972` under
-  FILES, `103.007` under FOLDERS — and in the NAME column the label with the
+  every total under its own column — `41,5 GB` under SIZE, `179.064` under
+  FILES, `103.009` under FOLDERS — and in the NAME column the label with the
   entry count (`TOTAL: 107 entries`). These are the same numbers the TUI
   detail pane (entry 10) puts on top of the right panel; when the table is
   long, the first rows are already off-screen, and the total stays within
@@ -126,19 +129,19 @@ dash. A real example from the scan above:
 
 ```
  -------------------------------------------------------------------------------
-    41,4 GB                                      178.972    103.007  TOTAL: 107 entries
+    41,5 GB                        179.064    103.009  TOTAL: 107 entries
 --- THE 10 BIGGEST FILES ------------------------------------------------------
    350,5 MB  C:\Windows\Installer\46390ac1.msi
    ...
 -------------------------------------------------------------------------------
-    WARNING  - opening folder C:\Windows\CSC: Accesso negato.
-             - opening folder C:\Windows\LiveKernelReports: Accesso negato.
-             - opening folder C:\Windows\ServiceState: Accesso negato.
+    WARNING  - opening folder C:\Windows\ServiceProfiles\MSSQL$SQLEXPRESS: Accesso negato.
              - opening folder C:\Windows\WUModels: Accesso negato.
-             - opening folder C:\Windows\appcompat\UA: Accesso negato.
              - opening folder C:\Windows\Temp: Accesso negato.
              - opening folder C:\Windows\SystemTemp: Accesso negato.
+             - opening folder C:\Windows\System32\appmgmt\S-1-5-18: Accesso negato.
+             - opening folder C:\Windows\SysWOW64\Com\dmp: Accesso negato.
              - opening folder C:\Windows\SysWOW64\config: Accesso negato.
+             - opening folder C:\Windows\SysWOW64\Configuration: Accesso negato.
              ... and 46 more reports
 ```
 
@@ -211,22 +214,22 @@ all traversed anyway. With a glob:
 ```
 > mfd-cli -f *.dll C:\Windows
 
+--- C:\Windows (filter: *.dll) ------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    26,3 GB  100%  ########################       38.668    102.992  C:\Windows (filter: *.dll)
-    12,3 GB   46%  ###########.............      26.476     92.330  |-- WinSxS\
-     6,8 GB   25%  ######..................        2.161      3.745  |-- assembly\
-     4,3 GB   16%  ####....................        4.741      1.651  |-- System32\
-     1,1 GB    4%  #.......................        2.707        387  |-- SysWOW64\
-     1,1 GB    4%  #.......................          498      1.943  |-- SystemApps\
-   645,8 MB    2%  #.......................        1.969      1.929  |-- Microsoft.NET\
-    20,5 MB    0%  ........................           30           4  |-- UUS\
-    18,1 MB    0%  ........................            6          10  |-- ImmersiveControlPanel\
+    12,1 GB   46%  #####.....       26.286     92.331  |-- WinSxS\
+     6,8 GB   25%  ###.......        2.161      3.745  |-- assembly\
+     4,3 GB   16%  ##........        4.744      1.651  |-- System32\
+     1,1 GB    4%  ..........        2.707        387  |-- SysWOW64\
+     1,1 GB    4%  ..........          498      1.943  |-- SystemApps\
+   645,8 MB    2%  ..........        1.969      1.929  |-- Microsoft.NET\
+    20,5 MB    0%  ..........           30          4  |-- UUS\
+    18,1 MB    0%  ..........            6         10  |-- ImmersiveControlPanel\
 
-(20 rows in all; here the first ones — the command prints them all)
+(19 rows in all; here the first ones — the command prints them all)
 -------------------------------------------------------------------------------
-    26,3 GB                                       38.668    102.992  TOTAL: 20 entries
-    WARNING  - opening folder C:\Windows\WUModels: Accesso negato.
+    26,0 GB                                       38.481    103.009  TOTAL: 19 entries
+    WARNING  - opening folder C:\Windows\ServiceState: Accesso negato.
              ...
              ... and 46 more reports
 
@@ -236,10 +239,11 @@ NOTE: 67 folders without a match hidden by the filter
 Worth noting:
 
 - **The filter changes the meaning of the numbers**, and that is why it
-  appears next to the root: `(filter: *.dll)`. The 26,3 GB are the sum of
+  appears next to the path, in the title band: `(filter: *.dll)`. The
+  26,0 GB are the sum of
   the .dll files only — and the TOTAL at the bottom repeats them, because
-  it follows the lens like the root does.
-- **The FOLDERS column is not filtered** (102.992, about the same as
+  it follows the lens like the title band does.
+- **The FOLDERS column is not filtered** (103.009, about the same as
   without the filter): folders are all traversed, or nothing would be found.
 - **Folders without a match are not in the grid**: C:\Windows contains 67
   folders without a single .dll inside, and since 0.7.0 those rows (all
@@ -251,54 +255,63 @@ Worth noting:
 
 ## 6. The table is long: can I see just a slice?
 
-`-top N` keeps the first N rows (root included) and says so, because a
+`-top N` keeps the first N rows and says so, because a
 truncated count without a notice would be a lie:
 
 ```
 > mfd-cli -top 5 C:\Windows
 
+--- C:\Windows ----------------------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    41,4 GB  100%  ########################      181.507    102.992  C:\Windows
-    18,5 GB   44%  ###########.............      124.088     92.330  |-- WinSxS\
-     7,1 GB   17%  ####....................       20.437      1.651  |-- System32\
-     6,8 GB   16%  ####....................        4.441      3.745  |-- assembly\
-     4,0 GB    9%  ##......................          922        100  |-- Installer\
+    18,1 GB   43%  ####......      122.666     92.331  |-- WinSxS\
+     7,2 GB   17%  ##........       20.051      1.651  |-- System32\
+     6,8 GB   16%  ##........        4.441      3.745  |-- assembly\
+     4,4 GB   10%  #.........          927        101  |-- Installer\
+     1,4 GB    3%  ..........        7.704      1.943  |-- SystemApps\
 -------------------------------------------------------------------------------
-    41,4 GB                                      181.507    102.992  TOTAL: 108 entries
+    41,5 GB                        179.064    103.009  TOTAL: 107 entries
+--- THE 10 BIGGEST FILES ------------------------------------------------------
+   350,5 MB  C:\Windows\Installer\46390ac1.msi
+   348,5 MB  C:\Windows\Installer\3b7172f7.msi
+   327,7 MB  C:\Windows\System32\Microsoft-Edge-WebView\msedge.dll
+   ...
+-------------------------------------------------------------------------------
+    WARNING  - opening folder C:\Windows\ServiceProfiles\MSSQL$SQLEXPRESS: Accesso negato.
+             ...
+             ... and 46 more reports
 
-NOTE: first 5 rows of 108; raise -top N to see them all
+NOTE: first 5 rows of 107; raise -top N to see them all
 ```
 
 The NOTE sits in the notes block at the bottom, under the grid (the WARNING
 rows instead close it, right under the TOTAL): the grid stays purely
 numeric, the notices stay aside. The cut does not touch the TOTAL: the data
 rows are truncated, the totals are not — the entry count too stays that of
-all 108 rows, not of the 5 shown.
+all 107 rows, not of the 5 shown.
 
 Combining `-top` with the sort order makes the classic "top by": `-o A.C
 -top 10` for the first 10 names in alphabetical order,
 
 ```
 > mfd-cli -o A.C -top 10 C:\Windows
-
+--- C:\Windows ----------------------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    41,4 GB  100%  ########################      181.507    102.992  C:\Windows
-      802 B    0%  ........................            1           0  |-- addins\
-   358,6 KB    0%  ........................            6           8  |-- appcompat\
-    19,2 MB    0%  ........................           26          11  |-- apppatch\
-       0 B    0%  ........................            0           0  |-- AppReadiness\
-     6,8 GB   16%  ####....................        4.441      3.745  |-- assembly\
-   766,8 KB    0%  ........................            2           0  |-- bcastdvr\
-   144,0 KB    0%  ........................            -           -  |-- bfsvc.exe
-    70,3 MB    0%  ........................          302         128  |-- Boot\
-    66,0 KB    0%  ........................            -           -  |-- bootstat.dat
+      802 B    0%  ..........            1          0  |-- addins\
+   372,0 KB    0%  ..........            6          8  |-- appcompat\
+    19,2 MB    0%  ..........           26         11  |-- apppatch\
+        0 B    0%  ..........            0          0  |-- AppReadiness\
+     6,8 GB   16%  ##........        4.441      3.745  |-- assembly\
+   766,8 KB    0%  ..........            2          0  |-- bcastdvr\
+   144,0 KB    0%  ..........            -          -  |-- bfsvc.exe
+    70,3 MB    0%  ..........          302        128  |-- Boot\
+    66,0 KB    0%  ..........            -          -  |-- bootstat.dat
+   103,4 KB    0%  ..........            3          3  |-- Branding\
 -------------------------------------------------------------------------------
-    41,4 GB                                      181.507    102.992  TOTAL: 108 entries
+    41,5 GB                        179.064    103.009  TOTAL: 107 entries
 
-NOTE: first 10 rows of 108; raise -top N to see them all
-```
+NOTE: first 10 rows of 107; raise -top N to see them all
 
 and `-o F.D -top 10` for the 10 folders with the most files (WinSxS,
 System32, servicing, SystemApps...). How deep to go and how many rows to
@@ -309,42 +322,40 @@ complete scan of `-d a -json`, shown as a tree — and the rows are governed by
 
 ```
 > mfd-cli -d a -top 6 crates      (run from rust\)
-
+--- D:\SVILUPPO\MantoFreeDisk\GIT\Manto.FreeDisk\rust\crates ------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-   553,4 KB  100%  ########################           27           8  crates
-   274,5 KB   49%  ###########.............           18           3  |-- mfd-core\
-   168,6 KB   30%  ########................            7           0  |   |-- lang\
-    26,6 KB    4%  #.......................            -           -  |   |   |-- ja.json
-    24,7 KB    4%  #.......................            -           -  |   |   |-- de.json
-    24,3 KB    4%  #.......................            -           -  |   |   |-- es.json
+   298,3 KB   45%  #####.....           18          3  |-- mfd-core\
+   177,0 KB   27%  ###.......            7          0  |   |-- lang\
+    27,9 KB    4%  ..........            -          -  |   |   |-- ja.json
+    25,9 KB    3%  ..........            -          -  |   |   |-- de.json
+    25,6 KB    3%  ..........            -          -  |   |   |-- es.json
+    25,0 KB    3%  ..........            -          -  |   |   |-- it.json
 -------------------------------------------------------------------------------
-   553,4 KB                                            27           8  TOTAL: 36 entries
+   654,2 KB                             27           8  TOTAL: 35 entries
 
-NOTE: first 6 rows of 36; raise -top N to see them all
-```
+NOTE: first 6 rows of 35; raise -top N to see them all
 
 The same walk through a lens — only the Rust sources, filter declared next
 to the root:
 
 ```
 > mfd-cli -f *.rs -d a -top 8 crates
-
+--- D:\SVILUPPO\MantoFreeDisk\GIT\Manto.FreeDisk\rust\crates (filter: *.rs) ---
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-   382,8 KB  100%  ########################           17           8  crates (filter: *.rs)
-   187,4 KB   48%  ############...........            5           1  |-- mfd-tui\
-   187,4 KB   48%  ############...........            5           0  |   `-- src\
-    99,2 KB   25%  ######..................            -           -  |       |-- app.rs
-    59,8 KB   15%  #####...................            -           -  |       |-- ui.rs
-    10,2 KB    2%  ........................            -           -  |       |-- theme.rs
-     9,6 KB    2%  ........................            -           -  |       |-- settings.rs
-     8,7 KB    2%  ........................            -           -  |       `-- main.rs
+   227,7 KB   47%  #####.....            5          1  |-- mfd-tui\
+   227,7 KB   47%  #####.....            5          0  |   `-- src\
+   115,0 KB   24%  ##........            -          -  |       |-- app.rs
+    82,4 KB   17%  ##........            -          -  |       |-- ui.rs
+    10,3 KB    2%  ..........            -          -  |       |-- settings.rs
+    10,2 KB    2%  ..........            -          -  |       |-- theme.rs
+     9,9 KB    2%  ..........            -          -  |       `-- main.rs
+   126,6 KB   26%  ###.......            2          1  |-- mfd-cli\
 -------------------------------------------------------------------------------
-   382,8 KB                                            17           8  TOTAL: 25 entries
+   475,1 KB                             17           8  TOTAL: 24 entries
 
-NOTE: first 8 rows of 25; raise -top N to see them all
-```
+NOTE: first 8 rows of 24; raise -top N to see them all
 
 ## 7. How do I use it inside a script?
 
@@ -811,35 +822,30 @@ contract of always. A real session in Italian:
 
 ```
 > mfd-cli -lang it -top 3 C:\Windows
-
+--- C:\Windows ----------------------------------------------------------------
  DIMENSIONE     %                                   FILE   CARTELLE  NOME
 -------------------------------------------------------------------------------
-    41,4 GB  100%  ########################      181.496    102.997  C:\Windows
-    18,5 GB   44%  ###########.............      124.088     92.330  |-- WinSxS\
-     7,1 GB   17%  ####....................       20.437      1.651  |-- System32\
+    18,1 GB   43%  ####......      122.666     92.331  |-- WinSxS\
+     7,2 GB   17%  ##........       20.051      1.651  |-- System32\
+     6,8 GB   16%  ##........        4.441      3.745  |-- assembly\
 -------------------------------------------------------------------------------
-    41,4 GB                                      181.496    102.997  TOTALE: 108 voci
-    WARNING  - apertura cartella C:\Windows\appcompat\UA: Accesso negato.
-             - apertura cartella C:\Windows\WUModels: Accesso negato.
-             - apertura cartella C:\Windows\SystemTemp: Accesso negato.
-             - apertura cartella C:\Windows\Temp: Accesso negato.
-             - apertura cartella C:\Windows\System32\appmgmt\S-1-5-18: Accesso negato.
-             - apertura cartella C:\Windows\System32\appmgmt\MACHINE: Accesso negato.
-             - apertura cartella C:\Windows\SysWOW64\config: Accesso negato.
-             - apertura cartella C:\Windows\SysWOW64\Configuration: Accesso negato.
-             - apertura cartella C:\Windows\SysWOW64\Com\dmp: Accesso negato.
-             - apertura cartella C:\Windows\System32\Com\dmp: Accesso negato.
+    41,5 GB                        179.064    103.009  TOTALE: 107 voci
+--- I 10 FILE PIU' GRANDI -----------------------------------------------------
+   350,5 MB  C:\Windows\Installer\46390ac1.msi
+   ...
+-------------------------------------------------------------------------------
+    WARNING  - apertura cartella C:\Windows\ServiceProfiles\MSSQL$SQLEXPRESS: Accesso negato.
+             ...
              ... e altre 46 segnalazioni
 
-NOTE: prime 3 righe di 108; alzare -top N per vederle tutte
-```
+NOTE: prime 3 righe di 107; alzare -top N per vederle tutte
 
 ![La griglia parla la lingua della sessione: -lang it](docs/img/cli-lang.png)
 
 (the totals line too: `mfd-cli -lang it -d 0 <folder>` answers `mfd-cli:
-C:\Windows - 181.496 file, 102.997 cartelle, 41,4 GB in 1441 ms, 56
+C:\Windows - 179.064 file, 103.009 cartelle, 41,5 GB in 1721 ms, 56
 warning`; and `-h` opens with
-`mfd-cli 0.7.1 - conteggio ricorsivo di file, cartelle e byte`)
+`mfd-cli 0.9.1 - conteggio ricorsivo di file, cartelle e byte`)
 
 One case that fools the eye: in the WARNING block the prefix ("opening
 folder", "apertura cartella") is ours and follows the language, but the
@@ -866,7 +872,7 @@ run:
 ```
 > mfd-cli -lang xx -d 0 C:\Windows
 mfd-cli: language 'xx' not found (available: en, de, es, it, ja, pt-BR, zh-CN)
-mfd-cli: C:\Windows - 181.496 files, 102.997 folders, 41,4 GB in 1473 ms, 56 warnings
+mfd-cli: C:\Windows - 179.064 files, 103.009 folders, 41,5 GB in 1709 ms, 56 warnings
 ```
 
 (a warning on stderr, the run starts in English, exit code 0 — like the
@@ -888,15 +894,13 @@ everything else on Windows): `*.log` means "any name ending in .log":
 
 ```
 > mfd-cli -f *.log C:\Users\Public\mfd-captures\demo2
-
+--- C:\Users\Public\mfd-captures\demo2 (filter: *.log) ------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-      504 B  100%  ########################            2          0  C:\Users\Public\mfd-captures\demo2 (filter: *.log)
-      302 B   59%  ##############..........            -          -  |-- report.log
-      202 B   40%  ##########..............            -          -  `-- ANALYSIS.LOG
+      302 B   59%  ######....            -          -  |-- report.log
+      202 B   40%  ####......            -          -  `-- ANALYSIS.LOG
 -------------------------------------------------------------------------------
-      504 B                                            2          0  TOTAL: 3 entries
-```
+      504 B                              2          0  TOTAL: 2 entries
 
 report.log and ANALYSIS.LOG match — upper case included — while
 backup.logs does not (its extension is .logs, not .log). The % is computed
@@ -907,18 +911,16 @@ in the name** — the classic trap:
 
 ```
 > mfd-cli -f 'REG(log)' C:\Users\Public\mfd-captures\demo2
-
+--- C:\Users\Public\mfd-captures\demo2 (filter: REG(log)) ---------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-     1,3 KB  100%  ########################            5          0  C:\Users\Public\mfd-captures\demo2 (filter: REG(log))
-      402 B   30%  #######.................            -          -  |-- logger.txt
-      302 B   23%  ######..................            -          -  |-- report.log
-      252 B   19%  #####...................            -          -  |-- backup.logs
-      202 B   15%  ####....................            -          -  |-- ANALYSIS.LOG
-      152 B   11%  ###.....................            -          -  `-- catalog.txt
+      402 B   30%  ###.......            -          -  |-- logger.txt
+      302 B   23%  ##........            -          -  |-- report.log
+      252 B   19%  ##........            -          -  |-- backup.logs
+      202 B   15%  ##........            -          -  |-- ANALYSIS.LOG
+      152 B   11%  #.........            -          -  `-- catalog.txt
 -------------------------------------------------------------------------------
-     1,3 KB                                            5          0  TOTAL: 6 entries
-```
+     1,3 KB                              5          0  TOTAL: 5 entries
 
 Five files: logger.txt contains "log" in the middle of the name, catalog
 contains it too ("cata-log"), backup.logs matches with its s. `REG(log)`
@@ -929,30 +931,26 @@ gives back the same two files as the glob:
 
 ```
 > mfd-cli -f 'REG(\.log$)' C:\Users\Public\mfd-captures\demo2
-
+--- C:\Users\Public\mfd-captures\demo2 (filter: REG(\.log$)) ------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-      504 B  100%  ########################            2          0  C:\Users\Public\mfd-captures\demo2 (filter: REG(\.log$))
-      302 B   59%  ##############..........            -          -  |-- report.log
-      202 B   40%  ##########..............            -          -  `-- ANALYSIS.LOG
+      302 B   59%  ######....            -          -  |-- report.log
+      202 B   40%  ####......            -          -  `-- ANALYSIS.LOG
 -------------------------------------------------------------------------------
-      504 B                                            2          0  TOTAL: 3 entries
-```
+      504 B                              2          0  TOTAL: 2 entries
 
 The regex pays back its complexity with the alternation — one pattern,
 many extensions:
 
 ```
 > mfd-cli -f 'REG(\.(zip|7z)$)' C:\Users\Public\mfd-captures\demo2
-
+--- C:\Users\Public\mfd-captures\demo2 (filter: REG(\.(zip|7z)$)) -------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-      854 B  100%  ########################            2          0  C:\Users\Public\mfd-captures\demo2 (filter: REG(\.(zip|7z)$))
-      502 B   58%  ##############..........            -          -  |-- archive.zip
-      352 B   41%  ##########..............            -          -  `-- archive.7z
+      502 B   58%  ######....            -          -  |-- archive.zip
+      352 B   41%  ####......            -          -  `-- archive.7z
 -------------------------------------------------------------------------------
-      854 B                                            2          0  TOTAL: 3 entries
-```
+      854 B                              2          0  TOTAL: 2 entries
 
 The rule of thumb: a glob for the simple cases (`*.iso`, `*.vhdx`,
 `Cargo.*`), a regex when the pattern is a sentence ("the archives",
@@ -963,7 +961,7 @@ NOTE (entry 5), and the totals follow the filter.
 ## 15. Why do the numbers use Italian separators?
 
 Because they are a contract, and contracts change loudly, not quietly.
-`41,4 GB`, `181.507 files`: dot for thousands, comma for decimals — the
+`41,5 GB`, `179.064 files`: dot for thousands, comma for decimals — the
 format the project was born with, kept identical in every language. The
 reason is in the design (docs/DESIGN-I18N.md, §5): the redirected grid
 must stay byte-for-byte the format it has always had, and changing a
@@ -985,7 +983,7 @@ the problem:
 
 ```
 > mfd-cli -d 0 C:\Windows
-mfd-cli: C:\Windows - 181.496 files, 102.997 folders, 41,4 GB in 3849 ms, 56 warnings
+mfd-cli: C:\Windows - 179.064 files, 103.009 folders, 41,5 GB in 1751 ms, 56 warnings
 ```
 
 Then the map — one level is enough to see the shape (entry 1 has the same
@@ -1028,31 +1026,30 @@ assembly behind it. The map says where; the addresses come from `-big`:
              ... and 46 more reports
 ```
 
-The plot thickens: one installer package is worth 348,5 MB, and msedge.dll
+The plot thickens: one installer package is worth 350,5 MB, and msedge.dll
 shows up four times — three versions that WinSxS, the component store,
 keeps on disk. The tree view completes the picture for the folder you
 decide to keep:
 
 ```
 > mfd-cli -d a -top 10 C:\Windows\Installer
-
+--- C:\Windows\Installer ------------------------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-     4,0 GB  100%  ########################          922        100  C:\Windows\Installer
-   348,5 MB    8%  ##......................            -          -  |-- 3b7172f7.msi
-   163,7 MB    3%  #.......................            -          -  |-- 114fc849.msi
-   160,4 MB    3%  #.......................            -          -  |-- 501d750a.msi
-   143,8 MB    3%  #.......................            -          -  |-- 14d7f8ae.msi
-   136,2 MB    3%  #.......................            -          -  |-- 57cc8f0.msi
-   136,0 MB    3%  #.......................            -          -  |-- 8f41bbe9.msi
-   119,8 MB    2%  #.......................            -          -  |-- 114824c1.msi
-   115,0 MB    2%  #.......................            -          -  |-- 8f41bb29.msi
-   112,3 MB    2%  #.......................            -          -  |-- 41478d7a.msi
+   350,5 MB    7%  #.........            -          -  |-- 46390ac1.msi
+   348,5 MB    7%  #.........            -          -  |-- 3b7172f7.msi
+   163,7 MB    3%  ..........            -          -  |-- 114fc849.msi
+   160,4 MB    3%  ..........            -          -  |-- 501d750a.msi
+   143,8 MB    3%  ..........            -          -  |-- 14d7f8ae.msi
+   136,2 MB    3%  ..........            -          -  |-- 57cc8f0.msi
+   136,0 MB    3%  ..........            -          -  |-- 8f41bbe9.msi
+   119,8 MB    2%  ..........            -          -  |-- 114824c1.msi
+   115,0 MB    2%  ..........            -          -  |-- 8f41bb29.msi
+   112,3 MB    2%  ..........            -          -  |-- 41478d7a.msi
 -------------------------------------------------------------------------------
-     4,0 GB                                          922        100  TOTAL: 1.023 entries
+     4,4 GB                            927        101  TOTAL: 1.028 entries
 
-NOTE: first 10 rows of 1.023; raise -top N to see them all
-```
+NOTE: first 10 rows of 1.028; raise -top N to see them all
 
 1.023 entries, 10 shown: the classic shape of a system folder — a few
 huge packages scattered over a thousand patch files. And the lens answers
@@ -1060,33 +1057,24 @@ the accountant's question — how much of this folder is code?:
 
 ```
 > mfd-cli -f 'REG(\.(exe|dll)$)' -top 6 C:\Windows
-
+--- C:\Windows (filter: REG(\.(exe|dll)$)) ------------------------------------
        SIZE     %                                  FILES    FOLDERS  NAME
 -------------------------------------------------------------------------------
-    28,4 GB  100%  ########################       44.090    102.997  C:\Windows (filter: REG(\.(exe|dll)$))
-    13,5 GB   47%  ###########.............       30.568     92.330  |-- WinSxS\
-     6,8 GB   23%  ######..................        2.243      3.745  |-- assembly\
-     5,0 GB   17%  ####....................        5.507      1.651  |-- System32\
-     1,2 GB    4%  #.......................        3.040        387  |-- SysWOW64\
-     1,1 GB    3%  #.......................          556      1.943  |-- SystemApps\
+    13,2 GB   47%  #####.....       30.348     92.331  |-- WinSxS\
+     6,8 GB   24%  ##........        2.243      3.745  |-- assembly\
+     5,0 GB   17%  ##........        5.511      1.651  |-- System32\
+     1,2 GB    4%  ..........        3.040        387  |-- SysWOW64\
+     1,1 GB    3%  ..........          556      1.943  |-- SystemApps\
+   663,7 MB    2%  ..........        2.040      1.929  |-- Microsoft.NET\
 -------------------------------------------------------------------------------
-    28,4 GB                                       44.090    102.997  TOTAL: 30 entries
-    WARNING  - opening folder C:\Windows\appcompat\Backup: Accesso negato.
-             - opening folder C:\Windows\ModemLogs: Accesso negato.
-             - opening folder C:\Windows\Prefetch: Accesso negato.
-             - opening folder C:\Windows\ServiceState: Accesso negato.
-             - opening folder C:\Windows\Provisioning\Autopilot: Accesso negato.
-             - opening folder C:\Windows\ServiceProfiles\SQLTELEMETRY$SQLEXPRESS: Accesso negato.
-             - opening folder C:\Windows\ServiceProfiles\SQLTELEMETRY$SQLEXPRESS01: Accesso negato.
-             - opening folder C:\Windows\WUModels: Accesso negato.
-             - opening folder C:\Windows\Temp: Accesso negato.
-             - opening folder C:\Windows\SystemTemp: Accesso negato.
+    28,1 GB                         43.875    103.009  TOTAL: 30 entries
+    WARNING  - opening folder C:\Windows\Prefetch: Accesso negato.
+             ...
              ... and 46 more reports
 
 NOTE: first 6 rows of 30; raise -top N to see them all
-```
 
-28,4 GB of executables and libraries out of 41,4: through the lens, what
+28,1 GB of executables and libraries out of 41,5: through the lens, what
 sits in C:\Windows turns out to be mostly Windows. What is left is the
 proof: photograph with `-d a -json`, clean, photograph again, diff —
 entry 9 is the complete recipe, and the TUI takes the same pictures with
