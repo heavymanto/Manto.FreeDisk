@@ -35,13 +35,13 @@
 **F.F.F — Fun For Free.** Find the big files and what drains your disk, in seconds, doing nothing.
 
 <p align="justify">
-The idea comes from an annoyance: the disk always full, and no tool
+The idea comes from an an­noy­ance: the disk always full, and no tool
 that said at a glance where to step in. So I wrote my own. I could
-have done it in C#, my work language for twenty years: I chose Rust,
+have done it in C#, my work lan­guage for twenty years: I chose Rust,
 helped by GLM 5.3 (open weight, on-premise). It worked — huge
-forgotten files surfaced at once: backups, abandoned virtual
-machines, old installations, system temps with hundreds of GB in
-use. In no time I recovered more than 30% of space!
+for­got­ten files sur­faced at once: backups, aban­doned virtual
+ma­chines, old in­stal­la­tions, system temps with hun­dreds of GB in
+use. In no time I re­cov­ered more than 30% of space!
 </p>
 
 **Manto.FreeDisk** is a fast scanner — one thread per core, sizes

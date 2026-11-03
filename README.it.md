@@ -35,13 +35,13 @@
 **F.F.F — Fun For Free.** Trova i big file e scopri chi drena il disco in pochi secondi, senza fare nulla.
 
 <p align="justify">
-L'idea nasce da un fastidio: il disco sempre pieno, e nessun tool che
-dicesse in un colpo d'occhio dove intervenire. Cosi' me lo sono
-scritto. Potevo farlo in C#, il mio linguaggio di lavoro da vent'anni:
-ho scelto Rust, affiancato da GLM 5.3 (open weight, on-premise). Ha
-funzionato — i file enormi dimenticati sono saltati fuori subito:
-backup, macchine virtuali abbandonate, vecchie installazioni, temp di
-sistema con centinaia di GB usati. In un attimo ho recuperato piu' del
+L'idea nasce da un fa­sti­dio: il disco sempre pieno, e nessun tool che
+dicesse in un colpo d'oc­chio dove in­ter­ve­ni­re. Cosi' me lo sono
+scritto. Potevo farlo in C#, il mio lin­guag­gio di lavoro da ven­t'an­ni:
+ho scelto Rust, af­fian­ca­to da GLM 5.3 (open weight, on-premise). Ha
+fun­zio­na­to — i file enormi di­men­ti­ca­ti sono saltati fuori subito:
+backup, mac­chi­ne vir­tua­li ab­ban­do­na­te, vecchie in­stal­la­zio­ni, temp di
+sistema con cen­ti­na­ia di GB usati. In un attimo ho re­cu­pe­ra­to piu' del
 30% di spazio!
 </p>
 
