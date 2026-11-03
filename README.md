@@ -18,7 +18,7 @@
       </p>
       <p>
         <a href="docs/FAQ.md"><img src="https://img.shields.io/badge/%F0%9F%93%96-MANUAL-007ec6?style=flat-square" alt="Manual" /></a>
-        <a href="#quickstart"><img src="https://img.shields.io/badge/%F0%9F%94%A7-QUICKSTART-007ec6?style=flat-square" alt="Quickstart" /></a>
+        <a href="#installation"><img src="https://img.shields.io/badge/%F0%9F%94%A7-INSTALLATION-007ec6?style=flat-square" alt="Installation" /></a>
         <a href="README.it.md"><img src="https://img.shields.io/badge/%F0%9F%87%AE%F0%9F%87%B9-LEGGILO%20IN%20ITALIANO-007ec6?style=flat-square" alt="Leggilo in italiano" /></a>
       </p>
     </td>
@@ -46,10 +46,11 @@ use. In no time I re­cov­ered more than 30% of space!
 
 **Manto.FreeDisk** is a fast scanner — one thread per core, sizes
 read while it enumerates — and two ways to read the answer:
-`mfd-cli`, text commands ready to plug into other automation
-systems, classic or AI; `mfd-tui`, still on the terminal but with
-a real interface, like my first tools, which I am still very fond
-of!
+
+- `mfd-cli`, text commands ready to plug into other automation
+  systems, classic or AI;
+- `mfd-tui`, still on the terminal but with a real interface, like my
+  first tools, which I am still very fond of!
 
 ---
 
@@ -58,11 +59,7 @@ of!
 They say Rust is faster and drinks less memory than the others —
 but how much, exactly? To find out I wrote the same scanner three
 times, in Node, Rust and C#, and timed it on the same files, with
-the same totals: three benches, three questions — how fast is the
-scan, how much RAM does it use, how much does it cost to start —
-interleaved rounds with rotated order, medians before printing
-anything. The sessions are pasted whole in
-[bench/results/](bench/results); the method in
+the same totals: three benches, the method in
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 **Speed is the surprise: Rust and C# are tied — Node sits ~6x behind.
@@ -115,10 +112,6 @@ is Rust's.
 
 Nobody wins in absolute terms: **Rust is the performance champion** (CPU tie, one fifth of the RAM, a single 2 MB binary that starts in ~10 ms), **Node the portability one** (one codebase that runs anywhere), and **C# the best sum — the right compromise**. The two purists tie at 16/25: the sum crowns the compromise.
 
-The first two rows of the standings are measured (the sessions in [bench/results/](bench/results)); the last three are my judgment, declared as such.
-
-The product chose Rust as the engine (mfd-core, mfd-cli, mfd-tui): a disk analyzer that must feel instant and ship as one small binary. C# stays a proof of concept — the walker, without the CLI and TUI around it. Its promotion is the [roadmap](docs/ROADMAP.md)'s next chapter, and it's exactly the compromise I keep a second opinion for. Node stays frozen as the phase-0 prototype: its portability couldn't save its 251 MB.
-
 ## Download
 
 Nothing to install: extract and run — that's it. Both binaries work
@@ -133,7 +126,7 @@ languages are found in `lang/` next to the binaries.
 
 ## Two frontends, one engine
 
-One engine only (mfd-core): scan, lens, languages, JSON contract. The two frontends look into it in two ways: **`mfd-cli`** prints the answer and fits scripts, **`mfd-tui`** lets you navigate it with arrows. Same engine, same lens, same seven languages — only how you look changes.
+One engine only (mfd-core): scan, lens, languages, JSON structure. The two frontends look into it in two ways: **`mfd-cli`** prints the answer and fits scripts, **`mfd-tui`** lets you navigate it with arrows. Same engine, same lens, same seven languages — only how you look changes.
 
 | `mfd-cli` — the answer, read | `mfd-tui` — the answer, navigated |
 |:---:|:---:|
@@ -206,7 +199,7 @@ console (the default), CLI. In motion:
 
 ---
 
-## The JSON contract
+## The JSON structure
 
 Every picture comes from the same serializer, promoted into the engine
 (mfd-core): pure ASCII, deterministic order, byte-for-byte diffable.
@@ -261,22 +254,39 @@ The before/after recipe and the TUI prints are in the FAQ (entries 9 and 12).
 
 ---
 
-## Quickstart
+## Installation
 
-You need [Rust](https://rustup.rs) (`cargo --version`) and a clone of this
-repository. If Rust is not there yet: `winget install Rustlang.Rustup`, then
-open a **new** terminal — the ones already open don't see the PATH that
-rustup just wrote. Everything else is two commands:
+Two ways to use it, and the difference is only where the commands end up.
+
+**Local use (portable):** extract the downloaded package and run the
+binaries from their folder. It works at once: English is built in and
+the other six languages live in `lang/` next to the binaries — no
+trace in the system, no privilege required.
+
+**Global commands:** every package carries its own install script.
+It publishes the binaries as user commands and copies the languages
+into the profile: from then on `mfd-cli` and `mfd-tui` run from any
+terminal.
+
+| System | Script | Commands land in | Languages land in |
+| --- | --- | --- | --- |
+| **Windows** | `install.ps1` | `%USERPROFILE%\.local\bin` | `%APPDATA%\mfd\lang` |
+| **Linux** | `install.sh` | `~/.local/bin` | `~/.config/mfd/lang` |
+| **macOS** | `install-macos.sh` | `~/.local/bin` | `~/.config/mfd/lang` |
+
+On Windows the script also checks that the command folder is in the
+`PATH` and adds it if missing — reopen the terminal after installing.
+
+**From source**, finally: you need [Rust](https://rustup.rs) (`winget
+install Rustlang.Rustup`, then a **new** terminal — the ones already
+open don't see the PATH rustup just wrote) and a clone of this
+repository. Everything else is two commands:
 
 ```powershell
 cd rust
 cargo build --release     # about a minute → mfd-cli.exe and mfd-tui.exe in target\release\
 .\target\release\mfd-cli.exe
 ```
-
-No parameters: like `du` and `ncdu`, the scan starts from the folder you
-are in — and `mfd-tui.exe`, with no arguments the same way, lets you navigate it. A
-path as the argument (`mfd-cli C:\Windows`) chooses where to look.
 
 Then ask the question this tool exists for — where did the space go? —
 and read the answer in one shot: the map on top (the heaviest folders,
@@ -285,20 +295,6 @@ paths, fixed size-descending order. That is Windows seen from the
 inside: 658 font files for 461 MB, with the CJK ones (Chinese,
 Japanese) weighing as much as everything else. Add `-json` and the
 same picture comes as JSON (`mfd-cli -json > picture.json`).
-
-<details>
-<summary><b>Optional:</b> publish the commands (and the seven languages)</summary>
-
-`.\install.ps1` in `rust\` drops the exes into `%USERPROFILE%\.local\bin`
-(make sure that folder is in your PATH) and the language files into
-`%APPDATA%\mfd\lang`, the registry CLI and TUI discover at runtime —
-English is embedded in the binaries, so they work even without that folder.
-`install.ps1` never touches your `PATH`. Without installing, run
-`rust\target\release\mfd-cli.exe` directly. Prebuilt binaries via GitHub
-Releases are planned.
-
-</details>
-
 
 ## Known limitations
 
@@ -323,9 +319,6 @@ Releases are planned.
 cargo test                                        # the workspace's tests
 powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target . -Runs 2
 ```
-
-Architecture notes — engine vs. frontends, the walker, the contracts:
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Repository layout
 

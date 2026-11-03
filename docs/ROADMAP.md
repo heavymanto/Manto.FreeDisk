@@ -1,9 +1,11 @@
 # Roadmap
 
-The order is not random, and the criterion is one: think first, then
-build. Every phase must bring non-trivial examples with it into the FAQ
-(docs/FAQ.md): if a feature has no real question justifying it, it does
+<p align="justify">
+The order is not random, and the cri­te­ri­on is one: think first, then
+build. Every phase must bring non-trivial ex­am­ples with it into the FAQ
+(docs/FAQ.md): if a feature has no real ques­tion jus­ti­fy­ing it, it does
 not start.
+</p>
 
 ## Phase 1 — CLI (done, 0.6.x)
 

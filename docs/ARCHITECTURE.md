@@ -1,15 +1,17 @@
 # Architecture
 
-Manto.FreeDisk was born as an experiment: **the same on-disk walker,
-three implementations** (Node, C#, Rust) to choose the stack with numbers
-in hand. The verdict is a scorecard where nobody wins in absolute terms:
-**Rust the performance crown** (memory above all), **Node the portability
-crown**, **C# the best sum — the right compromise**; the whole analysis,
-with the sessions, is in the READMEs. The C# twin is a proof of concept
-today — the walker, complete and benchmarked, without the CLI and the
-TUI around it (its promotion is the roadmap's phase 3); Node is the
-historical phase-0 prototype. The comparison between the two worlds is
-part of the product, not a leftover.
+<p align="justify">
+Manto.FreeDisk was born as an ex­per­i­ment: <b>the same on-disk walker, three
+im­ple­men­ta­tions</b> (Node, C#, Rust) to choose the stack with numbers in
+hand. The verdict is a score­card where nobody wins in ab­so­lute terms:
+<b>Rust the per­for­mance crown</b> (memory above all), <b>Node the porta­bil­i­ty
+crown</b>, <b>C# the best sum — the right com­pro­mise</b>; the whole anal­y­sis,
+with the ses­sions, is in the READMEs. The C# twin is a proof of concept
+today — the walker, com­plete and bench­marked, without the CLI and the TUI
+around it (its pro­mo­tion is the roadmap's phase 3); Node is the his­tor­i­cal
+phase-0 pro­to­type. The com­par­i­son between the two worlds is part of the
+product, not a left­over.
+</p>
 
 ## The map
 

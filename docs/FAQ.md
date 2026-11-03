@@ -1,16 +1,21 @@
 # FAQ — real questions, real commands, real outputs
 
-The rule of this file (and of the project): **every entry is a real question,
-the command was really run, the output is pasted whole from a real run**. No
-invented examples, nothing "similar to". If an answer takes more imagination
+<p align="justify">
+The rule of this file (and of the project): <b>every entry is a real ques­tion,
+the command was really run, the output is pasted whole from a real run</b>. No
+in­vent­ed ex­am­ples, nothing "similar to". If an answer takes more imag­i­na­tion
 than code, it is not an answer: it is a feature waiting to happen (see the
 queue at the bottom).
-
-The outputs are from mfd-cli 0.7.1 on Windows (mfd-tui 0.2.1 for the TUI
-entries), in the factory language, English. One detail you will notice right
-away: the numbers keep the Italian format — dot for thousands, comma for
-decimals, `41,4 GB` — in every language. That is a declared contract, not an
-oversight: entry 15 says why.
+</p>
+<p align="justify">
+The outputs are from mfd-cli 0.9.1 on Windows (mfd-tui 0.2.1 for the TUI
+entries), in the factory lan­guage, English — the few his­tor­i­cal ses­sions (the
+cold/warm one of entry 3, the bench­marks of entry 8) keep the numbers of the
+day they ran. One detail you will notice right away: the numbers keep the
+Italian format — dot for thou­sands, comma for dec­i­mals, <code>41,4 GB</code> —
+in every lan­guage. That is a de­clared con­tract, not an over­sight: entry 15
+says why.
+</p>
 
 ## Index
 

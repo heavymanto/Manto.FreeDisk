@@ -1,10 +1,12 @@
 # Benchmarks
 
-Three micro-benchmarks, three different questions. Common protocol:
-warmup of ALL the variants before measuring, then INTERLEAVED rounds
-(round-robin, never in parallel) with the order rotated every round, and
-the median of the results. This way an external load that comes and goes
-hits all the variants the same way, instead of contaminating one block.
+<p align="justify">
+Three micro-benchmarks, three dif­fer­ent ques­tions. Common pro­to­col: warmup
+of ALL the vari­ants before mea­sur­ing, then IN­TER­LEAVED rounds (round-robin,
+never in par­al­lel) with the order rotated every round, and the median of the
+results. This way an ex­ter­nal load that comes and goes hits all the vari­ants
+the same way, instead of con­tam­i­nat­ing one block.
+</p>
 
 | Script | Question | Metric |
 |---|---|---|

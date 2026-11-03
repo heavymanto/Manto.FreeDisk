@@ -47,10 +47,11 @@ sistema con cen­ti­na­ia di GB usati. In un attimo ho re­cu­pe­ra­to piu'
 
 **Manto.FreeDisk** e' uno scanner veloce — un thread per core, le
 dimensioni lette mentre enumera — e due modi di guardare la risposta:
-mfd-cli, comandi di testo pronti da integrare in altri sistemi di
-automazione, classici o AI; mfd-tui, sempre a terminale ma con
-un'interfaccia vera, come i miei primi tool, a cui sono ancora molto
-affezionato!
+
+- mfd-cli, comandi di testo pronti da integrare in altri sistemi di
+  automazione, classici o AI;
+- mfd-tui, sempre a terminale ma con un'interfaccia vera, come i miei
+  primi tool, a cui sono ancora molto affezionato!
 
 ---
 
@@ -59,11 +60,8 @@ affezionato!
 Dicono che Rust sia piu' veloce e beva meno memoria degli altri — ma
 quanto, esattamente? Per saperlo ho scritto lo stesso scanner tre
 volte, in Node, Rust e C#, e l'ho cronometrato sugli stessi file, con
-gli stessi totali: tre bench, tre domande — quanto e' veloce la
-scansione, quanta RAM usa, quanto costa avviarla — round interleaved
-con ordine ruotato, mediane prima di stampare qualsiasi cosa. Le
-sessioni sono incollate per intero in [bench/results/](bench/results);
-il metodo in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+gli stessi totali: tre bench, il metodo in
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 **La velocita' e' una sorpresa: Rust e C# sono appaiati — Node resta ~6
 volte dietro. La memoria e' il verdetto: Rust percorre l'albero con
@@ -114,10 +112,6 @@ Qui vince C#: piattaforma ventennale, libreria di classi immensa, tooling al ver
 
 Nessuno vince in senso assoluto: **Rust e' il campione delle prestazioni** (CPU pari, un quinto della RAM, un binario da 2 MB che parte in ~10 ms), **Node quello della portabilita'** (una base di codice sola che gira ovunque), e **C# la somma migliore — il compromesso giusto**. I due puristi pareggiano a 16/25: la somma incorona il compromesso.
 
-Le prime due righe della classifica sono misurate (le sessioni in [bench/results/](bench/results)); le ultime tre sono il mio giudizio, dichiarato per tale.
-
-Il prodotto ha scelto Rust come motore (mfd-core, mfd-cli, mfd-tui): un analizzatore di disco che deve sembrare istantaneo e spedirsi come un binario solo. Il C# resta proof of concept — il walker, senza CLI e TUI attorno. La sua promozione e' il prossimo capitolo del [roadmap](docs/ROADMAP.md), ed e' esattamente il compromesso per cui tengo un secondo parere. Node resta congelato come prototipo della fase 0: la sua portabilita' non ha salvato i suoi 251 MB.
-
 ## Download
 
 Niente da installare: estrai ed esegui — e basta. I due binari
@@ -132,7 +126,7 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
 ## Due frontend, un motore
 
-Il motore e' uno solo (mfd-core): scansione, lente, lingue, contratto JSON. I due frontend ci guardano dentro in due modi: **`mfd-cli`** stampa la risposta e sta bene negli script, **`mfd-tui`** te la fa navigare a frecce. Stesso motore, stessa lente, stesse sette lingue — cambia solo come guardi.
+Il motore e' uno solo (mfd-core): scansione, lente, lingue, struttura JSON. I due frontend ci guardano dentro in due modi: **`mfd-cli`** stampa la risposta e sta bene negli script, **`mfd-tui`** te la fa navigare a frecce. Stesso motore, stessa lente, stesse sette lingue — cambia solo come guardi.
 
 | `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
 |:---:|:---:|
@@ -202,7 +196,7 @@ Console (il default), CLI. In movimento:
 
 ---
 
-## Il contratto JSON
+## La struttura JSON
 
 Ogni fotografia nasce dallo stesso serializzatore, promosso nel motore
 (mfd-core): ASCII puro, ordine deterministico, diffabile byte per byte.
@@ -260,21 +254,38 @@ sono nel FAQ (voci 9 e 12).
 
 ## Installazione
 
-Serve [Rust](https://rustup.rs) (`cargo --version`) e un clone di questo
-repository. Se Rust non c'e' ancora: `winget install Rustlang.Rustup`, poi
-aprite un terminale **nuovo** — quelli gia' aperti non vedono il PATH che
-rustup ha appena scritto. Tutto il resto sono due comandi:
+Due modi di usarlo, e la differenza e' solo dove finiscono i comandi.
+
+**Uso locale (portabile):** estraete il pacchetto scaricato e lanciate
+i binari dalla loro cartella. Funziona subito: l'inglese e' incorporato
+e le altre sei lingue stanno in `lang/` accanto ai binari — nessuna
+traccia nel sistema, nessun privilegio richiesto.
+
+**Comandi globali:** ogni pacchetto porta il suo script di
+installazione. Pubblica i binari come comandi utente e copia le lingue
+nel profilo: da quel momento `mfd-cli` e `mfd-tui` girano da
+qualsiasi terminale.
+
+| Sistema | Script | I comandi finiscono in | Le lingue finiscono in |
+| --- | --- | --- | --- |
+| **Windows** | `install.ps1` | `%USERPROFILE%\.local\bin` | `%APPDATA%\mfd\lang` |
+| **Linux** | `install.sh` | `~/.local/bin` | `~/.config/mfd/lang` |
+| **macOS** | `install-macos.sh` | `~/.local/bin` | `~/.config/mfd/lang` |
+
+Su Windows lo script verifica anche che la cartella dei comandi sia
+nel `PATH` e la aggiunge se manca — riaprite il terminale dopo
+l'installazione.
+
+**Da fonte**, infine: serve [Rust](https://rustup.rs) (`winget install
+Rustlang.Rustup`, poi un terminale **nuovo** — quelli gia' aperti non
+vedono il PATH che rustup ha appena scritto) e un clone di questo
+repository. Tutto il resto sono due comandi:
 
 ```powershell
 cd rust
 cargo build --release     # circa un minuto → mfd-cli.exe e mfd-tui.exe in target\release\
 .\target\release\mfd-cli.exe
 ```
-
-Niente parametri: come `du` e `ncdu`, la scansione parte dalla cartella
-in cui vi trovate — e `mfd-tui.exe`, senza parametri allo stesso modo, ve la fa
-navigare. Un percorso come argomento (`mfd-cli C:\Windows`) sceglie dove
-guardare.
 
 Poi fate la domanda per cui questo tool esiste — dove e' finito lo
 spazio? — e leggete la risposta in un colpo solo: sopra la mappa (le
@@ -284,19 +295,6 @@ Quello e' Windows visto da dentro: 658 file di font per 461 MB, con i
 CJK (cinese, giapponese) che pesano quanto tutto il resto. Aggiungete
 `-json` e la stessa fotografia arriva in JSON
 (`mfd-cli -json > quadro.json`).
-
-<details>
-<summary><b>Opzionale:</b> pubblicare i comandi (e le sette lingue)</summary>
-
-`.\install.ps1` in `rust\` copia gli exe in `%USERPROFILE%\.local\bin`
-(verificate che quella cartella sia nel vostro PATH) e i file delle lingue
-in `%APPDATA%\mfd\lang`, il registro che CLI e TUI scoprono a runtime —
-l'inglese e' incorporato nei binari, quindi funzionano anche senza quella
-cartella. `install.ps1` non tocca mai il `PATH`. Senza installazione,
-eseguite direttamente `rust\target\release\mfd-cli.exe`. I binari
-precompilati via GitHub Releases sono in programma.
-
-</details>
 
 ## Limiti noti
 
@@ -321,9 +319,6 @@ precompilati via GitHub Releases sono in programma.
 cargo test                                        # i test del workspace
 powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target . -Runs 2
 ```
-
-Appunti di architettura — motore e frontend, il walker, i contratti:
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Struttura del repository
 
