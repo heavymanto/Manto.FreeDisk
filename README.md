@@ -117,9 +117,23 @@ Nothing to install: extract and run — that's it. Both binaries work
 right away, in portable mode: English is embedded, and the other six
 languages are found in `lang/` next to the binaries.
 
-[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-win-x64.zip)
-[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-linux-x64.tar.gz)
-[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz)
+<details>
+<summary><img src="https://img.shields.io/badge/%E2%AC%87-DOWNLOAD-2ea44f?style=for-the-badge" alt="Download" /></summary>
+<br/>
+<p align="center">
+  <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="110" />
+  <br/><br/>
+  <b>We give you the software. You give us a star.</b> ⭐<br/>
+  <i>Stars make dreams — and at 1,000 the C# twin becomes real
+  (<a href="docs/ROADMAP.md">roadmap</a>).</i>
+  <br/><br/>
+  <a href="https://github.com/heavymanto/Manto.FreeDisk"><img src="https://img.shields.io/badge/%E2%AD%90-GIVE%20US%20A%20STAR-e3b341?style=for-the-badge" alt="Give us a star" /></a>
+  <br/><br/>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-win-x64.zip"><img src="https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge" alt="Windows x64" /></a>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-linux-x64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge" alt="Linux x64" /></a>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge" alt="macOS arm64" /></a>
+</p>
+</details>
 
 ---
 

@@ -118,9 +118,23 @@ Niente da installare: estrai ed esegui — e basta. I due binari
 funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
 le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
-[![Windows x64](https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-win-x64.zip)
-[![Linux x64](https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-linux-x64.tar.gz)
-[![macOS arm64](https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge)](../../releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz)
+<details>
+<summary><img src="https://img.shields.io/badge/%E2%AC%87-SCARICA-2ea44f?style=for-the-badge" alt="Scarica" /></summary>
+<br/>
+<p align="center">
+  <img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="110" />
+  <br/><br/>
+  <b>Noi ti doniamo il software. Tu donaci una stella.</b> ⭐<br/>
+  <i>Le stelle fanno sognare — e a 1.000 il gemello C# diventa vero
+  (<a href="docs/ROADMAP.md">roadmap</a>).</i>
+  <br/><br/>
+  <a href="https://github.com/heavymanto/Manto.FreeDisk"><img src="https://img.shields.io/badge/%E2%AD%90-LASCIA%20UNA%20STELLA-e3b341?style=for-the-badge" alt="Lascia una stella" /></a>
+  <br/><br/>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-win-x64.zip"><img src="https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge" alt="Windows x64" /></a>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-linux-x64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge" alt="Linux x64" /></a>
+  <a href="../../releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge" alt="macOS arm64" /></a>
+</p>
+</details>
 
 ---
 
