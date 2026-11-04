@@ -87,7 +87,7 @@ it gets measured.
 
 On CPU, C# and Rust end in a tie, Node last as expected. If you expected Rust to be the clear winner, it isn't.
 
-On RAM, Rust is the champion, C# second, Node last as expected. The reason is simple — Rust has no garbage collector dragging heap and runtime structures along. Rust wins both startup time and average RAM consumption overall.
+On RAM, Rust is the champion, C# second, Node last, unsurprisingly. The reason is simple — Rust has no garbage collector dragging heap and runtime structures along. Rust wins both startup time and average RAM consumption overall.
 
 ### 2 — Robustness, maturity, development
 
@@ -95,8 +95,7 @@ Here C# wins: a twenty-year-old platform, a huge class library, top-notch toolin
 
 ### 3 — Portability
 
-.NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust, like C++, must be recompiled on every system you release for. GitHub CI compensates considerably, using release Workflows: compilation is automatic, even if you don't have Linux and/or Mac installed. Node instead is absolutely cross-platform: once written it runs anywhere, you just install the interpreter (often already present), but by its nature nothing needs recompiling.
-is Rust's.
+.NET has a capability Rust doesn't: cross-publish from a single machine — from Windows, `dotnet publish -r linux-x64 --self-contained true` produces the Linux executable, with one command. Rust, like C++, must be recompiled on every system you release for. GitHub CI compensates considerably, using release Workflows: compilation is automatic, even if you don't have Linux and/or Mac installed. Node instead is absolutely cross-platform: once written it runs anywhere, you just install the interpreter (often already present). The process is .NET's game, the artifact is Rust's.
 
 ### The final standings
 
