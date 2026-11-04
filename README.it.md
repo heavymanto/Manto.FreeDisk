@@ -126,7 +126,7 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
 ## Due frontend, un motore
 
-Il motore e' uno solo (mfd-core): scansione, lente, lingue, struttura JSON. I due frontend ci guardano dentro in due modi: **`mfd-cli`** stampa la risposta e sta bene negli script, **`mfd-tui`** te la fa navigare a frecce. Stesso motore, stessa lente, stesse sette lingue — cambia solo come guardi.
+Il motore e' uno solo (mfd-core): scansione, lente, lingue, struttura JSON. **`mfd-cli`** stampa la risposta e sta bene negli script, **`mfd-tui`** te la fa navigare a frecce. Stesso motore, stessa lente, stesse sette lingue — cambia solo come guardi.
 
 | `mfd-cli` — la risposta, da leggere | `mfd-tui` — la risposta, da navigare |
 |:---:|:---:|

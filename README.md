@@ -125,7 +125,7 @@ languages are found in `lang/` next to the binaries.
 
 ## Two frontends, one engine
 
-One engine only (mfd-core): scan, lens, languages, JSON structure. The two frontends look into it in two ways: **`mfd-cli`** prints the answer and fits scripts, **`mfd-tui`** lets you navigate it with arrows. Same engine, same lens, same seven languages — only how you look changes.
+One engine only (mfd-core): scan, lens, languages, JSON structure. **`mfd-cli`** prints the answer and fits scripts, **`mfd-tui`** lets you navigate it with arrows. Same engine, same lens, same seven languages — only how you look changes.
 
 | `mfd-cli` — the answer, read | `mfd-tui` — the answer, navigated |
 |:---:|:---:|
