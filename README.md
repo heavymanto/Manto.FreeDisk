@@ -147,11 +147,7 @@ One engine only (mfd-core): scan, lens, languages, JSON structure. **`mfd-cli`**
 
 Running with no arguments:
 
-<a href="#mfd-cli-in-action"><img src="docs/img/cli-demo.gif" alt="mfd-cli in motion: the command, the loader, the grid with the biggest files" /></a>
-
-And the loader while the scan runs — one line, rewritten over and over until the picture lands:
-
-<a href="#mfd-cli-in-action"><img src="docs/img/cli-loader.png" alt="The CLI loader during the scan of C:\Windows\WinSxS" /></a>
+<a href="#mfd-cli-in-action"><img src="docs/img/cli-demo.gif" alt="mfd-cli in motion: the command with no arguments, the loader during the scan, and the picture landing" /></a>
 
 The variants declare themselves, command by command: `-grid -d a -top
 12` opens the whole tree, `-lang it` speaks the session's language,

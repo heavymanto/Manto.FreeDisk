@@ -147,11 +147,7 @@ Il motore e' uno solo (mfd-core): scansione, lente, lingue, struttura JSON. **`m
 
 Esecuzione senza parametri:
 
-<a href="#mfd-cli-in-azione"><img src="docs/img/cli-demo.gif" alt="mfd-cli in movimento: il comando, il loader, la griglia con i file piu' grandi" /></a>
-
-E il loader mentre la scansione gira — una riga sola, riscritta di continuo finché il quadro non arriva:
-
-<a href="#mfd-cli-in-azione"><img src="docs/img/cli-loader.png" alt="Il loader della CLI durante la scansione di C:\Windows\WinSxS" /></a>
+<a href="#mfd-cli-in-azione"><img src="docs/img/cli-demo.gif" alt="mfd-cli in movimento: il comando senza parametri, il loader durante la scansione, e il quadro che arriva" /></a>
 
 Le varianti si dichiarano da sole, comando per comando: `-grid -d a
 -top 12` apre l'albero intero, `-lang it` parla la lingua della
