@@ -27,22 +27,26 @@ not start.
 - [x] Two separate binaries (`mfd-cli` + `mfd-tui`) on the shared
       core (see docs/ARCHITECTURE.md)
 
-## Phase 3 — the complete C# twin
+## Phase 3 — the C# twin, on demand
 
-Today the twin is a proof of concept: the walker, complete and
-benchmarked, without the CLI and the TUI around it (the READMEs' scorecard
-says why it stays: the right compromise, waiting for its promotion).
+Today the twin is a proof of concept, and there it stays: the walker,
+complete and benchmarked, without the CLI and the TUI around it (the
+READMEs' scorecard says why it is kept: the right compromise, a second
+opinion at a diff's distance).
 
-The gate is explicit: phase 3 starts when the Rust product is published
-and stable — the twin compares against a frozen contract, and its
-accept test is the same redirected ASCII, byte for byte. The C# TUI is
-deliberately out of the path: the twin's endgame is the GUI of phase 4,
-where .NET is at home. The roads not taken stay open to the community:
-the bench's RESULT lines and the redirected ASCII output are the judge
-of every contribution (CONTRIBUTING.md).
+The promotion is not on the calendar — it is conditioned to real
+interest: **1,000 stars**. Until that many people say they want it, the
+POC is the experiment's evidence and nothing more. The accept test is
+already written, for the day the stars arrive: the same redirected
+ASCII, byte for byte. The C# TUI stays out of the path either way (the
+twin's endgame would be the GUI of phase 4, where .NET is at home),
+and the roads not taken stay open to the community: the bench's RESULT
+lines and the redirected ASCII output are the judge of every
+contribution (CONTRIBUTING.md).
 
-- [ ] `Manto.FreeDisk.Cli` promoted from walker to real CLI: same help,
-      same grid, same tree, same `-top` as the Rust twin
+- [ ] `Manto.FreeDisk.Cli` promoted from walker to real CLI — gated
+      by 1k stars: same help, same grid, same tree, same `-top` as
+      the Rust twin
 - [ ] The Rust-vs-C# comparison becomes a product comparison, not just
       a walker comparison
 

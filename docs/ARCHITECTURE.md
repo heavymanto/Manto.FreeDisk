@@ -8,7 +8,7 @@ hand. The verdict is a score­card where nobody wins in ab­so­lute terms:
 crown</b>, <b>C# the best sum — the right com­pro­mise</b>; the whole anal­y­sis,
 with the ses­sions, is in the READMEs. The C# twin is a proof of concept
 today — the walker, com­plete and bench­marked, without the CLI and the TUI
-around it (its pro­mo­tion is the roadmap's phase 3); Node is the his­tor­i­cal
+around it (its pro­mo­tion is demand-gated: 1,000 stars, see the roadmap); Node is the his­tor­i­cal
 phase-0 pro­to­type. The com­par­i­son between the two worlds is part of the
 product, not a left­over.
 </p>
@@ -20,7 +20,7 @@ rust\                the Rust family (Cargo workspace)
   crates\mfd-core\     the engine: walker, tree, filters, warnings
   crates\mfd-cli\      the CLI: parsing, grid, -json, RESULT/ITER lines
   crates\mfd-tui\      the TUI: panels, lens, ratatui event loop
-net\                the .NET family: the C# proof of concept (Manto.FreeDisk.Cli, the walker; full twin: roadmap phase 3)
+net\                the .NET family: the C# proof of concept (Manto.FreeDisk.Cli, the walker; promotion gated by interest, see the roadmap)
 node\mfd-scan\      the phase-0 Node prototype (frozen, historical value)
 bench\              micro-benchmark scripts and their results
 gui\  app\          reserved for the later phases (see docs/ROADMAP.md)

@@ -13,6 +13,11 @@ Format inspired by "Keep a Changelog"; the version is mfd-cli's.
   character as the grid shrinks), the themes. Seven images per page,
   down from twenty. The header links become badges, as visible as the
   rest, and the opening paragraph is justified.
+- **The C# twin stays a proof of concept**: the promotion to a full
+  twin is no longer on the calendar — it is conditioned to real
+  interest, **1,000 stars**. The walker keeps serving the experiment,
+  the scorecard's verdict stands, and the accept test waits for the
+  day the stars arrive.
 - **The console widens itself for the picture**: when the grid does not
   fit, mfd-cli first asks the window to grow — conhost accepts (the
   same `mode con cols=` the user would type by hand), modern terminals

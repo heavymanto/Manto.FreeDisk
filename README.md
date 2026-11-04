@@ -324,7 +324,7 @@ powershell -ExecutionPolicy Bypass -File bench\run-bench.ps1 -Target . -Runs 2
 ```text
 rust\     Rust family (Cargo workspace): crates\mfd-core (the engine),
           crates\mfd-cli (the CLI), crates\mfd-tui (the interactive TUI)
-net\      .NET family: the C# proof of concept — the walker, bench-verified (full twin: roadmap)
+net\      .NET family: the C# proof of concept — the walker, bench-verified (promotion gated: 1k stars)
 node\     phase-0 Node prototype (frozen: history, and one bench implementation)
 bench\    benchmark scripts (run / startup / mem) and their results
 docs\     ARCHITECTURE - BENCHMARKS - ROADMAP - FAQ
@@ -336,7 +336,7 @@ gui\ app\ reserved for the future GUI and app distribution
 - [docs/FAQ.md](docs/FAQ.md) — real questions, real commands, real outputs
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — engine vs. frontend, the walker, the contracts
 - [docs/BENCHMARKS.md](docs/BENCHMARKS.md) — method, scripts, the RESULT contract
-- [docs/ROADMAP.md](docs/ROADMAP.md) — TUI, the C# twin promotion, GUI, app
+- [docs/ROADMAP.md](docs/ROADMAP.md) — TUI, the C# twin on demand, GUI, app
 - [docs/DESIGN-TUI.md](docs/DESIGN-TUI.md) — the approved TUI design: two panels, one lens, and since 0.7.1 the tree and the reading cursor
 
 ## Contributing
