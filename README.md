@@ -129,6 +129,9 @@ languages are found in `lang/` next to the binaries.
   at 1,000 the C# CLI becomes reality (<a href="docs/ROADMAP.md">roadmap</a>).</i>
   <br/><br/>
   <a href="https://github.com/heavymanto/Manto.FreeDisk"><img src="https://img.shields.io/badge/%E2%AD%90-GIVE%20US%20A%20STAR-e3b341?style=for-the-badge" alt="Give us a star" /></a>
+  <br/>
+  <a href="https://github.com/heavymanto/Manto.FreeDisk/stargazers"><img src="https://img.shields.io/github/stars/heavymanto/Manto.FreeDisk?style=flat-square&label=stars" alt="stars" /></a>
+  <a href="https://github.com/heavymanto/Manto.FreeDisk/releases"><img src="https://img.shields.io/github/downloads/heavymanto/Manto.FreeDisk/total?style=flat-square&label=downloads" alt="downloads" /></a>
   <br/><br/>
   <a href="https://github.com/heavymanto/Manto.FreeDisk/releases/download/v0.9.2/mantofreedisk-0.9.2-win-x64.zip"><img src="https://img.shields.io/badge/%E2%AC%87-Windows%20x64-2ea44f?style=for-the-badge" alt="Windows x64" /></a>
   <a href="https://github.com/heavymanto/Manto.FreeDisk/releases/download/v0.9.2/mantofreedisk-0.9.2-linux-x64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-Linux%20x64-2ea44f?style=for-the-badge" alt="Linux x64" /></a>
