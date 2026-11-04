@@ -2,7 +2,7 @@
 
 Format inspired by "Keep a Changelog"; the version is mfd-cli's.
 
-## [Unreleased]
+## [0.9.2] - 2026-11-01
 
 ### Changed
 - **Fewer pictures, all animated, grouped by function**: the READMEs
