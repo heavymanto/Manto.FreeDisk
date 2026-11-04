@@ -119,7 +119,7 @@ funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
 le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
 <details>
-<summary><img src="https://img.shields.io/badge/%E2%AC%87-DOWNLOAD-2ea44f?style=for-the-badge" alt="Download" /></summary>
+<summary><b>⬇ DOWNLOAD</b></summary>
 <br/>
 <p align="center">
   <a href="#download"><img src="docs/img/star.png" alt="Star" width="120" /></a>
