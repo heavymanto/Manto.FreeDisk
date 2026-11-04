@@ -55,7 +55,7 @@ dimensioni lette mentre enumera — e due modi di guardare la risposta:
 
 ---
 
-## Quanto vale davvero Rust? L'esperimento
+## Quanto è davvero performante Rust? L'esperimento
 
 Dicono che Rust sia piu' veloce e beva meno memoria degli altri — ma
 quanto, esattamente? Per saperlo ho scritto lo stesso scanner tre

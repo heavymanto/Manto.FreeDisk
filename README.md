@@ -54,7 +54,7 @@ read while it enumerates — and two ways to read the answer:
 
 ---
 
-## How much is Rust really worth? The experiment
+## How performant is Rust, really? The experiment
 
 They say Rust is faster and drinks less memory than the others —
 but how much, exactly? To find out I wrote the same scanner three
