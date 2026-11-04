@@ -118,8 +118,9 @@ Niente da installare: estrai ed esegui — e basta. I due binari
 funzionano subito, in modalita' portabile: l'inglese e' incorporato, e
 le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
+<div align="center">
 <details>
-<summary><b>⬇ DOWNLOAD</b></summary>
+<summary><h3>🟢 ⬇️ DOWNLOAD ⬇️ 🟢</h3></summary>
 <br/>
 <p align="center">
   <a href="#download"><img src="docs/img/star.png" alt="Star" width="120" /></a>
@@ -135,6 +136,7 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
   <a href="https://github.com/heavymanto/Manto.FreeDisk/releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge" alt="macOS arm64" /></a>
 </p>
 </details>
+</div>
 
 ---
 

@@ -117,8 +117,9 @@ Nothing to install: extract and run — that's it. Both binaries work
 right away, in portable mode: English is embedded, and the other six
 languages are found in `lang/` next to the binaries.
 
+<div align="center">
 <details>
-<summary><b>⬇ DOWNLOAD</b></summary>
+<summary><h3>🟢 ⬇️ DOWNLOAD ⬇️ 🟢</h3></summary>
 <br/>
 <p align="center">
   <a href="#download"><img src="docs/img/star.png" alt="Star" width="120" /></a>
@@ -134,6 +135,7 @@ languages are found in `lang/` next to the binaries.
   <a href="https://github.com/heavymanto/Manto.FreeDisk/releases/download/v0.9.2/mantofreedisk-0.9.2-macos-aarch64.tar.gz"><img src="https://img.shields.io/badge/%E2%AC%87-macOS%20arm64-2ea44f?style=for-the-badge" alt="macOS arm64" /></a>
 </p>
 </details>
+</div>
 
 ---
 
