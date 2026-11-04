@@ -167,7 +167,8 @@ una domanda vera, un comando vero e il suo output vero.
 Una scansione, poi si naviga a frecce. Il giro completo, in movimento:
 l'albero scorre, la classifica dei file piu' grossi del ramo selezionato
 la segue in fondo, `TAB` gira il cursore in lettura per albero, dettaglio
-e classifica, e `←` risale fino alla radice — da dove il giro ricomincia:
+e classifica, `→` scorre i nomi troppo lunghi per il pannello, e `←`
+risale fino alla radice — da dove il giro ricomincia:
 
 <a href="#mfd-tui-in-azione"><img src="docs/img/tui-demo.gif" alt="mfd-tui in movimento: la navigazione, la classifica che segue la selezione, TAB, la risalita alla radice" /></a>
 

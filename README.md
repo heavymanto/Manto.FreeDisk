@@ -170,7 +170,8 @@ is a real question, a real command, and its real output.
 One scan, then the arrows. The whole round trip, in motion: the tree
 scrolls, the ranking of the biggest files of the selected branch follows
 at the bottom, `TAB` cycles the reading cursor through tree, detail and
-ranking, and `←` climbs back to the root — where the tour begins again:
+ranking, `→` scrolls the names too long for the panel, and `←` climbs
+back to the root — where the tour begins again:
 
 <a href="#mfd-tui-in-action"><img src="docs/img/tui-demo.gif" alt="mfd-tui in motion: navigation, the ranking following the selection, TAB, the climb back to the root" /></a>
 
