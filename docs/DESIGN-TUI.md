@@ -55,6 +55,14 @@
 > The files are born in the launch folder (`mfd-stampa-<name>.json`
 > for the view, `mfd-report-<name>.json` for the report, numbered if
 > the name already exists); the flash says where.
+>
+> **v2 (mfd-tui 0.2.2, with CLI 0.9.2): the title band wears the CLI's
+> box.** The path in the header is framed with the same rounded corners
+> of the CLI's grid — three rows, the blue path and the TOT inside: the
+> two frontends speak the same grammar from the very first line. The
+> bar shrinks to a tenth (every `#` is exactly 10%, the same unit here
+> and in the CLI), and with the reading cursor the horizontal scroll
+> reads the long names whole.
 
 ## 1. Vision and aesthetics
 

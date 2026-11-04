@@ -8,7 +8,7 @@ than code, it is not an answer: it is a feature waiting to happen (see the
 queue at the bottom).
 </p>
 <p align="justify">
-The outputs are from mfd-cli 0.9.1 on Windows (mfd-tui 0.2.1 for the TUI
+The outputs are from mfd-cli 0.9.2 on Windows (mfd-tui 0.2.2 for the TUI
 entries), in the factory lan­guage, English — the few his­tor­i­cal ses­sions (the
 cold/warm one of entry 3, the bench­marks of entry 8) keep the numbers of the
 day they ran. One detail you will notice right away: the numbers keep the
@@ -753,7 +753,7 @@ the `tree` section keeps closed (`mfd-stampa-demo-tui.json`):
 
 ```json
 {
-  "mfd": "0.2.1",
+  "mfd": "0.2.2",
   "root": "C:\\Users\\Public\\mfd-captures\\demo-tui",
   "filter": null,
   "depth": 4294967295,
@@ -850,7 +850,7 @@ NOTE: prime 3 righe di 107; alzare -top N per vederle tutte
 (the totals line too: `mfd-cli -lang it -d 0 <folder>` answers `mfd-cli:
 C:\Windows - 179.064 file, 103.009 cartelle, 41,5 GB in 1721 ms, 56
 warning`; and `-h` opens with
-`mfd-cli 0.9.1 - conteggio ricorsivo di file, cartelle e byte`)
+`mfd-cli 0.9.2 - conteggio ricorsivo di file, cartelle e byte`)
 
 One case that fools the eye: in the WARNING block the prefix ("opening
 folder", "apertura cartella") is ours and follows the language, but the
