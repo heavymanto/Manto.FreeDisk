@@ -120,7 +120,7 @@ le altre sei lingue vengono trovate in `lang/` accanto ai binari.
 
 <div align="center">
 <details>
-<summary><h3>🟢 ⬇️ DOWNLOAD ⬇️ 🟢</h3></summary>
+<summary><h3>💚 ⬇️ DOWNLOAD ⬇️ 💚</h3></summary>
 <br/>
 <p align="center">
   <a href="#download"><img src="docs/img/star.png" alt="Star" width="120" /></a>
