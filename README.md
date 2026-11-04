@@ -121,7 +121,7 @@ languages are found in `lang/` next to the binaries.
 <summary><img src="https://img.shields.io/badge/%E2%AC%87-DOWNLOAD-2ea44f?style=for-the-badge" alt="Download" /></summary>
 <br/>
 <p align="center">
-  <a href="#download"><img src="docs/img/MNT_C1.png" alt="Manto.FreeDisk" width="110" /></a>
+  <a href="#download"><img src="docs/img/star.png" alt="Star" width="120" /></a>
   <br/><br/>
   <b>We give you the software. You give us a star.</b> ⭐<br/>
   <i>Stars make dreams — they unlock new features:<br/>
